@@ -1,27 +1,40 @@
+-- Unloader de Players: Limpeza Profunda
 if shared.PlayerESP_Data then
-    -- 1. Desconecta todos os eventos (Monitoramento e Loops)
-    for _, conn in pairs(shared.PlayerESP_Data.Connections) do
-        if conn then conn:Disconnect() end
+    -- 1. Desconectar todos os eventos salvos (Loops, PlayerAdded, CharacterAdded)
+    if shared.PlayerESP_Data.Connections then
+        for _, conn in pairs(shared.PlayerESP_Data.Connections) do
+            if typeof(conn) == "RBXScriptConnection" then
+                conn:Disconnect()
+            end
+        end
     end
-    
-    -- 2. Remove todos os objetos visuais de cada player
-    for player, data in pairs(shared.PlayerESP_Data.ActiveESP) do
-        if data.Highlight then data.Highlight:Destroy() end
-        if data.Billboard then data.Billboard:Destroy() end
-        
-        -- Busca adicional por segurança
+
+    -- 2. Remover todos os objetos de cada player na tabela ativa
+    if shared.PlayerESP_Data.ActiveESP then
+        for player, data in pairs(shared.PlayerESP_Data.ActiveESP) do
+            if data.Highlight then data.Highlight:Destroy() end
+            if data.Billboard then data.Billboard:Destroy() end
+        end
+    end
+
+    -- 3. Busca exaustiva por resíduos nos personagens (Garante que nada ficou para trás)
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
         local char = player.Character
         if char then
             local h = char:FindFirstChild("PlayerHighlight")
             if h then h:Destroy() end
-            for _, p in pairs(char:GetChildren()) do
-                local b = p:FindFirstChild("PlayerESP")
-                if b then b:Destroy() end
+            for _, part in pairs(char:GetChildren()) do
+                if part:IsA("BasePart") then
+                    local b = part:FindFirstChild("PlayerESP")
+                    if b then b:Destroy() end
+                end
             end
         end
     end
-    
-    -- 3. Limpa a tabela de dados
+
+    -- 4. Resetar a tabela global
     shared.PlayerESP_Data = nil
-    print("ESP Players totalmente removido e processos encerrados.")
+    print("ESP de Players: Desativado e removido completamente.")
+else
+    print("ESP de Players: Nenhuma sessão ativa encontrada.")
 end

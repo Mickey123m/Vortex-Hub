@@ -1,11 +1,38 @@
+-- Unloader de Animais: Limpeza Profunda
 if shared.AnimalESP_Data then
-    for _, conn in pairs(shared.AnimalESP_Data.Connections) do
-        if conn then conn:Disconnect() end
+    -- 1. Desconectar loops e eventos de pasta
+    if shared.AnimalESP_Data.Connections then
+        for _, conn in pairs(shared.AnimalESP_Data.Connections) do
+            if typeof(conn) == "RBXScriptConnection" then
+                conn:Disconnect()
+            end
+        end
     end
-    for model, data in pairs(shared.AnimalESP_Data.ActiveESP) do
-        if data.Highlight then data.Highlight:Destroy() end
-        if data.Billboard then data.Billboard:Destroy() end
+
+    -- 2. Remover objetos da tabela ativa
+    if shared.AnimalESP_Data.ActiveESP then
+        for model, data in pairs(shared.AnimalESP_Data.ActiveESP) do
+            if data.Highlight then data.Highlight:Destroy() end
+            if data.Billboard then data.Billboard:Destroy() end
+        end
     end
+
+    -- 3. Varredura na pasta Animals por segurança
+    local folder = game.Workspace:FindFirstChild("Animals")
+    if folder then
+        for _, animal in pairs(folder:GetChildren()) do
+            local h = animal:FindFirstChild("AnimalHighlight")
+            if h then h:Destroy() end
+            for _, part in pairs(animal:GetChildren()) do
+                local b = part:FindFirstChild("AnimalESP")
+                if b then b:Destroy() end
+            end
+        end
+    end
+
+    -- 4. Resetar a tabela global
     shared.AnimalESP_Data = nil
-    print("ESP Animais totalmente removido.")
+    print("ESP de Animais: Desativado e removido completamente.")
+else
+    print("ESP de Animais: Nenhuma sessão ativa encontrada.")
 end

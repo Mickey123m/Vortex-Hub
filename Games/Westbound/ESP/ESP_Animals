@@ -1,8 +1,6 @@
--- ESP de Animais com Suporte a Remoção
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
+local LocalPlayer = game:GetService("Players").LocalPlayer
 
 local OutlineColor = Color3.fromRGB(255, 255, 0)
 local MaxDistance = 999999
@@ -19,12 +17,21 @@ local function GetModelPart(model)
     return model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("Head") or model:FindFirstChildWhichIsA("BasePart")
 end
 
-local function CreateESP(model)
+local function RemoveAnimalESP(model)
+    if shared.AnimalESP_Data.ActiveESP[model] then
+        local data = shared.AnimalESP_Data.ActiveESP[model]
+        if data.Highlight then data.Highlight:Destroy() end
+        if data.Billboard then data.Billboard:Destroy() end
+        shared.AnimalESP_Data.ActiveESP[model] = nil
+    end
+end
+
+local function CreateAnimalESP(model)
     if shared.AnimalESP_Data.ActiveESP[model] then return end
     local mainPart = GetModelPart(model)
     if not mainPart then return end
     
-    shared.AnimalESP_Data.ActiveESP[model] = {}
+    local data = {}
     local highlight = Instance.new("Highlight")
     highlight.Name = "AnimalHighlight"
     highlight.Adornee = model
@@ -33,7 +40,7 @@ local function CreateESP(model)
     highlight.OutlineColor = OutlineColor
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Parent = model
-    shared.AnimalESP_Data.ActiveESP[model].Highlight = highlight
+    data.Highlight = highlight
     
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "AnimalESP"
@@ -42,43 +49,55 @@ local function CreateESP(model)
     billboard.StudsOffset = Vector3.new(0, 3, 0)
     billboard.AlwaysOnTop = true
     billboard.Parent = mainPart
+    
     local textLabel = Instance.new("TextLabel")
     textLabel.Size = UDim2.new(1, 0, 1, 0)
     textLabel.BackgroundTransparency = 1
     textLabel.TextColor3 = OutlineColor
+    textLabel.TextStrokeTransparency = 0.5
     textLabel.TextSize = 16
     textLabel.Font = Enum.Font.SourceSansBold
     textLabel.Parent = billboard
-    shared.AnimalESP_Data.ActiveESP[model].Billboard = billboard
-    shared.AnimalESP_Data.ActiveESP[model].TextLabel = textLabel
+    
+    data.TextLabel = textLabel
+    data.Billboard = billboard
+    shared.AnimalESP_Data.ActiveESP[model] = data
 end
 
-local function RemoveESP(model)
-    if shared.AnimalESP_Data.ActiveESP[model] then
-        if shared.AnimalESP_Data.ActiveESP[model].Highlight then shared.AnimalESP_Data.ActiveESP[model].Highlight:Destroy() end
-        if shared.AnimalESP_Data.ActiveESP[model].Billboard then shared.AnimalESP_Data.ActiveESP[model].Billboard:Destroy() end
-        shared.AnimalESP_Data.ActiveESP[model] = nil
-    end
+-- Monitorar a pasta Animals em tempo real
+local animalsFolder = Workspace:WaitForChild("Animals", 10)
+if animalsFolder then
+    table.insert(shared.AnimalESP_Data.Connections, animalsFolder.ChildAdded:Connect(function(child)
+        task.wait(0.1)
+        if child:IsA("Model") then CreateAnimalESP(child) end
+    end))
+    table.insert(shared.AnimalESP_Data.Connections, animalsFolder.ChildRemoved:Connect(function(child)
+        RemoveAnimalESP(child)
+    end))
 end
 
--- Salvar conexões para poder matar depois
 table.insert(shared.AnimalESP_Data.Connections, RunService.RenderStepped:Connect(function()
-    if not Workspace:FindFirstChild("Animals") then return end
-    for _, animal in pairs(Workspace.Animals:GetChildren()) do
+    if not animalsFolder then return end
+    for _, animal in pairs(animalsFolder:GetChildren()) do
         if animal:IsA("Model") then
             local mainPart = GetModelPart(animal)
-            if mainPart then
-                local dist = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")) and (LocalPlayer.Character.HumanoidRootPart.Position - mainPart.Position).Magnitude or 0
+            local myChar = LocalPlayer.Character
+            if mainPart and myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                local dist = (myChar.HumanoidRootPart.Position - mainPart.Position).Magnitude
                 if dist <= MaxDistance then
-                    if not shared.AnimalESP_Data.ActiveESP[animal] then CreateESP(animal) end
-                    if shared.AnimalESP_Data.ActiveESP[animal] and shared.AnimalESP_Data.ActiveESP[animal].TextLabel then
-                        local text = (ShowName and GetAnimalName(animal.Name) or "") .. (ShowDistance and "\n[" .. math.floor(dist) .. "m]" or "")
-                        shared.AnimalESP_Data.ActiveESP[animal].TextLabel.Text = text
+                    if not shared.AnimalESP_Data.ActiveESP[animal] then CreateAnimalESP(animal) end
+                    local data = shared.AnimalESP_Data.ActiveESP[animal]
+                    if data and data.TextLabel then
+                        data.TextLabel.Text = (ShowName and GetAnimalName(animal.Name) or "") .. (ShowDistance and "\n[" .. math.floor(dist) .. "m]" or "")
                     end
                 else
-                    RemoveESP(animal)
+                    RemoveAnimalESP(animal)
                 end
             end
         end
+    end
+    -- Limpeza de modelos que foram destruídos sem passar pelo ChildRemoved
+    for model, _ in pairs(shared.AnimalESP_Data.ActiveESP) do
+        if not model.Parent then RemoveAnimalESP(model) end
     end
 end))

@@ -2,20 +2,15 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Configurações
 local OutlineColor = Color3.fromRGB(255, 0, 0)
 local MaxDistance = 999999
 local ShowName = true
 local ShowDistance = true
 
--- Inicializa o armazenamento de dados compartilhado
 shared.PlayerESP_Data = shared.PlayerESP_Data or {ActiveESP = {}, Connections = {}}
 
 local function GetCharacterPart(character)
-    return character:FindFirstChild("HumanoidRootPart") or 
-           character:FindFirstChild("Torso") or 
-           character:FindFirstChild("Head") or 
-           character:FindFirstChildWhichIsA("BasePart")
+    return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head") or character:FindFirstChildWhichIsA("BasePart")
 end
 
 local function RemoveESP(player)
@@ -29,14 +24,14 @@ end
 
 local function CreateESP(player, character)
     if player == LocalPlayer then return end
-    RemoveESP(player) -- Limpa qualquer resquício antes de criar
+    if not character or not character:IsDescendantOf(game.Workspace) then return end
+    
+    RemoveESP(player) -- Limpa anterior
 
     local mainPart = GetCharacterPart(character)
     if not mainPart then return end
     
     local data = {}
-    
-    -- Criar Highlight
     local highlight = Instance.new("Highlight")
     highlight.Name = "PlayerHighlight"
     highlight.Adornee = character
@@ -48,7 +43,6 @@ local function CreateESP(player, character)
     highlight.Parent = character
     data.Highlight = highlight
     
-    -- Criar Billboard
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "PlayerESP"
     billboard.Adornee = mainPart
@@ -69,45 +63,40 @@ local function CreateESP(player, character)
     data.Billboard = billboard
     data.TextLabel = textLabel
     data.Character = character
-    
     shared.PlayerESP_Data.ActiveESP[player] = data
 end
 
--- Função para monitorar cada player individualmente
 local function MonitorPlayer(player)
     if player == LocalPlayer then return end
     
-    local conn = player.CharacterAdded:Connect(function(char)
-        task.wait(0.5) -- Tempo para o personagem carregar no Workspace
+    -- Detecta novos personagens (morte/respawn)
+    table.insert(shared.PlayerESP_Data.Connections, player.CharacterAdded:Connect(function(char)
+        char:WaitForChild("HumanoidRootPart", 5)
+        task.wait(0.1)
         CreateESP(player, char)
-    end)
-    table.insert(shared.PlayerESP_Data.Connections, conn)
+    end))
     
-    if player.Character then
-        CreateESP(player, player.Character)
-    end
+    -- Detecta troca de Time ou mudanças de propriedade do Player
+    table.insert(shared.PlayerESP_Data.Connections, player:GetPropertyChangedSignal("Team"):Connect(function()
+        if player.Character then CreateESP(player, player.Character) end
+    end))
+
+    if player.Character then CreateESP(player, player.Character) end
 end
 
--- Conectar players atuais e futuros
 table.insert(shared.PlayerESP_Data.Connections, Players.PlayerAdded:Connect(MonitorPlayer))
-for _, player in pairs(Players:GetPlayers()) do
-    MonitorPlayer(player)
-end
+for _, player in pairs(Players:GetPlayers()) do MonitorPlayer(player) end
 
--- Loop de Atualização de Distância e Presença
 table.insert(shared.PlayerESP_Data.Connections, RunService.RenderStepped:Connect(function()
     for player, data in pairs(shared.PlayerESP_Data.ActiveESP) do
         if player.Parent and data.Character and data.Character.Parent then
             local mainPart = GetCharacterPart(data.Character)
-            if mainPart and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - mainPart.Position).Magnitude
-                
+            local myChar = LocalPlayer.Character
+            if mainPart and myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                local dist = (myChar.HumanoidRootPart.Position - mainPart.Position).Magnitude
                 if dist <= MaxDistance then
                     if data.TextLabel then
-                        local text = ""
-                        if ShowName then text = player.Name end
-                        if ShowDistance then text = text .. (text ~= "" and "\n" or "") .. "[" .. math.floor(dist) .. "m]" end
-                        data.TextLabel.Text = text
+                        data.TextLabel.Text = (ShowName and player.Name or "") .. (ShowDistance and "\n[" .. math.floor(dist) .. "m]" or "")
                     end
                 else
                     RemoveESP(player)
@@ -118,5 +107,3 @@ table.insert(shared.PlayerESP_Data.Connections, RunService.RenderStepped:Connect
         end
     end
 end))
-
-print("ESP Players ativado com monitoramento recursivo.")
