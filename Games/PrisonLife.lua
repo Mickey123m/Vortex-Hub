@@ -1,0 +1,878 @@
+-- VORTEX HUB - PRISON LIFE v1.0
+-- Script completo para Prison Life
+
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- [[ STATE VARIABLES ]]
+local States = {
+    ESP_Players = false,
+    ESP_Bandidos = false,
+    ESP_Policiais = false,
+    ESP_Prisioneiros = false,
+    Bypass_Doors = false,
+    Auto_KeyCard = false,
+    Auto_M9 = false,
+    Anti_AFK = false
+}
+
+-- [[ TELEPORT SYSTEM ]]
+local TeleportCooldown = false
+local LastTeleportTime = 0
+local TELEPORT_COOLDOWN = 2
+
+local function SafeTeleportWithReturn(cframe, delayBeforeReturn)
+    if TeleportCooldown then
+        local waitTime = TELEPORT_COOLDOWN - (tick() - LastTeleportTime)
+        if waitTime > 0 then
+            print("[Prison Life] Wait " .. math.ceil(waitTime) .. "s before teleporting again")
+            return false
+        end
+    end
+    
+    local char = LocalPlayer.Character
+    local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoidRootPart then
+        print("[Prison Life] Character not found!")
+        return false
+    end
+    
+    TeleportCooldown = true
+    LastTeleportTime = tick()
+    
+    local originalPosition = humanoidRootPart.CFrame
+    
+    humanoidRootPart.CFrame = cframe
+    task.wait(0.1)
+    
+    print("[Prison Life] Teleport completed!")
+    
+    if delayBeforeReturn and delayBeforeReturn > 0 then
+        task.wait(delayBeforeReturn)
+        humanoidRootPart.CFrame = originalPosition
+        task.wait(0.1)
+        print("[Prison Life] Returned to original position")
+    end
+    
+    task.spawn(function()
+        task.wait(TELEPORT_COOLDOWN)
+        TeleportCooldown = false
+    end)
+    
+    return true
+end
+
+local function SimpleTeleport(cframe)
+    if TeleportCooldown then
+        local waitTime = TELEPORT_COOLDOWN - (tick() - LastTeleportTime)
+        if waitTime > 0 then
+            print("[Prison Life] Wait " .. math.ceil(waitTime) .. "s before teleporting again")
+            return false
+        end
+    end
+    
+    local char = LocalPlayer.Character
+    local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoidRootPart then
+        print("[Prison Life] Character not found!")
+        return false
+    end
+    
+    TeleportCooldown = true
+    LastTeleportTime = tick()
+    
+    humanoidRootPart.CFrame = cframe
+    task.wait(0.1)
+    
+    print("[Prison Life] Teleport completed!")
+    
+    task.spawn(function()
+        task.wait(TELEPORT_COOLDOWN)
+        TeleportCooldown = false
+    end)
+    
+    return true
+end
+
+-- [[ ESP SYSTEM ]]
+local ESP = {
+    Players = {},
+    Connections = {}
+}
+
+function ESP.ShouldShowESP(player)
+    if player == LocalPlayer then return false end
+    if not player.Parent then return false end
+    
+    local teamName = player.Team and player.Team.Name or ""
+    local showESP = false
+    
+    if States.ESP_Players then
+        showESP = true
+    end
+    
+    if States.ESP_Bandidos and teamName == "Criminals" then
+        showESP = true
+    end
+    
+    if States.ESP_Policiais and teamName == "Guards" then
+        showESP = true
+    end
+    
+    if States.ESP_Prisioneiros and teamName == "Inmates" then
+        showESP = true
+    end
+    
+    return showESP
+end
+
+function ESP.CreateHighlight(player, character)
+    if not character or not character.Parent then return nil end
+    
+    ESP.RemoveHighlight(player)
+    
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
+    if not humanoidRootPart then return nil end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "VortexChams_" .. player.UserId
+    highlight.Adornee = character
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Enabled = false
+    highlight.Parent = character
+    
+    ESP.Players[player] = {
+        Highlight = highlight,
+        Character = character,
+        Team = player.Team
+    }
+    
+    ESP.UpdatePlayerESP(player)
+    
+    return highlight
+end
+
+function ESP.RemoveHighlight(player)
+    if ESP.Players[player] then
+        local data = ESP.Players[player]
+        if data.Highlight and data.Highlight.Parent then
+            data.Highlight:Destroy()
+        end
+        ESP.Players[player] = nil
+    end
+end
+
+function ESP.UpdatePlayerESP(player)
+    if not ESP.Players[player] then return end
+    
+    local data = ESP.Players[player]
+    if not data.Highlight or not data.Highlight.Parent then return end
+    
+    local shouldShow = ESP.ShouldShowESP(player)
+    local teamColor = player.TeamColor and player.TeamColor.Color or Color3.fromRGB(255, 255, 255)
+    
+    data.Highlight.Enabled = shouldShow
+    if shouldShow then
+        data.Highlight.FillColor = teamColor
+        data.Highlight.OutlineColor = Color3.new(1, 1, 1)
+    end
+end
+
+function ESP.UpdateAllESPs()
+    for player, data in pairs(ESP.Players) do
+        if player and player.Parent then
+            ESP.UpdatePlayerESP(player)
+        else
+            ESP.RemoveHighlight(player)
+        end
+    end
+end
+
+function ESP.SetupPlayer(player)
+    if player == LocalPlayer then return end
+    
+    ESP.RemoveHighlight(player)
+    
+    local function HandleCharacter(character)
+        if not character then return end
+        task.wait(0.5)
+        
+        ESP.CreateHighlight(player, character)
+        
+        local deathConnection = character.AncestryChanged:Connect(function(_, parent)
+            if not parent then
+                ESP.RemoveHighlight(player)
+            end
+        end)
+        
+        table.insert(ESP.Connections, deathConnection)
+    end
+    
+    if player.Character then
+        task.spawn(HandleCharacter, player.Character)
+    end
+    
+    local charAdded = player.CharacterAdded:Connect(function(character)
+        HandleCharacter(character)
+    end)
+    table.insert(ESP.Connections, charAdded)
+    
+    local teamChanged = player:GetPropertyChangedSignal("Team"):Connect(function()
+        ESP.UpdatePlayerESP(player)
+    end)
+    table.insert(ESP.Connections, teamChanged)
+    
+    local playerRemoving = player.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            ESP.RemoveHighlight(player)
+        end
+    end)
+    table.insert(ESP.Connections, playerRemoving)
+end
+
+function ESP.Initialize()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            task.spawn(function()
+                ESP.SetupPlayer(player)
+            end)
+        end
+    end
+    
+    local playerAdded = Players.PlayerAdded:Connect(function(player)
+        if player ~= LocalPlayer then
+            task.wait(1)
+            ESP.SetupPlayer(player)
+        end
+    end)
+    table.insert(ESP.Connections, playerAdded)
+    
+    local playerRemoving = Players.PlayerRemoving:Connect(function(player)
+        ESP.RemoveHighlight(player)
+    end)
+    table.insert(ESP.Connections, playerRemoving)
+end
+
+function ESP.Cleanup()
+    for player, _ in pairs(ESP.Players) do
+        ESP.RemoveHighlight(player)
+    end
+    
+    for _, connection in pairs(ESP.Connections) do
+        if connection and connection.Connected then
+            connection:Disconnect()
+        end
+    end
+    
+    ESP.Players = {}
+    ESP.Connections = {}
+end
+
+ESP.Initialize()
+
+-- [[ BYPASS DOORS ]]
+local originalProperties = {}
+task.spawn(function()
+    while task.wait(0.5) do
+        if States.Bypass_Doors then
+            pcall(function()
+                local doorsFolder = workspace:FindFirstChild("Doors")
+                
+                if doorsFolder then
+                    for _, door in pairs(doorsFolder:GetDescendants()) do
+                        if door:IsA("BasePart") then
+                            if not originalProperties[door] then
+                                originalProperties[door] = {
+                                    CanCollide = door.CanCollide,
+                                    Transparency = door.Transparency
+                                }
+                            end
+                            
+                            door.CanCollide = false
+                            door.Transparency = 0.5
+                        end
+                    end
+                end
+            end)
+        else
+            for door, properties in pairs(originalProperties) do
+                if door and door.Parent then
+                    door.CanCollide = properties.CanCollide
+                    door.Transparency = properties.Transparency
+                end
+            end
+        end
+    end
+end)
+
+-- [[ AUTO KEYCARD/M9 SYSTEM ]]
+local AUTO_PICKUP_INTERVAL = 3
+
+local function HasItemInInventory(itemName)
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    local character = LocalPlayer.Character
+    
+    if backpack then
+        for _, item in pairs(backpack:GetChildren()) do
+            if string.find(item.Name:lower(), itemName:lower()) then
+                return true
+            end
+        end
+    end
+    
+    if character then
+        for _, item in pairs(character:GetChildren()) do
+            if string.find(item.Name:lower(), itemName:lower()) then
+                return true
+            end
+        end
+    end
+    
+    return false
+end
+
+local function FindAndPickupItem(itemName)
+    pcall(function()
+        if HasItemInInventory(itemName) then
+            return false
+        end
+        
+        local foundItem = nil
+        
+        for _, item in pairs(workspace:GetDescendants()) do
+            if item:IsA("Model") and string.find(item.Name:lower(), itemName:lower()) then
+                local mesh = item:FindFirstChild("Mesh") or item:FindFirstChildWhichIsA("MeshPart")
+                if mesh then
+                    foundItem = item
+                    break
+                end
+            end
+        end
+        
+        if foundItem then
+            local char = LocalPlayer.Character
+            local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if humanoidRootPart then
+                local itemPosition = foundItem:GetModelCFrame().Position
+                local teleportCFrame = CFrame.new(itemPosition + Vector3.new(0, 2, 2))
+                
+                SafeTeleportWithReturn(teleportCFrame, 1.5)
+                
+                if HasItemInInventory(itemName) then
+                    print("[Prison Life] Picked up " .. itemName .. " successfully!")
+                    return true
+                else
+                    print("[Prison Life] Couldn't pick up " .. itemName)
+                    return false
+                end
+            end
+        end
+        
+        return false
+    end)
+    
+    return false
+end
+
+task.spawn(function()
+    while true do
+        task.wait(AUTO_PICKUP_INTERVAL)
+        
+        if States.Auto_KeyCard then
+            FindAndPickupItem("key")
+        end
+        
+        if States.Auto_M9 then
+            FindAndPickupItem("m9")
+        end
+    end
+end)
+
+-- [[ FUNCTION TO GET FORMATTED TEAM NAME ]]
+local function GetTeamName()
+    local team = LocalPlayer.Team
+    if not team then return "No Team" end
+    
+    local teamNames = {
+        ["Criminals"] = "Criminals",
+        ["Guards"] = "Guards",
+        ["Inmates"] = "Inmates",
+        ["Neutral"] = "Neutral"
+    }
+    
+    return teamNames[team.Name] or team.Name
+end
+
+-- [[ FUNCTION TO GET WEAPONS ]]
+local function GetPrisonWeapon(weaponName)
+    if TeleportCooldown then
+        local waitTime = TELEPORT_COOLDOWN - (tick() - LastTeleportTime)
+        if waitTime > 0 then
+            print("[Prison Life] Wait " .. math.ceil(waitTime) .. " seconds before teleporting again")
+            return
+        end
+    end
+    
+    pcall(function()
+        local prisonItems = workspace:FindFirstChild("Prison_ITEMS")
+        if not prisonItems then
+            print("[Prison Life] Prison_ITEMS folder not found!")
+            return
+        end
+        
+        local giverFolder = prisonItems:FindFirstChild("giver")
+        if not giverFolder then
+            print("[Prison Life] 'giver' folder not found!")
+            return
+        end
+        
+        local foundItem = nil
+        local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
+        
+        -- LOGIC FOR SHOTGUN
+        if string.find(weaponName:lower(), "shotgun") then
+            print("[Prison Life] Looking for shotgun... Current team: " .. currentTeam)
+            
+            if currentTeam == "Guards" then
+                foundItem = giverFolder:FindFirstChild("Remington 870")
+                if foundItem then
+                    print("[Prison Life] Found police Remington 870")
+                end
+            elseif currentTeam == "Criminals" or currentTeam == "Inmates" then
+                foundItem = giverFolder:FindFirstChild("Criminal Remington")
+                if foundItem then
+                    print("[Prison Life] Found Criminal Remington")
+                end
+            end
+            
+            if not foundItem then
+                print("[Prison Life] Searching for any available shotgun...")
+                for _, item in pairs(giverFolder:GetChildren()) do
+                    if item:IsA("Model") then
+                        local itemNameLower = item.Name:lower()
+                        if string.find(itemNameLower, "remington") or 
+                           string.find(itemNameLower, "shotgun") then
+                            foundItem = item
+                            print("[Prison Life] Found: " .. item.Name)
+                            break
+                        end
+                    end
+                end
+            end
+        else
+            foundItem = giverFolder:FindFirstChild(weaponName)
+            
+            if not foundItem then
+                for _, item in pairs(giverFolder:GetChildren()) do
+                    if string.find(string.lower(item.Name), string.lower(weaponName)) then
+                        foundItem = item
+                        break
+                    end
+                end
+            end
+        end
+        
+        if foundItem and foundItem:IsA("Model") then
+            local char = LocalPlayer.Character
+            local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if humanoidRootPart then
+                print("[Prison Life] Found: " .. foundItem.Name)
+                
+                local itemPosition = foundItem:GetModelCFrame().Position
+                local teleportCFrame = nil
+                
+                if string.find(weaponName:lower(), "ak") then
+                    teleportCFrame = CFrame.new(itemPosition + Vector3.new(0, 2, 3))
+                    print("[Prison Life] AK-47: Teleporting behind the weapon")
+                elseif string.find(weaponName:lower(), "mp5") then
+                    teleportCFrame = CFrame.new(itemPosition + Vector3.new(0, 2, 2))
+                else
+                    teleportCFrame = CFrame.new(itemPosition + Vector3.new(0, 2, 2))
+                end
+                
+                SafeTeleportWithReturn(teleportCFrame, 1.5)
+                
+                task.wait(0.5)
+                if HasItemInInventory(weaponName:lower()) then
+                    print("[Prison Life] " .. weaponName .. " picked up successfully!")
+                else
+                    print("[Prison Life] Couldn't pick up (click manually)")
+                end
+            else
+                print("[Prison Life] Character not found!")
+            end
+        else
+            print("[Prison Life] Weapon '" .. weaponName .. "' not found!")
+        end
+    end)
+end
+
+-- [[ ANTI-AFK SYSTEM ]]
+local AntiAFK = {
+    Active = false,
+    Connection = nil
+}
+
+function AntiAFK:Enable()
+    if self.Active then return end
+    
+    self.Active = true
+    
+    -- Criar VirtualUser
+    local VirtualUser = game:GetService("VirtualUser")
+    
+    -- Conectar ao evento de idle
+    self.Connection = LocalPlayer.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+    
+    print("[Prison Life] Anti-AFK ativado!")
+end
+
+function AntiAFK:Disable()
+    if not self.Active then return end
+    
+    self.Active = false
+    
+    if self.Connection then
+        self.Connection:Disconnect()
+        self.Connection = nil
+    end
+    
+    print("[Prison Life] Anti-AFK desativado!")
+end
+
+-- [[ INTERFACE ]]
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VortexPrisonLife"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 999999999
+
+local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+ScreenGui.Parent = success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 500, 0, 500)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -250)
+MainFrame.BackgroundColor3 = Color3.fromHex("17171C")
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Selectable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 8)
+MainCorner.Parent = MainFrame
+
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 38)
+TopBar.BackgroundColor3 = Color3.fromHex("1C1C22")
+TopBar.BorderSizePixel = 0
+TopBar.Active = true
+TopBar.Parent = MainFrame
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 8)
+TopCorner.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Text = "PRISON LIFE"
+Title.Size = UDim2.new(0, 120, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.TextColor3 = Color3.fromRGB(138, 43, 226)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 13
+Title.BackgroundTransparency = 1
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+-- Close button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Text = "X"
+CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+CloseBtn.Position = UDim2.new(1, -30, 0.5, -12)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+CloseBtn.Font = Enum.Font.Gotham
+CloseBtn.TextSize = 14
+CloseBtn.Parent = TopBar
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ESP.Cleanup()
+    AntiAFK:Disable()
+    ScreenGui:Destroy()
+end)
+
+-- Content area
+local Content = Instance.new("ScrollingFrame")
+Content.Name = "Content"
+Content.Size = UDim2.new(1, 0, 1, -38)
+Content.Position = UDim2.new(0, 0, 0, 38)
+Content.BackgroundTransparency = 1
+Content.BorderSizePixel = 0
+Content.ScrollBarThickness = 3
+Content.ScrollBarImageColor3 = Color3.fromRGB(138, 43, 226)
+Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Content.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout")
+UIList.Padding = UDim.new(0, 10)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Parent = Content
+
+local Padding = Instance.new("UIPadding")
+Padding.PaddingLeft = UDim.new(0, 15)
+Padding.PaddingTop = UDim.new(0, 15)
+Padding.PaddingRight = UDim.new(0, 15)
+Padding.Parent = Content
+
+-- [[ COMPONENT FUNCTIONS ]]
+local function CreateSection(name)
+    local section = Instance.new("Frame")
+    section.Size = UDim2.new(1, 0, 0, 30)
+    section.BackgroundTransparency = 1
+    section.LayoutOrder = 1
+    
+    local label = Instance.new("TextLabel")
+    label.Text = name:upper()
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 12
+    label.TextColor3 = Color3.fromRGB(100, 100, 100)
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = section
+    
+    return section
+end
+
+local function CreateToggle(name, desc, callback)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, 0, 0, 60)
+    card.BackgroundColor3 = Color3.fromHex("1C1C22")
+    card.LayoutOrder = 2
+    
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+    
+    local title = Instance.new("TextLabel")
+    title.Text = name
+    title.Size = UDim2.new(1, -70, 0, 20)
+    title.Position = UDim2.new(0, 10, 0, 8)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 13
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.BackgroundTransparency = 1
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = card
+    
+    local descLabel = Instance.new("TextLabel")
+    descLabel.Text = desc
+    descLabel.Size = UDim2.new(1, -75, 0, 30)
+    descLabel.Position = UDim2.new(0, 10, 0, 25)
+    descLabel.Font = Enum.Font.Gotham
+    descLabel.TextSize = 10
+    descLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    descLabel.BackgroundTransparency = 1
+    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    descLabel.TextWrapped = true
+    descLabel.Parent = card
+    
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 50, 0, 25)
+    toggleBtn.Position = UDim2.new(1, -60, 0.5, -12)
+    toggleBtn.BackgroundColor3 = Color3.fromHex("25252D")
+    toggleBtn.Text = "OFF"
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 11
+    toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+    toggleBtn.Parent = card
+    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 4)
+    
+    local state = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        state = not state
+        toggleBtn.Text = state and "ON" or "OFF"
+        toggleBtn.BackgroundColor3 = state and Color3.fromRGB(138, 43, 226) or Color3.fromHex("25252D")
+        callback(state)
+    end)
+    
+    return card
+end
+
+local function CreateButton(name, desc, callback)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, 0, 0, 60)
+    card.BackgroundColor3 = Color3.fromHex("1C1C22")
+    card.LayoutOrder = 2
+    
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 6)
+    
+    local title = Instance.new("TextLabel")
+    title.Text = name
+    title.Size = UDim2.new(1, -80, 0, 20)
+    title.Position = UDim2.new(0, 10, 0, 8)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 13
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.BackgroundTransparency = 1
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = card
+    
+    local descLabel = Instance.new("TextLabel")
+    descLabel.Text = desc
+    descLabel.Size = UDim2.new(1, -85, 0, 30)
+    descLabel.Position = UDim2.new(0, 10, 0, 25)
+    descLabel.Font = Enum.Font.Gotham
+    descLabel.TextSize = 10
+    descLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    descLabel.BackgroundTransparency = 1
+    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    descLabel.TextWrapped = true
+    descLabel.Parent = card
+    
+    local actionBtn = Instance.new("TextButton")
+    actionBtn.Size = UDim2.new(0, 65, 0, 28)
+    actionBtn.Position = UDim2.new(1, -70, 0.5, -14)
+    actionBtn.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    actionBtn.Text = "EXECUTE"
+    actionBtn.Font = Enum.Font.GothamBold
+    actionBtn.TextSize = 11
+    actionBtn.TextColor3 = Color3.new(1, 1, 1)
+    actionBtn.Parent = card
+    Instance.new("UICorner", actionBtn).CornerRadius = UDim.new(0, 4)
+    
+    actionBtn.MouseButton1Click:Connect(callback)
+    
+    return card
+end
+
+-- [[ ADD CONTENT ]]
+-- Visuals Section
+Content:AddChild(CreateSection("Visuals"))
+Content:AddChild(CreateToggle("ESP Players", "Visualiza TODOS os jogadores", function(v)
+    States.ESP_Players = v
+    ESP.UpdateAllESPs()
+end))
+
+Content:AddChild(CreateToggle("ESP Bandidos", "Mostra jogadores do time Criminal", function(v)
+    States.ESP_Bandidos = v
+    ESP.UpdateAllESPs()
+end))
+
+Content:AddChild(CreateToggle("ESP Policiais", "Mostra jogadores do time Guards", function(v)
+    States.ESP_Policiais = v
+    ESP.UpdateAllESPs()
+end))
+
+Content:AddChild(CreateToggle("ESP Prisioneiros", "Mostra jogadores do time Inmates", function(v)
+    States.ESP_Prisioneiros = v
+    ESP.UpdateAllESPs()
+end))
+
+-- Utilities Section
+Content:AddChild(CreateSection("Utilities"))
+Content:AddChild(CreateToggle("Bypass Doors", "Remove colisão das portas", function(v)
+    States.Bypass_Doors = v
+end))
+
+Content:AddChild(CreateToggle("Auto KeyCard", "Pega KeyCard automaticamente", function(v)
+    States.Auto_KeyCard = v
+end))
+
+Content:AddChild(CreateToggle("Auto M9", "Pega M9 automaticamente", function(v)
+    States.Auto_M9 = v
+end))
+
+Content:AddChild(CreateToggle("Anti-AFK", "Evita desconexão por inatividade", function(v)
+    States.Anti_AFK = v
+    if v then
+        AntiAFK:Enable()
+    else
+        AntiAFK:Disable()
+    end
+end))
+
+-- Teleports Section
+Content:AddChild(CreateSection("Teleports"))
+local teleports = {
+    ["TP Out Prison"] = CFrame.new(400, 100, 2215),
+    ["TP Criminals Spawn"] = CFrame.new(-920, 95, 2138),
+    ["TP Inside Prison"] = CFrame.new(919, 100, 2379),
+    ["TP Yard Center"] = CFrame.new(789, 98, 2475),
+    ["TP Police Station"] = CFrame.new(827, 100, 2288)
+}
+
+for name, position in pairs(teleports) do
+    Content:AddChild(CreateButton(name, "Teleport rápido", function()
+        SimpleTeleport(position)
+    end))
+end
+
+-- Weapons Section
+Content:AddChild(CreateSection("Prison Items"))
+Content:AddChild(CreateButton("Get AK-47", "Pega AK-47 automaticamente", function()
+    GetPrisonWeapon("AK-47")
+end))
+
+Content:AddChild(CreateButton("Get MP5", "Pega MP5 automaticamente", function()
+    GetPrisonWeapon("MP5")
+end))
+
+Content:AddChild(CreateButton("Get Shotgun", "Pega escopeta (Time: " .. GetTeamName() .. ")", function()
+    GetPrisonWeapon("Shotgun")
+end))
+
+-- DRAG SYSTEM
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Toggle visibility with Insert key
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.Insert then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+print("[Prison Life] Script carregado com sucesso! v1.0")
+print("[Prison Life] Pressione INSERT para mostrar/esconder")
