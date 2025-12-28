@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Configurações
 local OutlineColor = Color3.fromRGB(255, 0, 0) -- Vermelho
-local MaxDistance = 1000 -- Distância máxima para mostrar
+local MaxDistance = 999999 -- Distância máxima para mostrar
 local ShowName = true -- Mostrar nome do jogador
 local ShowDistance = true -- Mostrar distância
 
