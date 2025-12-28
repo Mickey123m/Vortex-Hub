@@ -7,7 +7,14 @@ local MaxDistance = 999999
 local ShowName = true
 local ShowDistance = true
 
+-- Estrutura de dados para evitar duplicatas e limpar conexões antigas
 shared.PlayerESP_Data = shared.PlayerESP_Data or {ActiveESP = {}, Connections = {}}
+
+-- Função para limpar conexões anteriores se o script for executado novamente
+for _, conn in ipairs(shared.PlayerESP_Data.Connections) do
+    if conn then conn:Disconnect() end
+end
+shared.PlayerESP_Data.Connections = {}
 
 local function GetCharacterPart(character)
     return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head") or character:FindFirstChildWhichIsA("BasePart")
@@ -24,14 +31,23 @@ end
 
 local function CreateESP(player, character)
     if player == LocalPlayer then return end
-    if not character or not character:IsDescendantOf(game.Workspace) then return end
-    
-    RemoveESP(player) -- Limpa anterior
+    -- Se o personagem sumir ou for deletado, removemos o antigo antes de criar
+    RemoveESP(player) 
 
+    if not character or not character.Parent then return end
+    
     local mainPart = GetCharacterPart(character)
-    if not mainPart then return end
+    -- Se a RootPart não existir ainda, esperamos brevemente
+    if not mainPart then 
+        task.delay(0.5, function()
+            if player.Character == character then CreateESP(player, character) end
+        end)
+        return 
+    end
     
     local data = {}
+    
+    -- Criação do Highlight (Corpo)
     local highlight = Instance.new("Highlight")
     highlight.Name = "PlayerHighlight"
     highlight.Adornee = character
@@ -43,6 +59,7 @@ local function CreateESP(player, character)
     highlight.Parent = character
     data.Highlight = highlight
     
+    -- Criação da Billboard (Nome/Distância)
     local billboard = Instance.new("BillboardGui")
     billboard.Name = "PlayerESP"
     billboard.Adornee = mainPart
@@ -69,40 +86,62 @@ end
 local function MonitorPlayer(player)
     if player == LocalPlayer then return end
     
-    -- Detecta novos personagens (morte/respawn)
-    table.insert(shared.PlayerESP_Data.Connections, player.CharacterAdded:Connect(function(char)
-        char:WaitForChild("HumanoidRootPart", 5)
-        task.wait(0.1)
+    -- Conexão para quando o personagem nasce/reaparece
+    local charAddedConn = player.CharacterAdded:Connect(function(char)
+        -- Espera carregar o personagem no Workspace
+        char:WaitForChild("HumanoidRootPart", 10)
+        task.wait(0.5) -- Delay de segurança para o motor do Roblox processar o modelo
         CreateESP(player, char)
-    end))
+    end)
+    table.insert(shared.PlayerESP_Data.Connections, charAddedConn)
     
-    -- Detecta troca de Time ou mudanças de propriedade do Player
-    table.insert(shared.PlayerESP_Data.Connections, player:GetPropertyChangedSignal("Team"):Connect(function()
-        if player.Character then CreateESP(player, player.Character) end
-    end))
+    -- Conexão para quando o time muda
+    local teamConn = player:GetPropertyChangedSignal("Team"):Connect(function()
+        if player.Character then 
+            CreateESP(player, player.Character) 
+        end
+    end)
+    table.insert(shared.PlayerESP_Data.Connections, teamConn)
 
-    if player.Character then CreateESP(player, player.Character) end
+    -- Se o player já tiver um personagem ao entrar/executar script
+    if player.Character then 
+        task.spawn(CreateESP, player, player.Character) 
+    end
 end
 
+-- Monitorar jogadores atuais e futuros
 table.insert(shared.PlayerESP_Data.Connections, Players.PlayerAdded:Connect(MonitorPlayer))
-for _, player in pairs(Players:GetPlayers()) do MonitorPlayer(player) end
+table.insert(shared.PlayerESP_Data.Connections, Players.PlayerRemoving:Connect(function(player)
+    RemoveESP(player)
+end))
 
+for _, player in pairs(Players:GetPlayers()) do 
+    MonitorPlayer(player) 
+end
+
+-- Loop de atualização de distância e validação
 table.insert(shared.PlayerESP_Data.Connections, RunService.RenderStepped:Connect(function()
     for player, data in pairs(shared.PlayerESP_Data.ActiveESP) do
+        -- Verifica se o player e o personagem ainda são válidos
         if player.Parent and data.Character and data.Character.Parent then
             local mainPart = GetCharacterPart(data.Character)
             local myChar = LocalPlayer.Character
+            
             if mainPart and myChar and myChar:FindFirstChild("HumanoidRootPart") then
                 local dist = (myChar.HumanoidRootPart.Position - mainPart.Position).Magnitude
+                
                 if dist <= MaxDistance then
                     if data.TextLabel then
                         data.TextLabel.Text = (ShowName and player.Name or "") .. (ShowDistance and "\n[" .. math.floor(dist) .. "m]" or "")
                     end
                 else
-                    RemoveESP(player)
+                    -- Oculta se estiver longe, mas mantém o objeto (opcional)
+                    if data.Billboard then data.Billboard.Enabled = false end
+                    if data.Highlight then data.Highlight.Enabled = false end
                 end
             end
         else
+            -- Se o personagem foi destruído ou player saiu, limpa o ESP da lista
             RemoveESP(player)
         end
     end
