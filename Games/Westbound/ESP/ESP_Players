@@ -1,37 +1,40 @@
--- ESP Outline para Players
--- Detecta todos os jogadores no servidor
-
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-
 local LocalPlayer = Players.LocalPlayer
 
 -- Configurações
-local OutlineColor = Color3.fromRGB(255, 0, 0) -- Vermelho
-local MaxDistance = 999999 -- Distância máxima para mostrar
-local ShowName = true -- Mostrar nome do jogador
-local ShowDistance = true -- Mostrar distância
+local OutlineColor = Color3.fromRGB(255, 0, 0)
+local MaxDistance = 999999
+local ShowName = true
+local ShowDistance = true
 
--- Tabela para armazenar os componentes ESP ativos
-local ActiveESP = {}
+-- Inicializa o armazenamento de dados compartilhado
+shared.PlayerESP_Data = shared.PlayerESP_Data or {ActiveESP = {}, Connections = {}}
 
--- Função para obter a parte principal do personagem
 local function GetCharacterPart(character)
     return character:FindFirstChild("HumanoidRootPart") or 
            character:FindFirstChild("Torso") or 
-           character:FindFirstChild("Head") or
+           character:FindFirstChild("Head") or 
            character:FindFirstChildWhichIsA("BasePart")
 end
 
--- Função para criar ESP completo (Highlight + BillboardGui)
+local function RemoveESP(player)
+    if shared.PlayerESP_Data.ActiveESP[player] then
+        local data = shared.PlayerESP_Data.ActiveESP[player]
+        if data.Highlight then data.Highlight:Destroy() end
+        if data.Billboard then data.Billboard:Destroy() end
+        shared.PlayerESP_Data.ActiveESP[player] = nil
+    end
+end
+
 local function CreateESP(player, character)
-    if ActiveESP[player] then return end
-    
+    if player == LocalPlayer then return end
+    RemoveESP(player) -- Limpa qualquer resquício antes de criar
+
     local mainPart = GetCharacterPart(character)
     if not mainPart then return end
     
-    ActiveESP[player] = {}
+    local data = {}
     
     -- Criar Highlight
     local highlight = Instance.new("Highlight")
@@ -43,163 +46,77 @@ local function CreateESP(player, character)
     highlight.OutlineTransparency = 0
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Parent = character
+    data.Highlight = highlight
     
-    ActiveESP[player].Highlight = highlight
-    ActiveESP[player].Character = character
+    -- Criar Billboard
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "PlayerESP"
+    billboard.Adornee = mainPart
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = mainPart
     
-    -- Criar BillboardGui para texto
-    if ShowName or ShowDistance then
-        local billboard = Instance.new("BillboardGui")
-        billboard.Name = "PlayerESP"
-        billboard.Adornee = mainPart
-        billboard.Size = UDim2.new(0, 200, 0, 50)
-        billboard.StudsOffset = Vector3.new(0, 3, 0)
-        billboard.AlwaysOnTop = true
-        billboard.Parent = mainPart
-        
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.BackgroundTransparency = 1
-        textLabel.TextColor3 = OutlineColor
-        textLabel.TextStrokeTransparency = 0.5
-        textLabel.TextSize = 16
-        textLabel.Font = Enum.Font.SourceSansBold
-        textLabel.Parent = billboard
-        
-        ActiveESP[player].Billboard = billboard
-        ActiveESP[player].TextLabel = textLabel
-    end
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = OutlineColor
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.TextSize = 16
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.Parent = billboard
+    
+    data.Billboard = billboard
+    data.TextLabel = textLabel
+    data.Character = character
+    
+    shared.PlayerESP_Data.ActiveESP[player] = data
 end
 
--- Função para remover ESP
-local function RemoveESP(player)
-    if ActiveESP[player] then
-        if ActiveESP[player].Highlight then
-            ActiveESP[player].Highlight:Destroy()
-        end
-        if ActiveESP[player].Billboard then
-            ActiveESP[player].Billboard:Destroy()
-        end
-        ActiveESP[player] = nil
-    end
-end
-
--- Função para verificar distância
-local function GetDistance(character)
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        return math.huge
-    end
-    
-    local playerPos = LocalPlayer.Character.HumanoidRootPart.Position
-    local characterPart = GetCharacterPart(character)
-    if not characterPart then return math.huge end
-    
-    local characterPos = characterPart.Position
-    return (playerPos - characterPos).Magnitude
-end
-
--- Função para atualizar texto do ESP
-local function UpdateESPText(player)
-    if not ActiveESP[player] or not ActiveESP[player].TextLabel then return end
-    if not ActiveESP[player].Character or not ActiveESP[player].Character.Parent then return end
-    
-    local distance = GetDistance(ActiveESP[player].Character)
-    local text = ""
-    
-    if ShowName then
-        text = player.Name
-    end
-    
-    if ShowDistance then
-        if text ~= "" then
-            text = text .. "\n"
-        end
-        text = text .. string.format("[%dm]", math.floor(distance))
-    end
-    
-    ActiveESP[player].TextLabel.Text = text
-end
-
--- Função para processar um jogador
-local function ProcessPlayer(player)
-    if player == LocalPlayer then return end -- Não mostrar ESP no próprio jogador
-    
-    local character = player.Character
-    if not character or not character.Parent then 
-        RemoveESP(player)
-        return 
-    end
-    
-    local distance = GetDistance(character)
-    
-    if distance <= MaxDistance then
-        if not ActiveESP[player] or ActiveESP[player].Character ~= character then
-            RemoveESP(player)
-            CreateESP(player, character)
-        end
-        UpdateESPText(player)
-    else
-        RemoveESP(player)
-    end
-end
-
--- Função para processar todos os jogadores
-local function UpdateAllPlayers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            ProcessPlayer(player)
-        end
-    end
-end
-
--- Detecta quando um jogador entra
-local function OnPlayerAdded(player)
+-- Função para monitorar cada player individualmente
+local function MonitorPlayer(player)
     if player == LocalPlayer then return end
     
-    -- Espera o personagem spawnar
-    player.CharacterAdded:Connect(function(character)
-        task.wait(0.2)
-        ProcessPlayer(player)
+    local conn = player.CharacterAdded:Connect(function(char)
+        task.wait(0.5) -- Tempo para o personagem carregar no Workspace
+        CreateESP(player, char)
     end)
+    table.insert(shared.PlayerESP_Data.Connections, conn)
     
-    -- Se já tem personagem
     if player.Character then
-        task.wait(0.2)
-        ProcessPlayer(player)
+        CreateESP(player, player.Character)
     end
 end
 
--- Detecta quando um jogador sai
-local function OnPlayerRemoving(player)
-    RemoveESP(player)
+-- Conectar players atuais e futuros
+table.insert(shared.PlayerESP_Data.Connections, Players.PlayerAdded:Connect(MonitorPlayer))
+for _, player in pairs(Players:GetPlayers()) do
+    MonitorPlayer(player)
 end
 
--- Inicializar
-local function Initialize()
-    -- Conectar eventos
-    Players.PlayerAdded:Connect(OnPlayerAdded)
-    Players.PlayerRemoving:Connect(OnPlayerRemoving)
-    
-    -- Processar jogadores existentes
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            OnPlayerAdded(player)
-            
-            -- Se já tem personagem
-            if player.Character then
-                ProcessPlayer(player)
+-- Loop de Atualização de Distância e Presença
+table.insert(shared.PlayerESP_Data.Connections, RunService.RenderStepped:Connect(function()
+    for player, data in pairs(shared.PlayerESP_Data.ActiveESP) do
+        if player.Parent and data.Character and data.Character.Parent then
+            local mainPart = GetCharacterPart(data.Character)
+            if mainPart and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (LocalPlayer.Character.HumanoidRootPart.Position - mainPart.Position).Magnitude
+                
+                if dist <= MaxDistance then
+                    if data.TextLabel then
+                        local text = ""
+                        if ShowName then text = player.Name end
+                        if ShowDistance then text = text .. (text ~= "" and "\n" or "") .. "[" .. math.floor(dist) .. "m]" end
+                        data.TextLabel.Text = text
+                    end
+                else
+                    RemoveESP(player)
+                end
             end
+        else
+            RemoveESP(player)
         end
     end
-    
-    local playerCount = #Players:GetPlayers() - 1 -- -1 para não contar o próprio jogador
-    print("Player ESP ativado! " .. playerCount .. " jogadores detectados")
-end
+end))
 
--- Loop de atualização
-RunService.RenderStepped:Connect(function()
-    UpdateAllPlayers()
-end)
-
--- Inicializar
-Initialize()
+print("ESP Players ativado com monitoramento recursivo.")

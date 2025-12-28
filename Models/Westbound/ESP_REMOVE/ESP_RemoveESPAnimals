@@ -1,0 +1,11 @@
+if shared.AnimalESP_Data then
+    for _, conn in pairs(shared.AnimalESP_Data.Connections) do
+        if conn then conn:Disconnect() end
+    end
+    for model, data in pairs(shared.AnimalESP_Data.ActiveESP) do
+        if data.Highlight then data.Highlight:Destroy() end
+        if data.Billboard then data.Billboard:Destroy() end
+    end
+    shared.AnimalESP_Data = nil
+    print("ESP Animais totalmente removido.")
+end
