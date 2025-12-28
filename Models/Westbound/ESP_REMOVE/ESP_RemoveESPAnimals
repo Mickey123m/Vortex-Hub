@@ -1,38 +1,54 @@
--- Unloader de Animais: Limpeza Profunda
-if shared.AnimalESP_Data then
-    -- 1. Desconectar loops e eventos de pasta
-    if shared.AnimalESP_Data.Connections then
-        for _, conn in pairs(shared.AnimalESP_Data.Connections) do
+-- ========================================
+-- UNLOADER APENAS DE ESP DE ANIMAIS
+-- ========================================
+if shared.AnimalESP_Connections or shared.AnimalESP_Objects then
+    print("[Animal ESP] Iniciando remoção...")
+    
+    -- 1. Desconectar todos os eventos
+    if shared.AnimalESP_Connections then
+        for _, conn in pairs(shared.AnimalESP_Connections) do
             if typeof(conn) == "RBXScriptConnection" then
-                conn:Disconnect()
+                pcall(function() conn:Disconnect() end)
             end
         end
+        print("[Animal ESP] Conexões desconectadas")
     end
 
-    -- 2. Remover objetos da tabela ativa
-    if shared.AnimalESP_Data.ActiveESP then
-        for model, data in pairs(shared.AnimalESP_Data.ActiveESP) do
-            if data.Highlight then data.Highlight:Destroy() end
-            if data.Billboard then data.Billboard:Destroy() end
+    -- 2. Remover objetos da tabela de ESP ativos
+    if shared.AnimalESP_Objects then
+        for animal, objects in pairs(shared.AnimalESP_Objects) do
+            for _, obj in pairs(objects) do
+                pcall(function() obj:Destroy() end)
+            end
         end
+        print("[Animal ESP] Objetos removidos da tabela")
     end
 
-    -- 3. Varredura na pasta Animals por segurança
+    -- 3. Varredura na pasta Animals para limpar resíduos
     local folder = game.Workspace:FindFirstChild("Animals")
     if folder then
         for _, animal in pairs(folder:GetChildren()) do
-            local h = animal:FindFirstChild("AnimalHighlight")
-            if h then h:Destroy() end
-            for _, part in pairs(animal:GetChildren()) do
-                local b = part:FindFirstChild("AnimalESP")
-                if b then b:Destroy() end
+            -- Remove Highlight
+            local highlight = animal:FindFirstChild("ESP_AnimalHighlight")
+            if highlight then 
+                pcall(function() highlight:Destroy() end)
+            end
+            
+            -- Remove Billboard de todas as partes
+            for _, part in pairs(animal:GetDescendants()) do
+                if part:IsA("BillboardGui") and part.Name == "ESP_AnimalBillboard" then
+                    pcall(function() part:Destroy() end)
+                end
             end
         end
+        print("[Animal ESP] Resíduos removidos da pasta Animals")
     end
 
-    -- 4. Resetar a tabela global
-    shared.AnimalESP_Data = nil
-    print("ESP de Animais: Desativado e removido completamente.")
+    -- 4. Resetar tabelas globais
+    shared.AnimalESP_Connections = nil
+    shared.AnimalESP_Objects = nil
+    
+    print("[Animal ESP] ✓ Desativado e removido completamente!")
 else
-    print("ESP de Animais: Nenhuma sessão ativa encontrada.")
+    print("[Animal ESP] Nenhuma sessão ativa encontrada")
 end

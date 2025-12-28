@@ -3,146 +3,203 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local OutlineColor = Color3.fromRGB(255, 0, 0)
-local MaxDistance = 999999
 local ShowName = true
 local ShowDistance = true
 
--- Estrutura de dados para evitar duplicatas e limpar conexões antigas
-shared.PlayerESP_Data = shared.PlayerESP_Data or {ActiveESP = {}, Connections = {}}
-
--- Função para limpar conexões anteriores se o script for executado novamente
-for _, conn in ipairs(shared.PlayerESP_Data.Connections) do
-    if conn then conn:Disconnect() end
-end
-shared.PlayerESP_Data.Connections = {}
-
-local function GetCharacterPart(character)
-    return character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head") or character:FindFirstChildWhichIsA("BasePart")
-end
-
-local function RemoveESP(player)
-    if shared.PlayerESP_Data.ActiveESP[player] then
-        local data = shared.PlayerESP_Data.ActiveESP[player]
-        if data.Highlight then data.Highlight:Destroy() end
-        if data.Billboard then data.Billboard:Destroy() end
-        shared.PlayerESP_Data.ActiveESP[player] = nil
+-- Limpa tudo antes de começar
+if shared.PlayerESP_Connections then
+    for _, conn in pairs(shared.PlayerESP_Connections) do
+        pcall(function() conn:Disconnect() end)
     end
 end
+shared.PlayerESP_Connections = {}
+shared.PlayerESP_Objects = {}
 
-local function CreateESP(player, character)
-    if player == LocalPlayer then return end
-    -- Se o personagem sumir ou for deletado, removemos o antigo antes de criar
-    RemoveESP(player) 
-
-    if not character or not character.Parent then return end
-    
-    local mainPart = GetCharacterPart(character)
-    -- Se a RootPart não existir ainda, esperamos brevemente
-    if not mainPart then 
-        task.delay(0.5, function()
-            if player.Character == character then CreateESP(player, character) end
-        end)
-        return 
-    end
-    
-    local data = {}
-    
-    -- Criação do Highlight (Corpo)
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "PlayerHighlight"
-    highlight.Adornee = character
-    highlight.FillColor = OutlineColor
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = OutlineColor
-    highlight.OutlineTransparency = 0
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = character
-    data.Highlight = highlight
-    
-    -- Criação da Billboard (Nome/Distância)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "PlayerESP"
-    billboard.Adornee = mainPart
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = mainPart
-    
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = OutlineColor
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.TextSize = 16
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.Parent = billboard
-    
-    data.Billboard = billboard
-    data.TextLabel = textLabel
-    data.Character = character
-    shared.PlayerESP_Data.ActiveESP[player] = data
-end
-
-local function MonitorPlayer(player)
+-- Função para criar ESP
+local function AddESP(player)
     if player == LocalPlayer then return end
     
-    -- Conexão para quando o personagem nasce/reaparece
-    local charAddedConn = player.CharacterAdded:Connect(function(char)
-        -- Espera carregar o personagem no Workspace
-        char:WaitForChild("HumanoidRootPart", 10)
-        task.wait(0.5) -- Delay de segurança para o motor do Roblox processar o modelo
-        CreateESP(player, char)
-    end)
-    table.insert(shared.PlayerESP_Data.Connections, charAddedConn)
-    
-    -- Conexão para quando o time muda
-    local teamConn = player:GetPropertyChangedSignal("Team"):Connect(function()
-        if player.Character then 
-            CreateESP(player, player.Character) 
+    local function ApplyESP(character)
+        if not character then return end
+        
+        -- Aguarda carregar
+        local humanoid = character:WaitForChild("Humanoid", 5)
+        local rootPart = character:WaitForChild("HumanoidRootPart", 5)
+        if not humanoid or not rootPart then return end
+        
+        task.wait(0.1)
+        
+        -- Remove ESP antigo deste jogador
+        if shared.PlayerESP_Objects[player] then
+            for _, obj in pairs(shared.PlayerESP_Objects[player]) do
+                pcall(function() obj:Destroy() end)
+            end
         end
-    end)
-    table.insert(shared.PlayerESP_Data.Connections, teamConn)
-
-    -- Se o player já tiver um personagem ao entrar/executar script
-    if player.Character then 
-        task.spawn(CreateESP, player, player.Character) 
+        shared.PlayerESP_Objects[player] = {}
+        
+        -- Cria Highlight
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight"
+        highlight.Adornee = character
+        highlight.FillColor = OutlineColor
+        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = OutlineColor
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = character
+        table.insert(shared.PlayerESP_Objects[player], highlight)
+        
+        -- Cria Billboard
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "ESP_Billboard"
+        billboard.Adornee = rootPart
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = rootPart
+        
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "ESP_Text"
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = OutlineColor
+        textLabel.TextStrokeTransparency = 0.5
+        textLabel.TextSize = 16
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.Text = player.Name
+        textLabel.Parent = billboard
+        
+        table.insert(shared.PlayerESP_Objects[player], billboard)
+        
+        print("[ESP] Aplicado em:", player.Name)
+    end
+    
+    -- Conecta ao CharacterAdded
+    local conn = player.CharacterAdded:Connect(ApplyESP)
+    table.insert(shared.PlayerESP_Connections, conn)
+    
+    -- Aplica ao personagem atual se existir
+    if player.Character then
+        task.spawn(ApplyESP, player.Character)
     end
 end
 
--- Monitorar jogadores atuais e futuros
-table.insert(shared.PlayerESP_Data.Connections, Players.PlayerAdded:Connect(MonitorPlayer))
-table.insert(shared.PlayerESP_Data.Connections, Players.PlayerRemoving:Connect(function(player)
-    RemoveESP(player)
-end))
-
-for _, player in pairs(Players:GetPlayers()) do 
-    MonitorPlayer(player) 
+-- Adiciona ESP para todos jogadores (incluindo os que já estão no servidor)
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        AddESP(player)
+        
+        -- IMPORTANTE: Aplica imediatamente se o personagem já existe
+        if player.Character then
+            task.spawn(function()
+                local character = player.Character
+                local humanoid = character:WaitForChild("Humanoid", 5)
+                local rootPart = character:WaitForChild("HumanoidRootPart", 5)
+                if not humanoid or not rootPart then return end
+                
+                task.wait(0.1)
+                
+                -- Remove ESP antigo
+                if shared.PlayerESP_Objects[player] then
+                    for _, obj in pairs(shared.PlayerESP_Objects[player]) do
+                        pcall(function() obj:Destroy() end)
+                    end
+                end
+                shared.PlayerESP_Objects[player] = {}
+                
+                -- Cria Highlight
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "ESP_Highlight"
+                highlight.Adornee = character
+                highlight.FillColor = OutlineColor
+                highlight.FillTransparency = 0.5
+                highlight.OutlineColor = OutlineColor
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = character
+                table.insert(shared.PlayerESP_Objects[player], highlight)
+                
+                -- Cria Billboard
+                local billboard = Instance.new("BillboardGui")
+                billboard.Name = "ESP_Billboard"
+                billboard.Adornee = rootPart
+                billboard.Size = UDim2.new(0, 200, 0, 50)
+                billboard.StudsOffset = Vector3.new(0, 3, 0)
+                billboard.AlwaysOnTop = true
+                billboard.Parent = rootPart
+                
+                local textLabel = Instance.new("TextLabel")
+                textLabel.Name = "ESP_Text"
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.BackgroundTransparency = 1
+                textLabel.TextColor3 = OutlineColor
+                textLabel.TextStrokeTransparency = 0.5
+                textLabel.TextSize = 16
+                textLabel.Font = Enum.Font.SourceSansBold
+                textLabel.Text = player.Name
+                textLabel.Parent = billboard
+                
+                table.insert(shared.PlayerESP_Objects[player], billboard)
+                
+                print("[ESP] Aplicado INICIAL em:", player.Name)
+            end)
+        end
+    end
 end
 
--- Loop de atualização de distância e validação
-table.insert(shared.PlayerESP_Data.Connections, RunService.RenderStepped:Connect(function()
-    for player, data in pairs(shared.PlayerESP_Data.ActiveESP) do
-        -- Verifica se o player e o personagem ainda são válidos
-        if player.Parent and data.Character and data.Character.Parent then
-            local mainPart = GetCharacterPart(data.Character)
-            local myChar = LocalPlayer.Character
+-- Monitora novos jogadores
+local conn1 = Players.PlayerAdded:Connect(AddESP)
+table.insert(shared.PlayerESP_Connections, conn1)
+
+-- Remove ESP quando jogador sai
+local conn2 = Players.PlayerRemoving:Connect(function(player)
+    if shared.PlayerESP_Objects[player] then
+        for _, obj in pairs(shared.PlayerESP_Objects[player]) do
+            pcall(function() obj:Destroy() end)
+        end
+        shared.PlayerESP_Objects[player] = nil
+    end
+end)
+table.insert(shared.PlayerESP_Connections, conn2)
+
+-- Atualiza distância em tempo real
+local conn3 = RunService.RenderStepped:Connect(function()
+    local myChar = LocalPlayer.Character
+    if not myChar then return end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local theirRoot = player.Character:FindFirstChild("HumanoidRootPart")
+            local billboard = theirRoot and theirRoot:FindFirstChild("ESP_Billboard")
+            local textLabel = billboard and billboard:FindFirstChild("ESP_Text")
             
-            if mainPart and myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                local dist = (myChar.HumanoidRootPart.Position - mainPart.Position).Magnitude
-                
-                if dist <= MaxDistance then
-                    if data.TextLabel then
-                        data.TextLabel.Text = (ShowName and player.Name or "") .. (ShowDistance and "\n[" .. math.floor(dist) .. "m]" or "")
-                    end
-                else
-                    -- Oculta se estiver longe, mas mantém o objeto (opcional)
-                    if data.Billboard then data.Billboard.Enabled = false end
-                    if data.Highlight then data.Highlight.Enabled = false end
+            if textLabel and theirRoot then
+                local distance = (myRoot.Position - theirRoot.Position).Magnitude
+                local text = ""
+                if ShowName then text = player.Name end
+                if ShowDistance then text = text .. "\n[" .. math.floor(distance) .. "m]" end
+                textLabel.Text = text
+            end
+        end
+    end
+end)
+table.insert(shared.PlayerESP_Connections, conn3)
+
+-- Loop de verificação (recria se sumir)
+task.spawn(function()
+    while task.wait(2) do
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local highlight = player.Character:FindFirstChild("ESP_Highlight")
+                if not highlight then
+                    print("[ESP] Recriando para:", player.Name)
+                    AddESP(player)
                 end
             end
-        else
-            -- Se o personagem foi destruído ou player saiu, limpa o ESP da lista
-            RemoveESP(player)
         end
     end
-end))
+end)
+
+print("[ESP] Sistema iniciado! Jogadores:", #Players:GetPlayers())

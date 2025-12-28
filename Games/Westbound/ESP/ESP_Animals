@@ -8,14 +8,14 @@ local MaxDistance = 999999
 local ShowName = true
 local ShowDistance = true
 
--- Estrutura de dados para evitar duplicatas e limpar conexões antigas
-shared.AnimalESP_Data = shared.AnimalESP_Data or {ActiveESP = {}, Connections = {}}
-
--- Limpa conexões anteriores para evitar acumulação de memória e bugs
-for _, conn in ipairs(shared.AnimalESP_Data.Connections) do
-    if conn then conn:Disconnect() end
+-- Limpa tudo antes de começar
+if shared.AnimalESP_Connections then
+    for _, conn in pairs(shared.AnimalESP_Connections) do
+        pcall(function() conn:Disconnect() end)
+    end
 end
-shared.AnimalESP_Data.Connections = {}
+shared.AnimalESP_Connections = {}
+shared.AnimalESP_Objects = {}
 
 local function GetAnimalName(fullName)
     return fullName:match("^(.-)%{") or fullName
@@ -25,44 +25,42 @@ local function GetModelPart(model)
     return model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("Head") or model:FindFirstChildWhichIsA("BasePart")
 end
 
-local function RemoveAnimalESP(model)
-    if shared.AnimalESP_Data.ActiveESP[model] then
-        local data = shared.AnimalESP_Data.ActiveESP[model]
-        if data.Highlight then data.Highlight:Destroy() end
-        if data.Billboard then data.Billboard:Destroy() end
-        shared.AnimalESP_Data.ActiveESP[model] = nil
-    end
-end
-
-local function CreateAnimalESP(model)
-    if shared.AnimalESP_Data.ActiveESP[model] then return end
-    if not model.Parent then return end
-
-    local mainPart = GetModelPart(model)
-    if not mainPart then 
-        task.delay(0.2, function()
-            if model.Parent then CreateAnimalESP(model) end
-        end)
-        return 
+-- Função para criar ESP no animal
+local function AddAnimalESP(animal)
+    if not animal or not animal:IsA("Model") then return end
+    if not animal.Parent then return end
+    
+    -- Aguarda a parte principal carregar
+    local mainPart = GetModelPart(animal)
+    if not mainPart then
+        task.wait(0.2)
+        mainPart = GetModelPart(animal)
+        if not mainPart then return end
     end
     
-    local data = {}
+    -- Remove ESP antigo se existir
+    if shared.AnimalESP_Objects[animal] then
+        for _, obj in pairs(shared.AnimalESP_Objects[animal]) do
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    shared.AnimalESP_Objects[animal] = {}
     
-    -- Criação do Highlight
+    -- Cria Highlight
     local highlight = Instance.new("Highlight")
-    highlight.Name = "AnimalHighlight"
-    highlight.Adornee = model
+    highlight.Name = "ESP_AnimalHighlight"
+    highlight.Adornee = animal
     highlight.FillColor = OutlineColor
     highlight.FillTransparency = 0.5
     highlight.OutlineColor = OutlineColor
     highlight.OutlineTransparency = 0
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = model
-    data.Highlight = highlight
+    highlight.Parent = animal
+    table.insert(shared.AnimalESP_Objects[animal], highlight)
     
-    -- Criação da Billboard
+    -- Cria Billboard
     local billboard = Instance.new("BillboardGui")
-    billboard.Name = "AnimalESP"
+    billboard.Name = "ESP_AnimalBillboard"
     billboard.Adornee = mainPart
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.StudsOffset = Vector3.new(0, 3, 0)
@@ -70,72 +68,114 @@ local function CreateAnimalESP(model)
     billboard.Parent = mainPart
     
     local textLabel = Instance.new("TextLabel")
+    textLabel.Name = "ESP_AnimalText"
     textLabel.Size = UDim2.new(1, 0, 1, 0)
     textLabel.BackgroundTransparency = 1
     textLabel.TextColor3 = OutlineColor
     textLabel.TextStrokeTransparency = 0.5
     textLabel.TextSize = 16
     textLabel.Font = Enum.Font.SourceSansBold
-    -- CORREÇÃO: Define o texto inicial imediatamente para não aparecer "Label"
-    textLabel.Text = (ShowName and GetAnimalName(model.Name) or "")
+    textLabel.Text = GetAnimalName(animal.Name)
     textLabel.Parent = billboard
     
-    data.TextLabel = textLabel
-    data.Billboard = billboard
-    shared.AnimalESP_Data.ActiveESP[model] = data
+    table.insert(shared.AnimalESP_Objects[animal], billboard)
+    
+    print("[Animal ESP] Aplicado em:", GetAnimalName(animal.Name))
 end
 
--- Monitorar a pasta Animals em tempo real
+-- Aguarda a pasta Animals
 local animalsFolder = Workspace:WaitForChild("Animals", 10)
 
 if animalsFolder then
-    table.insert(shared.AnimalESP_Data.Connections, animalsFolder.ChildAdded:Connect(function(child)
-        task.wait(0.2)
-        if child:IsA("Model") then 
-            CreateAnimalESP(child) 
-        end
-    end))
-    
-    table.insert(shared.AnimalESP_Data.Connections, animalsFolder.ChildRemoved:Connect(function(child)
-        RemoveAnimalESP(child)
-    end))
-
+    -- Aplica ESP em TODOS os animais que já existem
     for _, animal in pairs(animalsFolder:GetChildren()) do
         if animal:IsA("Model") then
-            task.spawn(CreateAnimalESP, animal)
+            task.spawn(AddAnimalESP, animal)
         end
     end
-end
-
--- Loop de atualização de distância
-table.insert(shared.AnimalESP_Data.Connections, RunService.RenderStepped:Connect(function()
-    if not animalsFolder then return end
     
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-
-    for model, data in pairs(shared.AnimalESP_Data.ActiveESP) do
-        if model.Parent == animalsFolder then
-            local mainPart = GetModelPart(model)
-            
-            if mainPart and myRoot then
-                local dist = (myRoot.Position - mainPart.Position).Magnitude
+    -- Monitora novos animais que aparecerem
+    local conn1 = animalsFolder.ChildAdded:Connect(function(child)
+        if child:IsA("Model") then
+            task.wait(0.2)
+            AddAnimalESP(child)
+        end
+    end)
+    table.insert(shared.AnimalESP_Connections, conn1)
+    
+    -- Remove ESP quando animal for deletado
+    local conn2 = animalsFolder.ChildRemoved:Connect(function(child)
+        if shared.AnimalESP_Objects[child] then
+            for _, obj in pairs(shared.AnimalESP_Objects[child]) do
+                pcall(function() obj:Destroy() end)
+            end
+            shared.AnimalESP_Objects[child] = nil
+        end
+    end)
+    table.insert(shared.AnimalESP_Connections, conn2)
+    
+    -- Atualiza distância em tempo real
+    local conn3 = RunService.RenderStepped:Connect(function()
+        local myChar = LocalPlayer.Character
+        if not myChar then return end
+        local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+        if not myRoot then return end
+        
+        for animal, objects in pairs(shared.AnimalESP_Objects) do
+            if animal and animal.Parent == animalsFolder then
+                local mainPart = GetModelPart(animal)
+                local billboard = mainPart and mainPart:FindFirstChild("ESP_AnimalBillboard")
+                local textLabel = billboard and billboard:FindFirstChild("ESP_AnimalText")
+                local highlight = animal:FindFirstChild("ESP_AnimalHighlight")
                 
-                if dist <= MaxDistance then
-                    if data.Billboard then data.Billboard.Enabled = true end
-                    if data.Highlight then data.Highlight.Enabled = true end
+                if mainPart and textLabel then
+                    local distance = (myRoot.Position - mainPart.Position).Magnitude
                     
-                    if data.TextLabel then
-                        -- Atualiza texto com distância
-                        data.TextLabel.Text = (ShowName and GetAnimalName(model.Name) or "") .. (ShowDistance and "\n[" .. math.floor(dist) .. "m]" or "")
+                    if distance <= MaxDistance then
+                        -- Mostra ESP
+                        if billboard then billboard.Enabled = true end
+                        if highlight then highlight.Enabled = true end
+                        
+                        -- Atualiza texto
+                        local text = ""
+                        if ShowName then text = GetAnimalName(animal.Name) end
+                        if ShowDistance then text = text .. "\n[" .. math.floor(distance) .. "m]" end
+                        textLabel.Text = text
+                    else
+                        -- Esconde ESP se muito longe
+                        if billboard then billboard.Enabled = false end
+                        if highlight then highlight.Enabled = false end
                     end
-                else
-                    if data.Billboard then data.Billboard.Enabled = false end
-                    if data.Highlight then data.Highlight.Enabled = false end
+                end
+            else
+                -- Remove se o animal não existe mais
+                if shared.AnimalESP_Objects[animal] then
+                    for _, obj in pairs(shared.AnimalESP_Objects[animal]) do
+                        pcall(function() obj:Destroy() end)
+                    end
+                    shared.AnimalESP_Objects[animal] = nil
                 end
             end
-        else
-            RemoveAnimalESP(model)
         end
-    end
-end))
+    end)
+    table.insert(shared.AnimalESP_Connections, conn3)
+    
+    -- Loop de verificação (recria se sumir)
+    task.spawn(function()
+        while task.wait(2) do
+            for _, animal in pairs(animalsFolder:GetChildren()) do
+                if animal:IsA("Model") then
+                    local highlight = animal:FindFirstChild("ESP_AnimalHighlight")
+                    if not highlight then
+                        print("[Animal ESP] Recriando para:", GetAnimalName(animal.Name))
+                        AddAnimalESP(animal)
+                    end
+                end
+            end
+        end
+    end)
+    
+    print("[Animal ESP] Sistema iniciado! Animais encontrados:", #animalsFolder:GetChildren())
+else
+    warn("[Animal ESP] ERRO: Pasta 'Animals' não encontrada no Workspace!")
+end
