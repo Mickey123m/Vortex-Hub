@@ -1,11 +1,26 @@
--- SERVIÇOS
-local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
 
+-- Para o loop de atualização de distância
 shared.AnimalESP_Running = false
 
-if CoreGui:FindFirstChild("ANIMAL_ESP_FOLDER") then
-	CoreGui.ANIMAL_ESP_FOLDER:Destroy()
+-- Limpa os dados armazenados
+shared.AnimalESP_Data = {}
+
+-- Função para limpar objetos de ESP dos modelos de animais
+local function clearAnimalObjects()
+    local animalsFolder = Workspace:FindFirstChild("Animals")
+    if animalsFolder then
+        for _, animal in ipairs(animalsFolder:GetChildren()) do
+            if animal:FindFirstChild("AnimalHighlight") then
+                animal.AnimalHighlight:Destroy()
+            end
+            if animal:FindFirstChild("AnimalDistanceGui") then
+                animal.AnimalDistanceGui:Destroy()
+            end
+        end
+    end
 end
 
-shared.AnimalESP_Data = {}
-print("[ANIMAL ESP] REMOVIDO")
+clearAnimalObjects()
+
+print("[ESP ANIMAIS] REMOVIDO E LOOP ENCERRADO")

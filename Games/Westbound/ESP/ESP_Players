@@ -1,94 +1,42 @@
--- SERVIÇOS
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
-
 local LocalPlayer = Players.LocalPlayer
 
--- CONFIG
-local ESP_COLOR = Color3.fromRGB(255, 0, 0)
-local UPDATE_RATE = 0.1
+local function applyHighlight(player)
+    -- Verifica se o jogador não é você mesmo
+    if player == LocalPlayer then return end
 
--- LIMPEZA ANTERIOR
-if CoreGui:FindFirstChild("PLAYER_ESP_FOLDER") then
-	CoreGui.PLAYER_ESP_FOLDER:Destroy()
+    local function onCharacterAdded(character)
+        -- Remove highlights antigos para evitar duplicação ao renascer
+        if character:FindFirstChildOfClass("Highlight") then
+            character:FindFirstChildOfClass("Highlight"):Destroy()
+        end
+
+        -- Cria uma nova instância de Highlight e define as propriedades
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = character
+        highlight.Name = "ESPHighlight"
+        highlight.Archivable = true
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Enabled = true
+        highlight.FillColor = Color3.fromRGB(255, 0, 4)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+    end
+
+    -- Se o personagem do jogador já existir, aplica o destaque
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+
+    -- Conecta-se a CharacterAdded para garantir que o destaque seja aplicado sempre que renascer
+    player.CharacterAdded:Connect(onCharacterAdded)
 end
 
-local Folder = Instance.new("Folder")
-Folder.Name = "PLAYER_ESP_FOLDER"
-Folder.Parent = CoreGui
-
-shared.PlayerESP_Data = {}
-shared.PlayerESP_Running = true
-
-local function CreateESP(player, character)
-	if player == LocalPlayer then return end
-	
-	local root = character:WaitForChild("HumanoidRootPart", 15)
-	local head = character:WaitForChild("Head", 15)
-	local humanoid = character:WaitForChild("Humanoid", 15)
-
-	if not root or not head or not humanoid then return end
-
-	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-	humanoid.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
-
-	local highlight = Instance.new("Highlight")
-	highlight.Name = "PlayerHighlight"
-	highlight.Adornee = character
-	highlight.FillColor = ESP_COLOR
-	highlight.OutlineColor = Color3.new(1, 1, 1)
-	highlight.FillTransparency = 0.5
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Parent = Folder
-
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "PlayerTag"
-	billboard.Adornee = head
-	billboard.Size = UDim2.fromOffset(200, 50)
-	billboard.StudsOffset = Vector3.new(0, 3, 0)
-	billboard.AlwaysOnTop = true
-	billboard.Parent = Folder
-
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.TextColor3 = ESP_COLOR
-	text.TextStrokeTransparency = 0
-	text.Font = Enum.Font.GothamBold
-	text.TextSize = 14
-	text.Text = player.Name
-	text.Parent = billboard
-
-	shared.PlayerESP_Data[player] = {Character = character, Root = root, Text = text}
+-- Aplica o destaque a todos os jogadores atuais (exceto você)
+for _, player in pairs(Players:GetPlayers()) do
+    applyHighlight(player)
 end
 
-local function SetupPlayer(player)
-	if player.Character then task.spawn(CreateESP, player, player.Character) end
-	player.CharacterAdded:Connect(function(char)
-		if shared.PlayerESP_Running then
-			task.wait(0.5)
-			CreateESP(player, char)
-		end
-	end)
-end
-
-for _, plr in ipairs(Players:GetPlayers()) do SetupPlayer(plr) end
-Players.PlayerAdded:Connect(SetupPlayer)
-
-task.spawn(function()
-	while shared.PlayerESP_Running do
-		local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-		for player, data in pairs(shared.PlayerESP_Data) do
-			if data.Character and data.Character.Parent and data.Root and data.Root.Parent then
-				if myRoot then
-					local dist = (myRoot.Position - data.Root.Position).Magnitude
-					data.Text.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
-				end
-			else
-				shared.PlayerESP_Data[player] = nil
-			end
-		end
-		task.wait(UPDATE_RATE)
-	end
-end)
-print("[PLAYER ESP] ATIVADO")
+-- Escuta novos jogadores entrando (aplica a lógica neles também)
+Players.PlayerAdded:Connect(applyHighlight)

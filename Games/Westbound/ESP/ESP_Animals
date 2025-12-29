@@ -1,78 +1,100 @@
 -- SERVIÇOS
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local ESP_COLOR = Color3.fromRGB(255, 255, 0)
+local ESP_COLOR = Color3.fromRGB(255, 255, 0) -- Amarelo para Animais
 
-if CoreGui:FindFirstChild("ANIMAL_ESP_FOLDER") then
-	CoreGui.ANIMAL_ESP_FOLDER:Destroy()
-end
-
-local Folder = Instance.new("Folder")
-Folder.Name = "ANIMAL_ESP_FOLDER"
-Folder.Parent = CoreGui
-
-shared.AnimalESP_Data = {}
+shared.AnimalESP_Data = shared.AnimalESP_Data or {}
 shared.AnimalESP_Running = true
 
-local function GetName(name) return name:match("^(.-)%{") or name end
+local function GetName(name) 
+    return name:match("^(.-)%{") or name 
+end
 
 local function CreateAnimalESP(animal)
-	local main = animal:FindFirstChild("HumanoidRootPart") or animal:FindFirstChildWhichIsA("BasePart")
-	if not main then task.wait(0.5) main = animal:FindFirstChildWhichIsA("BasePart") end
-	if not main then return end
+    -- Aguarda as partes principais do animal
+    local main = animal:WaitForChild("HumanoidRootPart", 5) or animal:FindFirstChildWhichIsA("BasePart")
+    if not main then return end
 
-	local highlight = Instance.new("Highlight")
-	highlight.Adornee = animal
-	highlight.FillColor = ESP_COLOR
-	highlight.OutlineColor = Color3.new(1,1,1)
-	highlight.FillTransparency = 0.5
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Parent = Folder
+    -- Limpeza de ESP antigo dentro do animal para evitar duplicação
+    if animal:FindFirstChild("AnimalHighlight") then animal.AnimalHighlight:Destroy() end
+    if animal:FindFirstChild("AnimalDistanceGui") then animal.AnimalDistanceGui:Destroy() end
 
-	local billboard = Instance.new("BillboardGui")
-	billboard.Adornee = main
-	billboard.Size = UDim2.fromOffset(200, 45)
-	billboard.StudsOffset = Vector3.new(0, 3, 0)
-	billboard.AlwaysOnTop = true
-	billboard.Parent = Folder
+    -- --- CONFIGURAÇÃO DO HIGHLIGHT (CORPO) ---
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "AnimalHighlight"
+    highlight.Parent = animal
+    highlight.Adornee = animal
+    highlight.FillColor = ESP_COLOR
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Borda Branca
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.TextColor3 = ESP_COLOR
-	text.TextStrokeTransparency = 0
-	text.Font = Enum.Font.GothamBold
-	text.TextSize = 14
-	text.Parent = billboard
+    -- --- CONFIGURAÇÃO DA DISTÂNCIA (TEXTO) ---
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "AnimalDistanceGui"
+    billboard.Parent = animal
+    billboard.Adornee = main
+    billboard.Size = UDim2.fromOffset(200, 50)
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+    billboard.AlwaysOnTop = true
 
-	shared.AnimalESP_Data[animal] = {Main = main, Text = text}
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Parent = billboard
+    textLabel.BackgroundTransparency = 1
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.Text = ""
+    textLabel.TextColor3 = ESP_COLOR -- Amarelo
+    textLabel.TextStrokeTransparency = 1 -- Sem bordas no texto
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextSize = 14
+    textLabel.RichText = true
+
+    -- Armazena os dados para atualização no loop
+    shared.AnimalESP_Data[animal] = {Main = main, Text = textLabel}
 end
 
+-- Inicializa os animais existentes na pasta "Animals" no Workspace
 local animalsFolder = Workspace:WaitForChild("Animals", 10)
 if animalsFolder then
-	for _, a in ipairs(animalsFolder:GetChildren()) do task.spawn(CreateAnimalESP, a) end
-	animalsFolder.ChildAdded:Connect(function(a)
-		if shared.AnimalESP_Running then task.wait(0.5) CreateAnimalESP(a) end
-	end)
+    for _, a in ipairs(animalsFolder:GetChildren()) do 
+        task.spawn(CreateAnimalESP, a) 
+    end
+    
+    -- Detecta novos animais que nascerem
+    animalsFolder.ChildAdded:Connect(function(a)
+        if shared.AnimalESP_Running then 
+            task.wait(0.5) 
+            CreateAnimalESP(a) 
+        end
+    end)
 end
 
+-- Loop de atualização de distância (RenderStepped para suavidade)
 task.spawn(function()
-	while shared.AnimalESP_Running do
-		local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-		for animal, data in pairs(shared.AnimalESP_Data) do
-			if animal and animal.Parent and data.Main and data.Main.Parent then
-				if myRoot then
-					local dist = (myRoot.Position - data.Main.Position).Magnitude
-					data.Text.Text = GetName(animal.Name) .. "\n[" .. math.floor(dist) .. "m]"
-				end
-			else
-				shared.AnimalESP_Data[animal] = nil
-			end
-		end
-		task.wait(0.1)
-	end
+    while shared.AnimalESP_Running do
+        local myChar = LocalPlayer.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        
+        for animal, data in pairs(shared.AnimalESP_Data) do
+            if animal and animal.Parent and data.Main and data.Main.Parent then
+                if myRoot then
+                    local dist = (myRoot.Position - data.Main.Position).Magnitude
+                    -- Formato: Nome \n [Distância m]
+                    data.Text.Text = GetName(animal.Name) .. "\n[" .. math.floor(dist) .. " m]"
+                else
+                    data.Text.Text = ""
+                end
+            else
+                -- Remove da lista se o animal for deletado
+                shared.AnimalESP_Data[animal] = nil
+            end
+        end
+        task.wait(0.1) -- Atualiza 10 vezes por segundo para economizar CPU
+    end
 end)
-print("[ANIMAL ESP] ATIVADO")
+
+print("[ANIMAL ESP] ATIVADO - Estilo Unificado")

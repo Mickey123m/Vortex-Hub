@@ -1,23 +1,23 @@
--- SERVIÇOS
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
 
-shared.PlayerESP_Running = false
-
-if CoreGui:FindFirstChild("PLAYER_ESP_FOLDER") then
-	CoreGui.PLAYER_ESP_FOLDER:Destroy()
+-- Função para limpar o ESP de um jogador específico
+local function removePlayerESP(player)
+    local character = player.Character
+    if character then
+        if character:FindFirstChild("ESPHighlight") then
+            character.ESPHighlight:Destroy()
+        end
+        if character:FindFirstChild("ESPDistanceGui") then
+            character.ESPDistanceGui:Destroy()
+        end
+    end
 end
 
-for _, player in ipairs(Players:GetPlayers()) do
-	local char = player.Character
-	if char then
-		local hum = char:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
-			hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.DisplayWhenDamaged
-		end
-	end
+-- Remove de todos os jogadores atuais
+for _, player in pairs(Players:GetPlayers()) do
+    removePlayerESP(player)
 end
 
-shared.PlayerESP_Data = {}
-print("[PLAYER ESP] REMOVIDO")
+-- Opcional: Desconectar eventos se você salvou as conexões em variáveis
+-- Caso contrário, apenas parar de criar novos já resolve ao reexecutar.
+print("[ESP JOGADORES] REMOVIDO")
