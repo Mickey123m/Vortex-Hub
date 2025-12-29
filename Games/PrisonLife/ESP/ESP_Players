@@ -1,0 +1,118 @@
+-- ESP Players for Prison Life
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Highlights = {}
+local Connections = {}
+
+-- Initialize ESP
+local function InitializeESP()
+    -- Clean previous ESP
+    for _, highlight in pairs(Highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+    Highlights = {}
+    
+    for _, conn in ipairs(Connections) do
+        if conn and conn.Connected then
+            conn:Disconnect()
+        end
+    end
+    Connections = {}
+    
+    local function CreatePlayerESP(player)
+        if player == LocalPlayer then return end
+        
+        local function ApplyESP(character)
+            if not character or not character.Parent then return end
+            
+            -- Remove existing highlight
+            if Highlights[player.UserId] then
+                Highlights[player.UserId]:Destroy()
+            end
+            
+            -- Create new highlight
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "ESP_Player_" .. player.UserId
+            highlight.Adornee = character
+            highlight.FillColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.5
+            highlight.OutlineColor = Color3.new(1, 1, 1)
+            highlight.OutlineTransparency = 0
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlight.Parent = character
+            
+            Highlights[player.UserId] = highlight
+            
+            -- Monitor character changes
+            local humanoid = character:WaitForChild("Humanoid", 2)
+            if humanoid then
+                local diedConn = humanoid.Died:Connect(function()
+                    highlight:Destroy()
+                    Highlights[player.UserId] = nil
+                end)
+                table.insert(Connections, diedConn)
+            end
+        end
+        
+        if player.Character then
+            ApplyESP(player.Character)
+        end
+        
+        local charAdded = player.CharacterAdded:Connect(ApplyESP)
+        table.insert(Connections, charAdded)
+    end
+    
+    -- Apply to existing players
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            CreatePlayerESP(player)
+        end
+    end
+    
+    -- Listen for new players
+    local playerAdded = Players.PlayerAdded:Connect(function(player)
+        CreatePlayerESP(player)
+    end)
+    table.insert(Connections, playerAdded)
+    
+    -- Listen for leaving players
+    local playerRemoving = Players.PlayerRemoving:Connect(function(player)
+        if Highlights[player.UserId] then
+            Highlights[player.UserId]:Destroy()
+            Highlights[player.UserId] = nil
+        end
+    end)
+    table.insert(Connections, playerRemoving)
+    
+    print("[Prison Life] ESP Players activated!")
+end
+
+-- Main function
+local function ToggleESP_Players(state)
+    if state then
+        InitializeESP()
+        return "ESP Players: ON"
+    else
+        -- Cleanup
+        for _, highlight in pairs(Highlights) do
+            if highlight and highlight.Parent then
+                highlight:Destroy()
+            end
+        end
+        Highlights = {}
+        
+        for _, conn in ipairs(Connections) do
+            if conn and conn.Connected then
+                conn:Disconnect()
+            end
+        end
+        Connections = {}
+        
+        print("[Prison Life] ESP Players deactivated!")
+        return "ESP Players: OFF"
+    end
+end
+
+return ToggleESP_Players

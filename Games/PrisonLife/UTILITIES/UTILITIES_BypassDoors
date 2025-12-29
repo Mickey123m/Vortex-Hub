@@ -1,0 +1,54 @@
+-- Bypass Doors for Prison Life
+local originalProperties = {}
+local isActive = false
+
+local function ToggleBypassDoors(state)
+    isActive = state
+    
+    if state then
+        print("[Prison Life] Bypass Doors: ON")
+        
+        -- Start bypass loop
+        task.spawn(function()
+            while isActive do
+                pcall(function()
+                    local doorsFolder = workspace:FindFirstChild("Doors")
+                    
+                    if doorsFolder then
+                        for _, door in pairs(doorsFolder:GetDescendants()) do
+                            if door:IsA("BasePart") then
+                                if not originalProperties[door] then
+                                    originalProperties[door] = {
+                                        CanCollide = door.CanCollide,
+                                        Transparency = door.Transparency
+                                    }
+                                end
+                                
+                                door.CanCollide = false
+                                door.Transparency = 0.5
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.5)
+            end
+        end)
+        
+        return "Bypass Doors: ON"
+    else
+        print("[Prison Life] Bypass Doors: OFF")
+        
+        -- Restore original properties
+        for door, properties in pairs(originalProperties) do
+            if door and door.Parent then
+                door.CanCollide = properties.CanCollide
+                door.Transparency = properties.Transparency
+            end
+        end
+        
+        originalProperties = {}
+        return "Bypass Doors: OFF"
+    end
+end
+
+return ToggleBypassDoors
