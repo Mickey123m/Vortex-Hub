@@ -1,27 +1,16 @@
--- Teleport to Outside Prison
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Teleporte seguro para Inside Prison (funciona para criminosos)
+local player = game.Players.LocalPlayer
+local character = player.Character
 
-local function TeleportOutPrison()
-    print("[Prison Life] Teleporting to Outside Prison...")
-    
-    local char = LocalPlayer.Character
-    local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if not humanoidRootPart then
-        print("[Prison Life] Character not found!")
-        return "Error: Character not found"
-    end
-    
-    -- Coordinates for outside prison
-    local targetCFrame = CFrame.new(400, 100, 2215)
-    
-    -- Teleport
-    humanoidRootPart.CFrame = targetCFrame
-    task.wait(0.1)
-    
-    print("[Prison Life] Successfully teleported to Outside Prison!")
-    return "Teleported to Outside Prison"
+-- Método 1: Teleporta em cima e desce
+local prisonPosition = Vector3.new(495.000, 98.000, 2205.000)
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+if rootPart then
+    -- Teleporta 50 studs acima
+    rootPart.CFrame = CFrame.new(prisonPosition + Vector3.new(0, 50, 0))
+    wait(0.1)
+    -- Desce para posição normal
+    rootPart.CFrame = CFrame.new(prisonPosition)
+    print("✅ Teleportado para Inside Prison")
 end
-
-return TeleportOutPrison

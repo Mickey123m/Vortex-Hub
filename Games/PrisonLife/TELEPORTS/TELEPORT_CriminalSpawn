@@ -1,27 +1,16 @@
--- Teleport to Criminal Spawn
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Teleporte seguro para Criminal Spawn (funciona para criminosos)
+local player = game.Players.LocalPlayer
+local character = player.Character
 
-local function TeleportCriminalSpawn()
-    print("[Prison Life] Teleporting to Criminal Spawn...")
-    
-    local char = LocalPlayer.Character
-    local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if not humanoidRootPart then
-        print("[Prison Life] Character not found!")
-        return "Error: Character not found"
-    end
-    
-    -- Coordinates for criminal spawn
-    local targetCFrame = CFrame.new(-920, 95, 2138)
-    
-    -- Teleport
-    humanoidRootPart.CFrame = targetCFrame
-    task.wait(0.1)
-    
-    print("[Prison Life] Successfully teleported to Criminal Spawn!")
-    return "Teleported to Criminal Spawn"
+-- Método 1: Teleporta em cima e desce
+local prisonPosition = Vector3.new(-920.050, 94.920, 2137.714)
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+if rootPart then
+    -- Teleporta 50 studs acima
+    rootPart.CFrame = CFrame.new(prisonPosition + Vector3.new(0, 50, 0))
+    wait(0.1)
+    -- Desce para posição normal
+    rootPart.CFrame = CFrame.new(prisonPosition)
+    print("✅ Teleportado para Inside Prison")
 end
-
-return TeleportCriminalSpawn

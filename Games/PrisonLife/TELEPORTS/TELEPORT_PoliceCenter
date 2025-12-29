@@ -1,27 +1,16 @@
--- Teleport to Police Center
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+-- Teleporte seguro para Inside Prison (funciona para criminosos)
+local player = game.Players.LocalPlayer
+local character = player.Character
 
-local function TeleportPoliceCenter()
-    print("[Prison Life] Teleporting to Police Center...")
-    
-    local char = LocalPlayer.Character
-    local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
-    
-    if not humanoidRootPart then
-        print("[Prison Life] Character not found!")
-        return "Error: Character not found"
-    end
-    
-    -- Coordinates for police station
-    local targetCFrame = CFrame.new(827, 100, 2288)
-    
-    -- Teleport
-    humanoidRootPart.CFrame = targetCFrame
-    task.wait(0.1)
-    
-    print("[Prison Life] Successfully teleported to Police Center!")
-    return "Teleported to Police Center"
+-- Método 1: Teleporta em cima e desce
+local prisonPosition = Vector3.new(826.512, 99.990, 2288.06)
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+if rootPart then
+    -- Teleporta 50 studs acima
+    rootPart.CFrame = CFrame.new(prisonPosition + Vector3.new(0, 50, 0))
+    wait(0.1)
+    -- Desce para posição normal
+    rootPart.CFrame = CFrame.new(prisonPosition)
+    print("✅ Teleportado para Inside Prison")
 end
-
-return TeleportPoliceCenter
