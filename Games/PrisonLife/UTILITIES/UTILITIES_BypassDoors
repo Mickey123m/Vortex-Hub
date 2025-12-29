@@ -1,54 +1,21 @@
--- Bypass Doors for Prison Life
-local originalProperties = {}
-local isActive = false
-
-local function ToggleBypassDoors(state)
-    isActive = state
-    
-    if state then
-        print("[Prison Life] Bypass Doors: ON")
-        
-        -- Start bypass loop
-        task.spawn(function()
-            while isActive do
-                pcall(function()
-                    local doorsFolder = workspace:FindFirstChild("Doors")
-                    
-                    if doorsFolder then
-                        for _, door in pairs(doorsFolder:GetDescendants()) do
-                            if door:IsA("BasePart") then
-                                if not originalProperties[door] then
-                                    originalProperties[door] = {
-                                        CanCollide = door.CanCollide,
-                                        Transparency = door.Transparency
-                                    }
-                                end
-                                
-                                door.CanCollide = false
-                                door.Transparency = 0.5
-                            end
+-- ServerScriptService
+task.spawn(function()
+    while true do
+        pcall(function()  -- Previne erros
+            local pasta = workspace.Doors
+            if pasta then
+                for _, coisa in pairs(pasta:GetDescendants()) do
+                    if coisa:IsA("BasePart") then
+                        coisa.CanCollide = false
+                        if coisa.Transparency < 0.7 then
+                            coisa.Transparency = 0.7
                         end
                     end
-                end)
-                task.wait(0.5)
+                end
             end
         end)
-        
-        return "Bypass Doors: ON"
-    else
-        print("[Prison Life] Bypass Doors: OFF")
-        
-        -- Restore original properties
-        for door, properties in pairs(originalProperties) do
-            if door and door.Parent then
-                door.CanCollide = properties.CanCollide
-                door.Transparency = properties.Transparency
-            end
-        end
-        
-        originalProperties = {}
-        return "Bypass Doors: OFF"
+        task.wait(0.08)  -- Rápido
     end
-end
+end)
 
-return ToggleBypassDoors
+print("✅ Bypass rodando em background")
