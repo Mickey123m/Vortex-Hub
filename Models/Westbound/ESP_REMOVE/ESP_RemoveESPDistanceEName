@@ -1,0 +1,14 @@
+local Players = game:GetService("Players")
+
+-- Percorre todos os jogadores para limpar o ESP unificado
+for _, player in pairs(Players:GetPlayers()) do
+    local character = player.Character
+    if character then
+        local fullESP = character:FindFirstChild("FullPlayerESP")
+        if fullESP then
+            fullESP:Destroy()
+        end
+    end
+end
+
+print("[ESP NOME + DISTÂNCIA] REMOVIDO COM SUCESSO")

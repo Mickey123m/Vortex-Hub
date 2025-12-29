@@ -1,0 +1,14 @@
+local Players = game:GetService("Players")
+
+-- Percorre todos os jogadores para limpar o ESP de nome
+for _, player in pairs(Players:GetPlayers()) do
+    local character = player.Character
+    if character then
+        local nameESP = character:FindFirstChild("OnlyNameESP")
+        if nameESP then
+            nameESP:Destroy()
+        end
+    end
+end
+
+print("[ESP NOME] REMOVIDO COM SUCESSO")
