@@ -1,54 +1,11 @@
--- ========================================
--- UNLOADER APENAS DE ESP DE ANIMAIS
--- ========================================
-if shared.AnimalESP_Connections or shared.AnimalESP_Objects then
-    print("[Animal ESP] Iniciando remoção...")
-    
-    -- 1. Desconectar todos os eventos
-    if shared.AnimalESP_Connections then
-        for _, conn in pairs(shared.AnimalESP_Connections) do
-            if typeof(conn) == "RBXScriptConnection" then
-                pcall(function() conn:Disconnect() end)
-            end
-        end
-        print("[Animal ESP] Conexões desconectadas")
-    end
+-- SERVIÇOS
+local CoreGui = game:GetService("CoreGui")
 
-    -- 2. Remover objetos da tabela de ESP ativos
-    if shared.AnimalESP_Objects then
-        for animal, objects in pairs(shared.AnimalESP_Objects) do
-            for _, obj in pairs(objects) do
-                pcall(function() obj:Destroy() end)
-            end
-        end
-        print("[Animal ESP] Objetos removidos da tabela")
-    end
+shared.AnimalESP_Running = false
 
-    -- 3. Varredura na pasta Animals para limpar resíduos
-    local folder = game.Workspace:FindFirstChild("Animals")
-    if folder then
-        for _, animal in pairs(folder:GetChildren()) do
-            -- Remove Highlight
-            local highlight = animal:FindFirstChild("ESP_AnimalHighlight")
-            if highlight then 
-                pcall(function() highlight:Destroy() end)
-            end
-            
-            -- Remove Billboard de todas as partes
-            for _, part in pairs(animal:GetDescendants()) do
-                if part:IsA("BillboardGui") and part.Name == "ESP_AnimalBillboard" then
-                    pcall(function() part:Destroy() end)
-                end
-            end
-        end
-        print("[Animal ESP] Resíduos removidos da pasta Animals")
-    end
-
-    -- 4. Resetar tabelas globais
-    shared.AnimalESP_Connections = nil
-    shared.AnimalESP_Objects = nil
-    
-    print("[Animal ESP] ✓ Desativado e removido completamente!")
-else
-    print("[Animal ESP] Nenhuma sessão ativa encontrada")
+if CoreGui:FindFirstChild("ANIMAL_ESP_FOLDER") then
+	CoreGui.ANIMAL_ESP_FOLDER:Destroy()
 end
+
+shared.AnimalESP_Data = {}
+print("[ANIMAL ESP] REMOVIDO")

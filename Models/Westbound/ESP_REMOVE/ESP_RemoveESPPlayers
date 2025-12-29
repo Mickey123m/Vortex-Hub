@@ -1,54 +1,23 @@
--- ========================================
--- UNLOADER APENAS DE ESP DE PLAYERS
--- ========================================
-if shared.PlayerESP_Connections or shared.PlayerESP_Objects then
-    print("[Player ESP] Iniciando remoção...")
-    
-    -- 1. Desconectar todos os eventos
-    if shared.PlayerESP_Connections then
-        for _, conn in pairs(shared.PlayerESP_Connections) do
-            if typeof(conn) == "RBXScriptConnection" then
-                pcall(function() conn:Disconnect() end)
-            end
-        end
-        print("[Player ESP] Conexões desconectadas")
-    end
+-- SERVIÇOS
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
 
-    -- 2. Remover objetos da tabela de ESP ativos
-    if shared.PlayerESP_Objects then
-        for player, objects in pairs(shared.PlayerESP_Objects) do
-            for _, obj in pairs(objects) do
-                pcall(function() obj:Destroy() end)
-            end
-        end
-        print("[Player ESP] Objetos removidos da tabela")
-    end
+shared.PlayerESP_Running = false
 
-    -- 3. Varredura em todos os personagens para limpar resíduos
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-        local char = player.Character
-        if char then
-            -- Remove Highlight
-            local highlight = char:FindFirstChild("ESP_Highlight")
-            if highlight then 
-                pcall(function() highlight:Destroy() end)
-            end
-            
-            -- Remove Billboard de todas as partes
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BillboardGui") and part.Name == "ESP_Billboard" then
-                    pcall(function() part:Destroy() end)
-                end
-            end
-        end
-    end
-    print("[Player ESP] Resíduos removidos dos personagens")
-
-    -- 4. Resetar tabelas globais
-    shared.PlayerESP_Connections = nil
-    shared.PlayerESP_Objects = nil
-    
-    print("[Player ESP] ✓ Desativado e removido completamente!")
-else
-    print("[Player ESP] Nenhuma sessão ativa encontrada")
+if CoreGui:FindFirstChild("PLAYER_ESP_FOLDER") then
+	CoreGui.PLAYER_ESP_FOLDER:Destroy()
 end
+
+for _, player in ipairs(Players:GetPlayers()) do
+	local char = player.Character
+	if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+			hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.DisplayWhenDamaged
+		end
+	end
+end
+
+shared.PlayerESP_Data = {}
+print("[PLAYER ESP] REMOVIDO")
