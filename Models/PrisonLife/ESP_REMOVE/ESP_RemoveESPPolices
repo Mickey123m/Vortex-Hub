@@ -1,0 +1,22 @@
+-- ESP POLICIAIS - REMOVER
+if _G.ESP_Guard then
+    for player, highlight in pairs(_G.ESP_Guard.Highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+    
+    for _, conn in pairs(_G.ESP_Guard.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    
+    _G.ESP_Guard.Highlights = {}
+    _G.ESP_Guard.Connections = {}
+    _G.ESP_Guard.Active = false
+    
+    print("ESP Policiais removido!")
+else
+    print("ESP Policiais não estava ativo")
+end

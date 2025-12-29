@@ -1,0 +1,22 @@
+-- ESP PRISIONEIROS - REMOVER
+if _G.ESP_Inmate then
+    for player, highlight in pairs(_G.ESP_Inmate.Highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+    
+    for _, conn in pairs(_G.ESP_Inmate.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    
+    _G.ESP_Inmate.Highlights = {}
+    _G.ESP_Inmate.Connections = {}
+    _G.ESP_Inmate.Active = false
+    
+    print("ESP Prisioneiros removido!")
+else
+    print("ESP Prisioneiros não estava ativo")
+end

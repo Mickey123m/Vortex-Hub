@@ -1,119 +1,114 @@
--- ESP TODOS OS JOGADORES - EXECUTA UMA VEZ E MOSTRA
+-- ESP TODOS OS JOGADORES - ATIVAR
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Estado (sempre ativo)
-local ESP_Ativo = true
-local Highlights = {}
+if not _G.ESP_All then
+    _G.ESP_All = {
+        Active = true,
+        Highlights = {},
+        Connections = {}
+    }
+end
 
--- Função para pegar cor baseada no time
+local ESP = _G.ESP_All
+
 local function GetTeamColor(player)
     if not player.Team then return Color3.fromRGB(255, 255, 255) end
     
     local teamName = player.Team.Name
     if teamName == "Inmates" then
-        return Color3.fromRGB(255, 105, 180)  -- Rosa
+        return Color3.fromRGB(255, 105, 180)
     elseif teamName == "Guards" then
-        return Color3.fromRGB(0, 100, 255)    -- Azul
+        return Color3.fromRGB(0, 100, 255)
     elseif teamName == "Criminals" then
-        return Color3.fromRGB(255, 0, 0)      -- Vermelho
+        return Color3.fromRGB(255, 0, 0)
     else
-        return Color3.fromRGB(255, 255, 255)  -- Branco
+        return Color3.fromRGB(255, 255, 255)
     end
 end
 
--- Cria highlight
 local function CreateHighlight(player, character)
     if not character then return end
     
-    -- Remove antigo
-    if Highlights[player] then
-        Highlights[player]:Destroy()
+    if ESP.Highlights[player] then
+        ESP.Highlights[player]:Destroy()
     end
     
-    -- Cria novo (sempre, exceto você mesmo)
     local highlight = Instance.new("Highlight")
-    highlight.Name = "ESP_All"
+    highlight.Name = "ESP_All_" .. player.UserId
     highlight.Adornee = character
     highlight.FillColor = GetTeamColor(player)
     highlight.OutlineColor = Color3.new(1, 1, 1)
     highlight.FillTransparency = 0.5
     highlight.OutlineTransparency = 0
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Enabled = ESP_Ativo
+    highlight.Enabled = ESP.Active
     
     highlight.Parent = character
-    Highlights[player] = highlight
+    ESP.Highlights[player] = highlight
 end
 
--- Configura jogador
 local function SetupPlayer(player)
     if player == LocalPlayer then return end
     
-    -- Quando character aparece
     local function HandleCharacter(character)
         task.wait(0.5)
         CreateHighlight(player, character)
         
-        -- Morte
         local humanoid = character:WaitForChild("Humanoid", 2)
         if humanoid then
-            humanoid.Died:Connect(function()
-                if Highlights[player] then
-                    Highlights[player]:Destroy()
-                    Highlights[player] = nil
+            local deathConn = humanoid.Died:Connect(function()
+                if ESP.Highlights[player] then
+                    ESP.Highlights[player]:Destroy()
+                    ESP.Highlights[player] = nil
                 end
             end)
+            table.insert(ESP.Connections, deathConn)
         end
     end
     
-    -- Character atual
     if player.Character then
         task.spawn(HandleCharacter, player.Character)
     end
     
-    -- Novo character
-    player.CharacterAdded:Connect(HandleCharacter)
+    local charConn = player.CharacterAdded:Connect(HandleCharacter)
+    table.insert(ESP.Connections, charConn)
     
-    -- Mudou time
-    player:GetPropertyChangedSignal("Team"):Connect(function()
-        if Highlights[player] then
-            Highlights[player].FillColor = GetTeamColor(player)
+    local teamConn = player:GetPropertyChangedSignal("Team"):Connect(function()
+        if ESP.Highlights[player] then
+            ESP.Highlights[player].FillColor = GetTeamColor(player)
         end
     end)
+    table.insert(ESP.Connections, teamConn)
     
-    -- Saiu do jogo
-    player.AncestryChanged:Connect(function(_, parent)
-        if not parent and Highlights[player] then
-            Highlights[player]:Destroy()
-            Highlights[player] = nil
+    local leavingConn = player.AncestryChanged:Connect(function(_, parent)
+        if not parent and ESP.Highlights[player] then
+            ESP.Highlights[player]:Destroy()
+            ESP.Highlights[player] = nil
         end
     end)
+    table.insert(ESP.Connections, leavingConn)
 end
 
--- Inicializa
 local function Initialize()
-    -- Configura jogadores atuais
     for _, player in pairs(Players:GetPlayers()) do
         task.spawn(SetupPlayer, player)
     end
     
-    -- Novo jogador
-    Players.PlayerAdded:Connect(function(player)
+    local playerAdded = Players.PlayerAdded:Connect(function(player)
         task.wait(1)
         SetupPlayer(player)
     end)
+    table.insert(ESP.Connections, playerAdded)
     
-    -- Jogador saiu
-    Players.PlayerRemoving:Connect(function(player)
-        if Highlights[player] then
-            Highlights[player]:Destroy()
-            Highlights[player] = nil
+    local playerRemoving = Players.PlayerRemoving:Connect(function(player)
+        if ESP.Highlights[player] then
+            ESP.Highlights[player]:Destroy()
+            ESP.Highlights[player] = nil
         end
     end)
+    table.insert(ESP.Connections, playerRemoving)
 end
 
--- EXECUTA
 Initialize()
-print("ESP Todos ativado!")
-print("Cores: Prisioneiros=Rosa, Policiais=Azul, Bandidos=Vermelho")
+print("ESP Todos ativado! (Cores por time)")

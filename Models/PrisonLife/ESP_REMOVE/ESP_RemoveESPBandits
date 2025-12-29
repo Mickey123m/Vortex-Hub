@@ -1,0 +1,22 @@
+-- ESP BANDIDOS - REMOVER
+if _G.ESP_Criminal then
+    for player, highlight in pairs(_G.ESP_Criminal.Highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+    
+    for _, conn in pairs(_G.ESP_Criminal.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    
+    _G.ESP_Criminal.Highlights = {}
+    _G.ESP_Criminal.Connections = {}
+    _G.ESP_Criminal.Active = false
+    
+    print("ESP Bandidos removido!")
+else
+    print("ESP Bandidos não estava ativo")
+end

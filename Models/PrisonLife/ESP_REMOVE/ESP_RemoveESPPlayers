@@ -1,0 +1,22 @@
+-- ESP TODOS OS JOGADORES - REMOVER
+if _G.ESP_All then
+    for player, highlight in pairs(_G.ESP_All.Highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+    
+    for _, conn in pairs(_G.ESP_All.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    
+    _G.ESP_All.Highlights = {}
+    _G.ESP_All.Connections = {}
+    _G.ESP_All.Active = false
+    
+    print("ESP Todos removido!")
+else
+    print("ESP Todos não estava ativo")
+end
