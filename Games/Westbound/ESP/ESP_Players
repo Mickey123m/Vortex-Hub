@@ -10,24 +10,17 @@ local OUTLINE_COLOR = Color3.fromRGB(255, 255, 255)
 
 shared.PlayerESP_Enabled = true
 
--- Função principal para aplicar o Highlight
-local function EnsureHighlight(player)
-    if not shared.PlayerESP_Enabled then return end
-    if player == LocalPlayer then return end
-
-    local character = player.Character
-    -- Verifica se o personagem existe e se está dentro do Workspace (vivo)
-    if not character or not character:IsDescendantOf(game.Workspace) then return end
-
-    local highlight = character:FindFirstChild("ESP_Highlight")
+-- Função que aplica e trava o Highlight
+local function ApplyHighlight(character)
+    if not character or not shared.PlayerESP_Enabled then return end
     
+    local highlight = character:FindFirstChild("ESP_Highlight")
     if not highlight then
         highlight = Instance.new("Highlight")
         highlight.Name = "ESP_Highlight"
         highlight.Parent = character
     end
 
-    -- Garante que as propriedades estejam sempre corretas
     highlight.Adornee = character
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.Enabled = true
@@ -37,47 +30,47 @@ local function EnsureHighlight(player)
     highlight.OutlineTransparency = 0
 end
 
--- Configuração inicial e reconexão no Respawn
 local function SetupPlayer(player)
     if player == LocalPlayer then return end
 
-    -- Conecta ao CharacterAdded para garantir execução imediata ao renascer
-    player.CharacterAdded:Connect(function(character)
-        -- Espera o personagem ser devidamente inserido no Workspace
-        character:WaitForChild("HumanoidRootPart", 10)
-        task.wait(0.2) -- Delay estratégico para o motor gráfico processar o novo modelo
-        if shared.PlayerESP_Enabled then
-            EnsureHighlight(player)
-        end
-    end)
+    local function onCharacter(character)
+        -- Tenta aplicar imediatamente
+        ApplyHighlight(character)
 
-    -- Se o jogador já tiver um personagem ao entrar/executar o script
-    if player.Character then
-        EnsureHighlight(player)
+        -- Escuta se algo for deletado do personagem (previne o sistema do Roblox de remover)
+        character.ChildRemoved:Connect(function(child)
+            if child.Name == "ESP_Highlight" and shared.PlayerESP_Enabled then
+                task.wait() -- Pequeno delay para não bugar o motor
+                ApplyHighlight(character)
+            end
+        end)
     end
+
+    player.CharacterAdded:Connect(onCharacter)
+    if player.Character then onCharacter(player.Character) end
 end
 
--- Inicializa para jogadores atuais
+-- Inicializa para todos
 for _, player in ipairs(Players:GetPlayers()) do
     SetupPlayer(player)
 end
 
--- Escuta novos jogadores
 Players.PlayerAdded:Connect(SetupPlayer)
 
--- LOOP DE VERIFICAÇÃO (Corrigido para evitar que o ESP saia sozinho)
-RunService.Heartbeat:Connect(function()
+-- LOOP AGRESSIVO (Verifica a cada frame se o ESP existe)
+RunService.RenderStepped:Connect(function()
     if not shared.PlayerESP_Enabled then return end
 
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
-            -- Verifica se o Highlight ainda existe, se não, recria imediatamente
             local char = player.Character
-            if not char:FindFirstChild("ESP_Highlight") then
-                EnsureHighlight(player)
+            -- Se não tiver o highlight ou se ele estiver desativado, força a volta
+            local highlight = char:FindFirstChild("ESP_Highlight")
+            if not highlight then
+                ApplyHighlight(char)
             end
         end
     end
 end)
 
-print("[PLAYER ESP] ATIVO - Correção de Respawn Aplicada")
+print("[PLAYER ESP] MODO PROTEGIDO ATIVO")

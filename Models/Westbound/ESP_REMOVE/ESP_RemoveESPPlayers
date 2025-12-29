@@ -1,15 +1,8 @@
-local Players = game:GetService("Players")
+shared.PlayerESP_Enabled = false
 
-shared.PlayerESP_Enabled = false -- Para o loop de criação
-
-for _, player in ipairs(Players:GetPlayers()) do
-    local character = player.Character
-    if character then
-        local highlight = character:FindFirstChild("ESP_Highlight")
-        if highlight then
-            highlight:Destroy()
-        end
+for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+    if player.Character then
+        local h = player.Character:FindFirstChild("ESP_Highlight")
+        if h then h:Destroy() end
     end
 end
-
-print("[PLAYER ESP] REMOVIDO")
