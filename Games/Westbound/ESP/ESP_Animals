@@ -4,97 +4,105 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local ESP_COLOR = Color3.fromRGB(255, 255, 0) -- Amarelo para Animais
 
-shared.AnimalESP_Data = shared.AnimalESP_Data or {}
-shared.AnimalESP_Running = true
+-- CONFIG
+local ESP_COLOR = Color3.fromRGB(255, 255, 0)
 
-local function GetName(name) 
-    return name:match("^(.-)%{") or name 
+shared.AnimalESP_Enabled = true
+shared.AnimalESP_Data = {}
+
+local function GetName(name)
+	return name:match("^(.-)%{") or name
 end
 
-local function CreateAnimalESP(animal)
-    -- Aguarda as partes principais do animal
-    local main = animal:WaitForChild("HumanoidRootPart", 5) or animal:FindFirstChildWhichIsA("BasePart")
-    if not main then return end
-
-    -- Limpeza de ESP antigo dentro do animal para evitar duplicação
-    if animal:FindFirstChild("AnimalHighlight") then animal.AnimalHighlight:Destroy() end
-    if animal:FindFirstChild("AnimalDistanceGui") then animal.AnimalDistanceGui:Destroy() end
-
-    -- --- CONFIGURAÇÃO DO HIGHLIGHT (CORPO) ---
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "AnimalHighlight"
-    highlight.Parent = animal
-    highlight.Adornee = animal
-    highlight.FillColor = ESP_COLOR
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Borda Branca
-    highlight.FillTransparency = 0.5
-    highlight.OutlineTransparency = 0
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-
-    -- --- CONFIGURAÇÃO DA DISTÂNCIA (TEXTO) ---
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "AnimalDistanceGui"
-    billboard.Parent = animal
-    billboard.Adornee = main
-    billboard.Size = UDim2.fromOffset(200, 50)
-    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Parent = billboard
-    textLabel.BackgroundTransparency = 1
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.Text = ""
-    textLabel.TextColor3 = ESP_COLOR -- Amarelo
-    textLabel.TextStrokeTransparency = 1 -- Sem bordas no texto
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextSize = 14
-    textLabel.RichText = true
-
-    -- Armazena os dados para atualização no loop
-    shared.AnimalESP_Data[animal] = {Main = main, Text = textLabel}
+-- Garante BasePart válida
+local function GetMainPart(animal)
+	return animal:FindFirstChild("HumanoidRootPart")
+		or animal:FindFirstChildWhichIsA("BasePart")
 end
 
--- Inicializa os animais existentes na pasta "Animals" no Workspace
+-- Garante ESP no animal
+local function EnsureAnimalESP(animal)
+	if not shared.AnimalESP_Enabled then return end
+	if not animal or not animal.Parent then return end
+
+	local main = GetMainPart(animal)
+	if not main then return end
+
+	-- HIGHLIGHT
+	local highlight = animal:FindFirstChild("AnimalHighlight")
+	if not highlight then
+		highlight = Instance.new("Highlight")
+		highlight.Name = "AnimalHighlight"
+		highlight.Parent = animal
+	end
+
+	highlight.Adornee = animal
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.FillColor = ESP_COLOR
+	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	highlight.FillTransparency = 0.5
+	highlight.OutlineTransparency = 0
+	highlight.Enabled = true
+
+	-- DISTÂNCIA
+	local billboard = animal:FindFirstChild("AnimalDistanceGui")
+	if not billboard then
+		billboard = Instance.new("BillboardGui")
+		billboard.Name = "AnimalDistanceGui"
+		billboard.Parent = animal
+	end
+
+	billboard.Adornee = main
+	billboard.Size = UDim2.fromOffset(200, 50)
+	billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+	billboard.AlwaysOnTop = true
+
+	local text = billboard:FindFirstChild("Text")
+	if not text then
+		text = Instance.new("TextLabel")
+		text.Name = "Text"
+		text.Parent = billboard
+		text.Size = UDim2.new(1, 0, 1, 0)
+		text.BackgroundTransparency = 1
+		text.Font = Enum.Font.SourceSansBold
+		text.TextSize = 14
+		text.RichText = true
+		text.TextStrokeTransparency = 1
+	end
+
+	text.TextColor3 = ESP_COLOR
+
+	shared.AnimalESP_Data[animal] = { Main = main, Text = text }
+end
+
+-- Pasta dos animais
 local animalsFolder = Workspace:WaitForChild("Animals", 10)
-if animalsFolder then
-    for _, a in ipairs(animalsFolder:GetChildren()) do 
-        task.spawn(CreateAnimalESP, a) 
-    end
-    
-    -- Detecta novos animais que nascerem
-    animalsFolder.ChildAdded:Connect(function(a)
-        if shared.AnimalESP_Running then 
-            task.wait(0.5) 
-            CreateAnimalESP(a) 
-        end
-    end)
-end
+if not animalsFolder then return end
 
--- Loop de atualização de distância (RenderStepped para suavidade)
-task.spawn(function()
-    while shared.AnimalESP_Running do
-        local myChar = LocalPlayer.Character
-        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-        
-        for animal, data in pairs(shared.AnimalESP_Data) do
-            if animal and animal.Parent and data.Main and data.Main.Parent then
-                if myRoot then
-                    local dist = (myRoot.Position - data.Main.Position).Magnitude
-                    -- Formato: Nome \n [Distância m]
-                    data.Text.Text = GetName(animal.Name) .. "\n[" .. math.floor(dist) .. " m]"
-                else
-                    data.Text.Text = ""
-                end
-            else
-                -- Remove da lista se o animal for deletado
-                shared.AnimalESP_Data[animal] = nil
-            end
-        end
-        task.wait(0.1) -- Atualiza 10 vezes por segundo para economizar CPU
-    end
+-- Novos animais
+animalsFolder.ChildAdded:Connect(function(animal)
+	task.wait(0.3)
+	EnsureAnimalESP(animal)
 end)
 
-print("[ANIMAL ESP] ATIVADO - Estilo Unificado")
+-- LOOP ROBUSTO (ANTI-FALHA)
+RunService.Heartbeat:Connect(function()
+	if not shared.AnimalESP_Enabled then return end
+
+	local char = LocalPlayer.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+
+	for _, animal in ipairs(animalsFolder:GetChildren()) do
+		EnsureAnimalESP(animal)
+
+		local data = shared.AnimalESP_Data[animal]
+		if data and root and data.Main and data.Main.Parent then
+			local dist = (root.Position - data.Main.Position).Magnitude
+			data.Text.Text =
+				GetName(animal.Name) .. "\n[" .. math.floor(dist) .. " m]"
+		end
+	end
+end)
+
+print("[ANIMAL ESP] ROBUSTO ATIVO")

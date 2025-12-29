@@ -1,26 +1,17 @@
+shared.AnimalESP_Enabled = false
+
 local Workspace = game:GetService("Workspace")
+local animalsFolder = Workspace:FindFirstChild("Animals")
+if not animalsFolder then return end
 
--- Para o loop de atualização de distância
-shared.AnimalESP_Running = false
+for _, animal in ipairs(animalsFolder:GetChildren()) do
+	local h = animal:FindFirstChild("AnimalHighlight")
+	if h then h:Destroy() end
 
--- Limpa os dados armazenados
-shared.AnimalESP_Data = {}
-
--- Função para limpar objetos de ESP dos modelos de animais
-local function clearAnimalObjects()
-    local animalsFolder = Workspace:FindFirstChild("Animals")
-    if animalsFolder then
-        for _, animal in ipairs(animalsFolder:GetChildren()) do
-            if animal:FindFirstChild("AnimalHighlight") then
-                animal.AnimalHighlight:Destroy()
-            end
-            if animal:FindFirstChild("AnimalDistanceGui") then
-                animal.AnimalDistanceGui:Destroy()
-            end
-        end
-    end
+	local b = animal:FindFirstChild("AnimalDistanceGui")
+	if b then b:Destroy() end
 end
 
-clearAnimalObjects()
+shared.AnimalESP_Data = {}
 
-print("[ESP ANIMAIS] REMOVIDO E LOOP ENCERRADO")
+print("[ANIMAL ESP] REMOVIDO")

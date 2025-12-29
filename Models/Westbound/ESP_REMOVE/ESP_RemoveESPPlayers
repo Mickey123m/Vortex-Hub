@@ -1,23 +1,13 @@
+shared.PlayerESP_Enabled = false
+
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
--- Função para limpar o ESP de um jogador específico
-local function removePlayerESP(player)
-    local character = player.Character
-    if character then
-        if character:FindFirstChild("ESPHighlight") then
-            character.ESPHighlight:Destroy()
-        end
-        if character:FindFirstChild("ESPDistanceGui") then
-            character.ESPDistanceGui:Destroy()
-        end
-    end
+for _, player in ipairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer and player.Character then
+		local h = player.Character:FindFirstChild("ESP_Highlight")
+		if h then h:Destroy() end
+	end
 end
 
--- Remove de todos os jogadores atuais
-for _, player in pairs(Players:GetPlayers()) do
-    removePlayerESP(player)
-end
-
--- Opcional: Desconectar eventos se você salvou as conexões em variáveis
--- Caso contrário, apenas parar de criar novos já resolve ao reexecutar.
-print("[ESP JOGADORES] REMOVIDO")
+print("[PLAYER ESP] REMOVIDO")

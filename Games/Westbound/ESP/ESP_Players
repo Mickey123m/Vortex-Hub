@@ -1,42 +1,70 @@
+-- SERVIÇOS
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local LocalPlayer = Players.LocalPlayer
 
-local function applyHighlight(player)
-    -- Verifica se o jogador não é você mesmo
-    if player == LocalPlayer then return end
+-- CONFIG
+local ESP_COLOR = Color3.fromRGB(255, 0, 0)
+local OUTLINE_COLOR = Color3.fromRGB(255, 255, 255)
 
-    local function onCharacterAdded(character)
-        -- Remove highlights antigos para evitar duplicação ao renascer
-        if character:FindFirstChildOfClass("Highlight") then
-            character:FindFirstChildOfClass("Highlight"):Destroy()
-        end
+shared.PlayerESP_Enabled = true
 
-        -- Cria uma nova instância de Highlight e define as propriedades
-        local highlight = Instance.new("Highlight")
-        highlight.Parent = character
-        highlight.Name = "ESPHighlight"
-        highlight.Archivable = true
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Enabled = true
-        highlight.FillColor = Color3.fromRGB(255, 0, 4)
-        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-        highlight.FillTransparency = 0.5
-        highlight.OutlineTransparency = 0
-    end
+-- Cria ou garante Highlight no personagem
+local function EnsureHighlight(player)
+	if not shared.PlayerESP_Enabled then return end
+	if player == LocalPlayer then return end
 
-    -- Se o personagem do jogador já existir, aplica o destaque
-    if player.Character then
-        onCharacterAdded(player.Character)
-    end
+	local character = player.Character
+	if not character then return end
 
-    -- Conecta-se a CharacterAdded para garantir que o destaque seja aplicado sempre que renascer
-    player.CharacterAdded:Connect(onCharacterAdded)
+	-- Se algum script apagar, recria
+	local highlight = character:FindFirstChild("ESP_Highlight")
+	if not highlight then
+		highlight = Instance.new("Highlight")
+		highlight.Name = "ESP_Highlight"
+		highlight.Parent = character
+	end
+
+	highlight.Adornee = character
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Enabled = true
+	highlight.FillColor = ESP_COLOR
+	highlight.OutlineColor = OUTLINE_COLOR
+	highlight.FillTransparency = 0.5
+	highlight.OutlineTransparency = 0
 end
 
--- Aplica o destaque a todos os jogadores atuais (exceto você)
-for _, player in pairs(Players:GetPlayers()) do
-    applyHighlight(player)
+-- Quando o personagem carregar
+local function SetupPlayer(player)
+	if player == LocalPlayer then return end
+
+	-- Garante quando spawnar
+	player.CharacterAdded:Connect(function(character)
+		-- Espera qualquer parte válida
+		character:WaitForChild("HumanoidRootPart", 10)
+		task.wait(0.1)
+		EnsureHighlight(player)
+	end)
 end
 
--- Escuta novos jogadores entrando (aplica a lógica neles também)
-Players.PlayerAdded:Connect(applyHighlight)
+-- Jogadores atuais
+for _, player in ipairs(Players:GetPlayers()) do
+	SetupPlayer(player)
+end
+
+-- Novos jogadores
+Players.PlayerAdded:Connect(SetupPlayer)
+
+-- LOOP DE GARANTIA (ANTI-FALHA)
+RunService.Heartbeat:Connect(function()
+	if not shared.PlayerESP_Enabled then return end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			EnsureHighlight(player)
+		end
+	end
+end)
+
+print("[PLAYER ESP] ATIVO - 100% ROBUSTO")
