@@ -1,0 +1,73 @@
+-- SERVIÇOS
+-- Referenciando os serviços essenciais do Roblox
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+
+-- VARIÁVEIS DO JOGADOR
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- CRIAÇÃO DA SCREEN GUI
+-- Este é o container principal que aparecerá na tela do jogador
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CustomMenuGUI"
+ScreenGui.Parent = playerGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false -- Mantém a tela mesmo se o personagem morrer
+
+-- FRAME PRINCIPAL (A Janela)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35) -- Cinza Escuro
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -100) -- Centralizado
+MainFrame.Size = UDim2.new(0, 250, 0, 200)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Permite que o jogador arraste a janela
+
+-- TÍTULO DA INTERFACE
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+TitleLabel.BorderSizePixel = 0
+TitleLabel.Size = UDim2.new(1, 0, 0, 30)
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.Text = "MEU SCRIPT"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 18.000
+
+-- BOTÃO DE FECHAR
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = MainFrame
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Vermelho
+CloseButton.BorderSizePixel = 0
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 20.000
+
+-- CONTEÚDO DENTRO DO FRAME (Exemplo de Texto)
+local ContentLabel = Instance.new("TextLabel")
+ContentLabel.Name = "ContentLabel"
+ContentLabel.Parent = MainFrame
+ContentLabel.BackgroundTransparency = 1.000
+ContentLabel.Position = UDim2.new(0.1, 0, 0.3, 0)
+ContentLabel.Size = UDim2.new(0.8, 0, 0.5, 0)
+ContentLabel.Font = Enum.Font.SourceSans
+ContentLabel.Text = "Script carregado com sucesso."
+ContentLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+ContentLabel.TextSize = 16.000
+ContentLabel.TextWrapped = true
+
+-- LÓGICA DO BOTÃO FECHAR
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- NOTIFICAÇÃO DE SUCESSO NO OUTPUT
+print("Interface carregada corretamente para " .. player.Name)
