@@ -2,15 +2,22 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-if not _G.ESP_All then
-    _G.ESP_All = {
+-- Garantir que a estrutura global existe
+if not _G.VortexHub then _G.VortexHub = {} end
+if not _G.VortexHub.ESP then _G.VortexHub.ESP = {} end
+
+if not _G.VortexHub.ESP.All then
+    _G.VortexHub.ESP.All = {
         Active = true,
         Highlights = {},
         Connections = {}
     }
+else
+    -- Se já existe, apenas ativar
+    _G.VortexHub.ESP.All.Active = true
 end
 
-local ESP = _G.ESP_All
+local ESP = _G.VortexHub.ESP.All
 
 local function GetTeamColor(player)
     if not player.Team then return Color3.fromRGB(255, 255, 255) end
@@ -30,12 +37,14 @@ end
 local function CreateHighlight(player, character)
     if not character then return end
     
+    -- Remover highlight antigo se existir
     if ESP.Highlights[player] then
-        ESP.Highlights[player]:Destroy()
+        pcall(function() ESP.Highlights[player]:Destroy() end)
+        ESP.Highlights[player] = nil
     end
     
     local highlight = Instance.new("Highlight")
-    highlight.Name = "ESP_All_" .. player.UserId
+    highlight.Name = "Vortex_ESP_All_" .. player.UserId
     highlight.Adornee = character
     highlight.FillColor = GetTeamColor(player)
     highlight.OutlineColor = Color3.new(1, 1, 1)
@@ -91,6 +100,14 @@ local function SetupPlayer(player)
 end
 
 local function Initialize()
+    -- Limpar conexões antigas
+    for _, conn in pairs(ESP.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    ESP.Connections = {}
+    
     for _, player in pairs(Players:GetPlayers()) do
         task.spawn(SetupPlayer, player)
     end
@@ -111,4 +128,4 @@ local function Initialize()
 end
 
 Initialize()
-print("ESP Todos ativado! (Cores por time)")
+print("[Vortex Hub] ESP Todos ativado! (Cores por time)")

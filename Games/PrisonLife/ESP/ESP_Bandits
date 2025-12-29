@@ -2,15 +2,22 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-if not _G.ESP_Criminal then
-    _G.ESP_Criminal = {
+-- Garantir que a estrutura global existe
+if not _G.VortexHub then _G.VortexHub = {} end
+if not _G.VortexHub.ESP then _G.VortexHub.ESP = {} end
+
+if not _G.VortexHub.ESP.Criminal then
+    _G.VortexHub.ESP.Criminal = {
         Active = true,
         Highlights = {},
         Connections = {}
     }
+else
+    -- Se já existe, apenas ativar
+    _G.VortexHub.ESP.Criminal.Active = true
 end
 
-local ESP = _G.ESP_Criminal
+local ESP = _G.VortexHub.ESP.Criminal
 
 local function IsCriminal(player)
     return player.Team and player.Team.Name == "Criminals"
@@ -19,13 +26,15 @@ end
 local function CreateHighlight(player, character)
     if not character then return end
     
+    -- Remover highlight antigo se existir
     if ESP.Highlights[player] then
-        ESP.Highlights[player]:Destroy()
+        pcall(function() ESP.Highlights[player]:Destroy() end)
+        ESP.Highlights[player] = nil
     end
     
     if IsCriminal(player) then
         local highlight = Instance.new("Highlight")
-        highlight.Name = "ESP_Criminal_" .. player.UserId
+        highlight.Name = "Vortex_ESP_Criminal_" .. player.UserId
         highlight.Adornee = character
         highlight.FillColor = Color3.fromRGB(255, 0, 0)
         highlight.OutlineColor = Color3.new(1, 1, 1)
@@ -87,6 +96,14 @@ local function SetupPlayer(player)
 end
 
 local function Initialize()
+    -- Limpar conexões antigas
+    for _, conn in pairs(ESP.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    ESP.Connections = {}
+    
     for _, player in pairs(Players:GetPlayers()) do
         task.spawn(SetupPlayer, player)
     end
@@ -107,4 +124,4 @@ local function Initialize()
 end
 
 Initialize()
-print("ESP Bandidos ativado!")
+print("[Vortex Hub] ESP Bandidos ativado!")

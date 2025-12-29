@@ -1,22 +1,47 @@
 -- ESP POLICIAIS - REMOVER
-if _G.ESP_Guard then
-    for player, highlight in pairs(_G.ESP_Guard.Highlights) do
-        if highlight and highlight.Parent then
-            highlight:Destroy()
-        end
-    end
-    
-    for _, conn in pairs(_G.ESP_Guard.Connections) do
-        if conn then
-            pcall(function() conn:Disconnect() end)
-        end
-    end
-    
-    _G.ESP_Guard.Highlights = {}
-    _G.ESP_Guard.Connections = {}
-    _G.ESP_Guard.Active = false
-    
-    print("ESP Policiais removido!")
-else
-    print("ESP Policiais não estava ativo")
+-- IMPORTANTE: Não destrói o objeto, apenas limpa
+
+if not _G.VortexHub then _G.VortexHub = {} end
+if not _G.VortexHub.ESP then _G.VortexHub.ESP = {} end
+
+if not _G.VortexHub.ESP.Guard then
+    _G.VortexHub.ESP.Guard = {
+        Active = false,
+        Highlights = {},
+        Connections = {}
+    }
 end
+
+local ESP = _G.VortexHub.ESP.Guard
+
+-- Desconectar todas as conexões
+for _, conn in pairs(ESP.Connections) do
+    if conn and type(conn) == "userdata" then
+        pcall(function() conn:Disconnect() end)
+    end
+end
+
+-- Remover todos os highlights
+for player, highlight in pairs(ESP.Highlights) do
+    if highlight and highlight.Parent then
+        pcall(function() highlight:Destroy() end)
+    end
+end
+
+-- Limpar as tabelas mas MANTER o objeto
+ESP.Highlights = {}
+ESP.Connections = {}
+ESP.Active = false
+
+-- Limpeza adicional por segurança
+for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+    if player.Character then
+        for _, child in pairs(player.Character:GetChildren()) do
+            if child:IsA("Highlight") and (string.find(child.Name, "Vortex_ESP_Guard") or string.find(child.Name, "ESP_Guard")) then
+                pcall(function() child:Destroy() end)
+            end
+        end
+    end
+end
+
+print("[Vortex Hub] ESP Policiais removido!")
