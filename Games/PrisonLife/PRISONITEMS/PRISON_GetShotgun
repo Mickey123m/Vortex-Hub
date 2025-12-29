@@ -1,111 +1,66 @@
--- Get Shotgun for Prison Life
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 local function GetShotgun()
     print("[Prison Life] Getting Shotgun...")
     
     local char = LocalPlayer.Character
     local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
     
-    if not humanoidRootPart then
-        print("[Prison Life] Character not found!")
+    if not humanoidRootPart or not humanoid then
         return "Error: Character not found"
     end
     
-    -- Get current team
-    local currentTeam = LocalPlayer.Team and LocalPlayer.Team.Name or ""
-    print("[Prison Life] Current team: " .. currentTeam)
-    
-    -- Find prison items folder
     local prisonItems = workspace:FindFirstChild("Prison_ITEMS")
-    if not prisonItems then
-        return "Error: Prison_ITEMS folder not found"
-    end
+    local giverFolder = prisonItems and prisonItems:FindFirstChild("giver")
     
-    local giverFolder = prisonItems:FindFirstChild("giver")
-    if not giverFolder then
-        return "Error: 'giver' folder not found"
-    end
+    -- Busca pela Remington 870 ou Criminal Remington
+    local shotgun = giverFolder and (giverFolder:FindFirstChild("Remington 870") or giverFolder:FindFirstChild("Criminal Remington"))
     
-    -- Look for shotgun based on team
-    local shotgun = nil
-    
-    if currentTeam == "Guards" then
-        shotgun = giverFolder:FindFirstChild("Remington 870")
-        print("[Prison Life] Looking for police Remington 870")
-    elseif currentTeam == "Criminals" or currentTeam == "Inmates" then
-        shotgun = giverFolder:FindFirstChild("Criminal Remington")
-        print("[Prison Life] Looking for Criminal Remington")
-    else
-        -- Try any shotgun
+    if not shotgun then
         for _, item in pairs(giverFolder:GetChildren()) do
-            if item:IsA("Model") then
-                local itemNameLower = item.Name:lower()
-                if string.find(itemNameLower, "remington") or 
-                   string.find(itemNameLower, "shotgun") then
-                    shotgun = item
-                    print("[Prison Life] Found generic shotgun: " .. item.Name)
-                    break
-                end
+            if string.find(item.Name:lower(), "remington") or string.find(item.Name:lower(), "shotgun") then
+                shotgun = item
+                break
             end
         end
     end
     
-    if not shotgun or not shotgun:IsA("Model") then
-        return "Error: Shotgun not found for your team"
-    end
+    if not shotgun then return "Error: Shotgun not found" end
     
-    print("[Prison Life] Found shotgun: " .. shotgun.Name)
-    
-    -- Save current position
     local originalPosition = humanoidRootPart.CFrame
     
-    -- Teleport to shotgun
-    local itemPosition = shotgun:GetModelCFrame().Position
-    local teleportCFrame = CFrame.new(itemPosition + Vector3.new(0, 2, 2))
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+    humanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
     
-    humanoidRootPart.CFrame = teleportCFrame
-    task.wait(0.1)
+    local itemPos = shotgun:GetPivot().Position
+    local camDirection = (Camera.CFrame.Position - itemPos).Unit
     
-    -- Wait and return
-    task.wait(1.5)
-    humanoidRootPart.CFrame = originalPosition
-    task.wait(0.1)
+    -- Mantida a posição exata do seu script da AK: +2 lateral, +10 altura, +4 direção tela
+    local finalPos = itemPos + Vector3.new(0, 0, -2) + (camDirection * 4)
     
-    -- Check if weapon was picked up
-    local function HasWeapon()
-        local backpack = LocalPlayer:FindFirstChild("Backpack")
-        local character = LocalPlayer.Character
-        
-        if backpack then
-            for _, item in pairs(backpack:GetChildren()) do
-                if string.find(item.Name:lower(), "remington") or 
-                   string.find(item.Name:lower(), "shotgun") then
-                    return true
-                end
+    char:PivotTo(CFrame.new(finalPos, itemPos))
+    
+    task.spawn(function()
+        for i = 1, 10 do
+            if workspace:FindFirstChild("Remote") and workspace.Remote:FindFirstChild("ItemHandler") then
+                workspace.Remote.ItemHandler:InvokeServer(shotgun)
             end
+            task.wait(0.05)
         end
-        
-        if character then
-            for _, item in pairs(character:GetChildren()) do
-                if string.find(item.Name:lower(), "remington") or 
-                   string.find(item.Name:lower(), "shotgun") then
-                    return true
-                end
-            end
-        end
-        
-        return false
-    end
+    end)
+
+    task.wait(0.6)
+
+    humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+    char:PivotTo(originalPosition)
     
-    if HasWeapon() then
-        print("[Prison Life] Successfully picked up Shotgun!")
-        return "Shotgun acquired! (Team: " .. currentTeam .. ")"
-    else
-        print("[Prison Life] Couldn't pick up Shotgun (click manually)")
-        return "Click on Shotgun to pick up"
-    end
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+    
+    return "Done"
 end
 
-return GetShotgun
+return GetShotgun()
