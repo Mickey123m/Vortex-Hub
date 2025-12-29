@@ -1,21 +1,32 @@
--- ServerScriptService
+-- Bypass Doors for Prison Life (ATIVAR)
+_G.OriginalDoorProperties = _G.OriginalDoorProperties or {}
+_G.BypassRunning = true
+
+print("[Prison Life] Bypass Doors: ON")
+
 task.spawn(function()
-    while true do
-        pcall(function()  -- Previne erros
-            local pasta = workspace.Doors
-            if pasta then
-                for _, coisa in pairs(pasta:GetDescendants()) do
-                    if coisa:IsA("BasePart") then
-                        coisa.CanCollide = false
-                        if coisa.Transparency < 0.7 then
-                            coisa.Transparency = 0.7
+    while _G.BypassRunning do
+        pcall(function()
+            local doorsFolder = workspace:FindFirstChild("Doors")
+            
+            if doorsFolder then
+                for _, door in pairs(doorsFolder:GetDescendants()) do
+                    if door:IsA("BasePart") then
+                        -- Salva as propriedades apenas uma vez
+                        if not _G.OriginalDoorProperties[door] then
+                            _G.OriginalDoorProperties[door] = {
+                                CanCollide = door.CanCollide,
+                                Transparency = door.Transparency
+                            }
                         end
+                        
+                        -- Modifica a porta
+                        door.CanCollide = false
+                        door.Transparency = 0.5
                     end
                 end
             end
         end)
-        task.wait(0.08)  -- Rápido
+        task.wait(0.5)
     end
 end)
-
-print("✅ Bypass rodando em background")

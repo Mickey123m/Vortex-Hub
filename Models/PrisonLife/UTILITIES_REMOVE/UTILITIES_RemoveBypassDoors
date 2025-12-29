@@ -1,0 +1,22 @@
+-- Bypass Doors for Prison Life (DESATIVAR)
+_G.BypassRunning = false -- Força o fim do loop no outro script
+
+print("[Prison Life] Bypass Doors: OFF")
+
+task.wait(0.1) -- Pequena pausa para garantir que o loop parou
+
+if _G.OriginalDoorProperties then
+    for door, properties in pairs(_G.OriginalDoorProperties) do
+        pcall(function()
+            if door and door.Parent then
+                door.CanCollide = properties.CanCollide
+                door.Transparency = properties.Transparency
+            end
+        end)
+    end
+    
+    -- Limpa a tabela para não acumular lixo na memória
+    _G.OriginalDoorProperties = {}
+else
+    warn("[Prison Life] Erro: Propriedades originais não encontradas.")
+end
