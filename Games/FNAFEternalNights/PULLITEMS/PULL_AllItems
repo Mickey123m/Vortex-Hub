@@ -1,0 +1,53 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+
+-- Tabela com todos os nomes dos itens que você quer puxar
+local targetNames = {
+    "Phillips screwdriver",
+    "Pliers",
+    "Fuse",
+    "Photo Camera",
+    "Battery"
+}
+
+-- Função principal para trazer o item até o jogador
+local function pullItem(item)
+    task.wait(0.1) -- Garante que o item carregou no Workspace
+    
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        -- Define a posição: 2 studs à frente do seu peito
+        local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+        
+        -- Move o item dependendo do tipo (Model, Tool ou Part)
+        if item:IsA("Model") or item:IsA("Tool") then
+            item:PivotTo(targetPos)
+        elseif item:IsA("BasePart") then
+            item.CFrame = targetPos
+        end
+    end
+end
+
+-- Função para verificar se o nome do objeto está na nossa lista
+local function checkItem(obj)
+    for _, name in ipairs(targetNames) do
+        if obj.Name == name then
+            pullItem(obj)
+            break
+        end
+    end
+end
+
+-- 1. Varredura Inicial: Puxa tudo o que já existe no mapa agora
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    checkItem(obj)
+end
+
+-- 2. Monitoramento: Se qualquer um desses itens spawnar depois, ele puxa na hora
+Workspace.DescendantAdded:Connect(function(obj)
+    checkItem(obj)
+end)
+
+print("Magnet de Itens Consolidado Ativado (Screwdriver, Pliers, Fuse, Camera, Battery).")
