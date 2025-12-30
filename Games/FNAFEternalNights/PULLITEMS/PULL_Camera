@@ -1,0 +1,39 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local targetName = "Photo Camera"
+
+local function pullItem(item)
+    -- Pequeno atraso para garantir que o objeto carregou no mapa
+    task.wait(0.1)
+    
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        -- Define a posição: 2 studs à frente do seu peito
+        local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+        
+        -- Verifica se é um Model, Tool ou Part e move para você
+        if item:IsA("Model") or item:IsA("Tool") then
+            item:PivotTo(targetPos)
+        elseif item:IsA("BasePart") then
+            item.CFrame = targetPos
+        end
+    end
+end
+
+-- Varredura inicial: Procura câmeras que já estão no mapa
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj.Name == targetName then 
+        pullItem(obj) 
+    end
+end
+
+-- Monitoramento: Se uma câmera spawnar depois, ela é puxada na hora
+Workspace.DescendantAdded:Connect(function(obj)
+    if obj.Name == targetName then 
+        pullItem(obj) 
+    end
+end)
+
+print("Magnet de Photo Camera ativado.")
