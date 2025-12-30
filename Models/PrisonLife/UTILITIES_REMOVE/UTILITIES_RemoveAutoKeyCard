@@ -1,0 +1,2 @@
+_G.AutoKeyActive = false
+print("[Prison Life] Comando de desativação enviado.")

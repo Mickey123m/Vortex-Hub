@@ -1,51 +1,102 @@
+-- Auto KeyCard for Prison Life (Ativar)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local function GetShotgun()
-    -- AJUSTE A POSIÇÃO AQUI:
-    local offset = Vector3.new(2, 3, 0) 
+-- Variável Global para permitir desligamento por outra loadstring
+_G.AutoKeyActive = true
+local checkInterval = 1 
+
+local function HasKeyCard()
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    local character = LocalPlayer.Character
     
-    local char = LocalPlayer.Character
-    local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
-    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-    
-    if not humanoidRootPart or not humanoid then return "Error: Character not found" end
-    
-    local prisonItems = workspace:FindFirstChild("Prison_ITEMS")
-    local giverFolder = prisonItems and prisonItems:FindFirstChild("giver")
-    local shotgun = giverFolder and (giverFolder:FindFirstChild("Remington 870") or giverFolder:FindFirstChild("Criminal Remington"))
-    
-    if not shotgun then
-        for _, item in pairs(giverFolder:GetChildren()) do
-            if string.find(item.Name:lower(), "remington") or string.find(item.Name:lower(), "shotgun") then
-                shotgun = item
-                break
-            end
+    local found = false
+    if backpack then
+        for _, item in pairs(backpack:GetChildren()) do
+            if string.find(item.Name:lower(), "key") then found = true break end
+        end
+    end
+    if character and not found then
+        for _, item in pairs(character:GetChildren()) do
+            if string.find(item.Name:lower(), "key") then found = true break end
         end
     end
     
-    if not shotgun then return "Error: Shotgun not found" end
-    
-    local originalPosition = humanoidRootPart.CFrame
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-    
-    char:PivotTo(shotgun:GetPivot() * CFrame.new(offset))
-    
-    task.spawn(function()
-        for i = 1, 10 do
-            if workspace:FindFirstChild("Remote") and workspace.Remote:FindFirstChild("ItemHandler") then
-                workspace.Remote.ItemHandler:InvokeServer(shotgun)
-            end
-            task.wait(0.05)
-        end
-    end)
-
-    task.wait(0.6)
-    humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-    char:PivotTo(originalPosition)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-    
-    return "Done"
+    return found
 end
 
-return GetShotgun()
+local function FindAndPickupKeyCard()
+    if HasKeyCard() then return false end
+    
+    local foundKeyCard = nil
+    local targets = {workspace, workspace:FindFirstChild("DroppedItems")}
+    
+    for _, parent in pairs(targets) do
+        if parent then
+            for _, item in pairs(parent:GetChildren()) do
+                if string.find(item.Name:lower(), "key") then
+                    if item:IsA("Tool") or item:IsA("Model") or item:IsA("Part") then
+                        foundKeyCard = item
+                        break
+                    end
+                end
+            end
+        end
+        if foundKeyCard then break end
+    end
+
+    if foundKeyCard then
+        local char = LocalPlayer.Character
+        local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+        
+        local targetPos
+        if foundKeyCard:IsA("Tool") and foundKeyCard:FindFirstChild("Handle") then
+            targetPos = foundKeyCard.Handle.Position
+        else
+            targetPos = foundKeyCard:GetPivot().Position
+        end
+
+        if humanoidRootPart and humanoid then
+            print("[Prison Life] KeyCard detectada! Teleportando...")
+            local originalPosition = humanoidRootPart.CFrame
+            
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+            humanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
+            
+            local camDirection = (Camera.CFrame.Position - targetPos).Unit
+            local finalPos = targetPos + Vector3.new(0, 10, 0) + (camDirection * 4)
+            
+            char:PivotTo(CFrame.new(finalPos, targetPos))
+            
+            task.spawn(function()
+                local remote = workspace:FindFirstChild("Remote") and workspace.Remote:FindFirstChild("ItemHandler")
+                for i = 1, 15 do
+                    if remote then remote:InvokeServer(foundKeyCard) end
+                    if char then char:TranslateBy(Vector3.new(0, -0.1, 0)) end
+                    task.wait(0.05)
+                end
+            end)
+            
+            task.wait(2.0) -- Tempo de permanência
+            
+            humanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+            char:PivotTo(originalPosition)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            return true
+        end
+    end
+    return false
+end
+
+-- Loop de execução controlado pela Global
+task.spawn(function()
+    print("[Prison Life] Auto KeyCard: ATIVADO")
+    while _G.AutoKeyActive do
+        FindAndPickupKeyCard()
+        task.wait(checkInterval)
+    end
+    print("[Prison Life] Auto KeyCard: DESATIVADO")
+end)
