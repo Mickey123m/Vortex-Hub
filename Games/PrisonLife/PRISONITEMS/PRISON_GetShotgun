@@ -3,7 +3,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local function GetShotgun()
     -- AJUSTE A POSIÇÃO AQUI:
-    local offset = Vector3.new(2, 2, 0) 
+    local offset = Vector3.new(2, 3, 0) 
     
     local char = LocalPlayer.Character
     local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
