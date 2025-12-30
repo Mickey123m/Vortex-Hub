@@ -1,7 +1,11 @@
 local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
 
 local function applyPlayerESP(character)
     if not character then return end
+    
+    -- VERIFICAÇÃO: Se o personagem for o seu, o script para aqui
+    if character.Name == localPlayer.Name then return end
     
     -- Evita duplicatas
     if character:FindFirstChild("Player_ESP_Internal") then return end
@@ -64,4 +68,4 @@ for _, player in ipairs(Players:GetPlayers()) do
     onPlayerAdded(player)
 end
 
-print("ESP de Players (Verde) ativado.")
+print("ESP de Players (Verde) ativado - Ignorando LocalPlayer.")

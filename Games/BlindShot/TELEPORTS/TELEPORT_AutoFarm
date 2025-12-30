@@ -1,0 +1,60 @@
+-- [[ AUTO TROPHY - ENABLE ]]
+_G.States = _G.States or {}
+_G.States.Auto_Trophy = true
+
+local function ExecuteTeleport()
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local Character = LocalPlayer.Character
+    local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
+
+    if not RootPart then 
+        print("[Auto Trophy] Erro: HumanoidRootPart não encontrado.")
+        return 
+    end
+
+    -- Busca o troféu no Workspace
+    local target = workspace:FindFirstChild("Trophy")
+    
+    if not target then
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj:IsA("Model") and string.find(obj.Name:lower(), "trophy") then
+                target = obj
+                break
+            end
+        end
+    end
+
+    if target then
+        local targetPos
+        if target:IsA("Model") then
+            targetPos = target:GetModelCFrame().Position
+        else
+            targetPos = target.Position
+        end
+
+        -- Teleporta 5 studs acima para não ficar preso dentro do troféu
+        RootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+        print("[Auto Trophy] Sucesso: Teleportado para " .. target.Name)
+    else
+        print("[Auto Trophy] Erro: Nenhum troféu encontrado no Workspace.")
+    end
+end
+
+-- Gerenciador do Loop
+if not _G.TrophyLoopRunning then
+    _G.TrophyLoopRunning = true
+    task.spawn(function()
+        while _G.States.Auto_Trophy do
+            pcall(ExecuteTeleport)
+            
+            -- Espera 20 segundos checando a cada 1 segundo se foi desligado
+            for i = 1, 20 do
+                if not _G.States.Auto_Trophy then break end
+                task.wait(1)
+            end
+        end
+        _G.TrophyLoopRunning = false
+        print("[Auto Trophy] Loop encerrado.")
+    end)
+end

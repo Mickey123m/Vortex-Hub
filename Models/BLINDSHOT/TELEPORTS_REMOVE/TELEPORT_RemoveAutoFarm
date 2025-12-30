@@ -1,0 +1,6 @@
+-- [[ AUTO TROPHY - DISABLE ]]
+if _G.States then
+    _G.States.Auto_Trophy = false
+end
+_G.TrophyLoopRunning = false
+print("[Auto Trophy] Sistema desativado.")

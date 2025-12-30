@@ -1,0 +1,15 @@
+-- [[ ANTI-AFK SYSTEM GLOBAL - DISABLE ]]
+if _G.GlobalAntiAFK then
+    local AntiAFK = _G.GlobalAntiAFK
+    
+    if AntiAFK.Active then
+        AntiAFK.Active = false
+        
+        if AntiAFK.Connection then
+            AntiAFK.Connection:Disconnect()
+            AntiAFK.Connection = nil
+        end
+        
+        print("[Vortex Hub] Anti-AFK Global DESATIVADO!")
+    end
+end

@@ -1,0 +1,29 @@
+-- [[ DESATIVAR BLIND SHOT ESP ]]
+local BlindShotESP = _G.BlindShotESP
+
+if BlindShotESP then
+    function BlindShotESP:Disable()
+        if not self.Active then return end
+        
+        self.Active = false
+        
+        if self.RenderConnection then
+            self.RenderConnection:Disconnect()
+            self.RenderConnection = nil
+        end
+        
+        for _, conn in ipairs(self.Connections) do
+            if conn then
+                pcall(function() conn:Disconnect() end)
+            end
+        end
+        
+        self.Connections = {}
+        self:CleanupHighlights()
+        
+        print("[Blind Shot ESP] Desativado!")
+    end
+
+    -- Execução do comando de desativação
+    BlindShotESP:Disable()
+end

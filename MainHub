@@ -47,8 +47,11 @@ local States = {
     FNAF_ESP_Flashlight = false,
     FNAF_ESP_All = false,
     
-    FNAF_FullBright = false,
-    FNAF_SpeedHack = false,
+    -- FNAF Utilities States
+    FNAF_ClockGame = false,
+    FNAF_ClockPuppet = false,
+    FNAF_FullBrightness = false,
+    FNAF_Speed = false,
     
     Westbound_ESP_Players = false,
     Westbound_ESP_Animals = false,
@@ -182,6 +185,7 @@ function CleanupSystem:CleanupAll()
     
     -- Desativar FNAF usando loadstrings de remoção
     if FNAF then
+        -- Desativar ESPs
         if FNAF.ESP_All_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAll")
             FNAF.ESP_All_Active = false
@@ -221,6 +225,24 @@ function CleanupSystem:CleanupAll()
         if FNAF.ESP_Screwdriver_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPScrewdriver")
             FNAF.ESP_Screwdriver_Active = false
+        end
+        
+        -- Desativar Utilities
+        if FNAF.ClockGame_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveClockGame")
+            FNAF.ClockGame_Active = false
+        end
+        if FNAF.ClockPuppet_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveClockPuppet")
+            FNAF.ClockPuppet_Active = false
+        end
+        if FNAF.FullBrightness_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveFullBrightness")
+            FNAF.FullBrightness_Active = false
+        end
+        if FNAF.Speed_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveSpeed")
+            FNAF.Speed_Active = false
         end
     end
     
@@ -1277,8 +1299,9 @@ function Westbound:ToggleESP_Name(state)
     end
 end
 
--- [[ FNAF: ETERNAL NIGHTS SYSTEMS - COMPLETAMENTE REFATORADO COM LOADSTRINGS ]]
+-- [[ FNAF: ETERNAL NIGHTS SYSTEMS - COMPLETAMENTE ATUALIZADO ]]
 local FNAF = {
+    -- ESP States
     ESP_Animatronics_Active = false,
     ESP_Fuses_Active = false,
     ESP_Batteries_Active = false,
@@ -1289,6 +1312,12 @@ local FNAF = {
     ESP_Camera_Active = false,
     ESP_Flashlight_Active = false,
     ESP_All_Active = false,
+    
+    -- Utilities States
+    ClockGame_Active = false,
+    ClockPuppet_Active = false,
+    FullBrightness_Active = false,
+    Speed_Active = false,
     
     LoadedScripts = {}
 }
@@ -1426,6 +1455,128 @@ end
 
 function FNAF:ApplyESP_Screwdriver(state)
     self:ToggleESP("Screwdriver", state)
+end
+
+-- Função para executar PULL ITEMS (botões executar)
+function FNAF:ExecutePullItem(itemType)
+    local url = ""
+    
+    if itemType == "AllItems" then
+        url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_AllItems"
+    elseif itemType == "Batteries" then
+        url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Batteries"
+    elseif itemType == "Camera" then
+        url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Camera"
+    elseif itemType == "Fuses" then
+        url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Fuses"
+    elseif itemType == "Pliers" then
+        url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Pliers"
+    elseif itemType == "Screwdriver" then
+        url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Screwdriver"
+    else
+        warn("[Vortex Hub] FNAF: Tipo de Pull Item inválido: " .. tostring(itemType))
+        return
+    end
+    
+    task.spawn(function()
+        local success = pcall(function()
+            local fullUrl = GetLatestGitHubScript(url)
+            return loadstring(game:HttpGet(fullUrl, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] FNAF: Pull " .. itemType .. " executado com sucesso!")
+        else
+            warn("[Vortex Hub] FNAF: Erro ao executar Pull " .. itemType)
+        end
+    end)
+end
+
+-- Função para ativar/desativar UTILITIES
+function FNAF:ToggleUtility(utilityType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    -- Mapear tipo para URLs
+    if utilityType == "ClockGame" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_ClockGame"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveClockGame"
+        stateName = "FNAF_ClockGame"
+    elseif utilityType == "ClockPuppet" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_ClockPuppet"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveClockPuppet"
+        stateName = "FNAF_ClockPuppet"
+    elseif utilityType == "FullBrightness" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_FullBrightness"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveFullBrightness"
+        stateName = "FNAF_FullBrightness"
+    elseif utilityType == "Speed" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_Speed"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveSpeed"
+        stateName = "FNAF_Speed"
+    else
+        warn("[Vortex Hub] FNAF: Tipo de Utility inválido: " .. tostring(utilityType))
+        return
+    end
+    
+    -- Atualizar estado
+    States[stateName] = state
+    
+    if state then
+        -- Ativar Utility
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self[utilityType .. "_Active"] = true
+                print("[Vortex Hub] FNAF: Utility " .. utilityType .. " ativado!")
+                
+                -- Registrar limpeza
+                CleanupSystem:RegisterScript("FNAF_Utility_" .. utilityType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self[utilityType .. "_Active"] = false
+                warn("[Vortex Hub] FNAF: Erro ao ativar Utility " .. utilityType)
+            end
+        end)
+    else
+        -- Desativar Utility
+        if self[utilityType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self[utilityType .. "_Active"] = false
+                    print("[Vortex Hub] FNAF: Utility " .. utilityType .. " desativado!")
+                else
+                    self[utilityType .. "_Active"] = false
+                    print("[Vortex Hub] FNAF: Utility " .. utilityType .. " desativado (fallback)")
+                end
+            end)
+        end
+    end
+end
+
+-- Funções específicas para cada Utility
+function FNAF:ToggleClockGame(state)
+    self:ToggleUtility("ClockGame", state)
+end
+
+function FNAF:ToggleClockPuppet(state)
+    self:ToggleUtility("ClockPuppet", state)
+end
+
+function FNAF:ToggleFullBrightness(state)
+    self:ToggleUtility("FullBrightness", state)
+end
+
+function FNAF:ToggleSpeed(state)
+    self:ToggleUtility("Speed", state)
 end
 
 -- Teleports
@@ -2176,28 +2327,10 @@ CreateToggle(Westbound_ESPGrid, "ESP Name", "Mostra apenas os nomes dos jogadore
     Westbound:ToggleESP_Name(v)
 end)
 
--- [[ FNAF: ETERNAL NIGHTS CONFIGURATION - REFATORADA COM LOADSTRINGS ]]
+-- [[ FNAF: ETERNAL NIGHTS CONFIGURATION - NOVAS CATEGORIAS ]]
 local FNAF_Data = CreatePage("FNAF: Eternal Nights")
 
-CreateSection(FNAF_Data.Page, "Teleports")
-local FNAF_TeleportGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
-
-CreateButton(FNAF_TeleportGrid, "TP Security Room", "Teleport para a sala de segurança", "TP", function()
-    FNAF:TeleportSecurityRoom()
-end)
-
-CreateButton(FNAF_TeleportGrid, "TP Puppet Clock", "Teleport para o relógio da Puppet", "TP", function()
-    FNAF:TeleportPuppetClock()
-end)
-
-CreateButton(FNAF_TeleportGrid, "TP Above Map", "Teleport para cima do mapa", "TP", function()
-    FNAF:TeleportAboveMap()
-end)
-
-CreateButton(FNAF_TeleportGrid, "TP Fuse Room", "Teleport para sala dos fusíveis", "TP", function()
-    FNAF:TeleportFuseRoom()
-end)
-
+-- VISUALS acima de TELEPORTS (como solicitado)
 CreateSection(FNAF_Data.Page, "Visuals")
 local FNAF_ESPGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
 
@@ -2239,6 +2372,74 @@ end)
 
 CreateToggle(FNAF_ESPGrid, "ESP ALL", "Ativa todos os ESPs de uma vez", "VISUAL", function(v)
     FNAF:ApplyESP_All(v)
+end)
+
+-- TELEPORTS (agora abaixo de VISUALS)
+CreateSection(FNAF_Data.Page, "Teleports")
+local FNAF_TeleportGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
+
+CreateButton(FNAF_TeleportGrid, "TP Security Room", "Teleport para a sala de segurança", "TP", function()
+    FNAF:TeleportSecurityRoom()
+end)
+
+CreateButton(FNAF_TeleportGrid, "TP Puppet Clock", "Teleport para o relógio da Puppet", "TP", function()
+    FNAF:TeleportPuppetClock()
+end)
+
+CreateButton(FNAF_TeleportGrid, "TP Above Map", "Teleport para cima do mapa", "TP", function()
+    FNAF:TeleportAboveMap()
+end)
+
+CreateButton(FNAF_TeleportGrid, "TP Fuse Room", "Teleport para sala dos fusíveis", "TP", function()
+    FNAF:TeleportFuseRoom()
+end)
+
+-- NOVA CATEGORIA: PULL ITEMS (botões executar)
+CreateSection(FNAF_Data.Page, "Pull Items")
+local FNAF_PullItemsGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
+
+CreateButton(FNAF_PullItemsGrid, "Pull All Items", "Puxa TODOS os itens do mapa para você", "PULL", function()
+    FNAF:ExecutePullItem("AllItems")
+end)
+
+CreateButton(FNAF_PullItemsGrid, "Pull Batteries", "Puxa todas as baterias para você", "PULL", function()
+    FNAF:ExecutePullItem("Batteries")
+end)
+
+CreateButton(FNAF_PullItemsGrid, "Pull Camera", "Puxa a câmera para você", "PULL", function()
+    FNAF:ExecutePullItem("Camera")
+end)
+
+CreateButton(FNAF_PullItemsGrid, "Pull Fuses", "Puxa todos os fusíveis para você", "PULL", function()
+    FNAF:ExecutePullItem("Fuses")
+end)
+
+CreateButton(FNAF_PullItemsGrid, "Pull Pliers", "Puxa todos os alicates para você", "PULL", function()
+    FNAF:ExecutePullItem("Pliers")
+end)
+
+CreateButton(FNAF_PullItemsGrid, "Pull Screwdriver", "Puxa todas as chaves de fenda para você", "PULL", function()
+    FNAF:ExecutePullItem("Screwdriver")
+end)
+
+-- NOVA CATEGORIA: UTILITIES (ON/OFF)
+CreateSection(FNAF_Data.Page, "Utilities")
+local FNAF_UtilitiesGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
+
+CreateToggle(FNAF_UtilitiesGrid, "Clock Game", "Ativa o jogo do relógio automaticamente", "UTILITY", function(v)
+    FNAF:ToggleClockGame(v)
+end)
+
+CreateToggle(FNAF_UtilitiesGrid, "Clock Puppet", "Ativa o relógio da Puppet automaticamente", "UTILITY", function(v)
+    FNAF:ToggleClockPuppet(v)
+end)
+
+CreateToggle(FNAF_UtilitiesGrid, "Full Brightness", "Liga o fullbright (iluminação total)", "UTILITY", function(v)
+    FNAF:ToggleFullBrightness(v)
+end)
+
+CreateToggle(FNAF_UtilitiesGrid, "Speed Hack", "Aumenta sua velocidade de movimento", "UTILITY", function(v)
+    FNAF:ToggleSpeed(v)
 end)
 
 CreateMenuBtn("Prison Life", GamesList)
@@ -2366,15 +2567,10 @@ UserInputService.InputBegan:Connect(function(input, processed)
 end)
 
 print("[Vortex Hub] Script loaded successfully! v2.3.0")
-print("[Vortex Hub] CORREÇÕES IMPLEMENTADAS:")
-print("[Vortex Hub] 1. Bind Insert corrigida - agora abre/fecha corretamente")
-print("[Vortex Hub] 2. FNAF: Eternal Nights completamente refatorado:")
-print("[Vortex Hub]   - Todos os ESPs usam loadstrings externos")
-print("[Vortex Hub]   - Sistema unificado de ativação/desativação")
-print("[Vortex Hub]   - ESP Players adicionado")
-print("[Vortex Hub]   - ESP Cabinet adicionado")
-print("[Vortex Hub]   - ESP Camera adicionado")
-print("[Vortex Hub]   - ESP Flashlight adicionado")
-print("[Vortex Hub]   - ESP All funcional")
-print("[Vortex Hub] 3. Sistema completo e funcional!")
+print("[Vortex Hub] NOVAS ATUALIZAÇÕES IMPLEMENTADAS:")
+print("[Vortex Hub] 1. FNAF: Eternal Nights com novas categorias:")
+print("[Vortex Hub]   - VISUALS agora aparece acima de TELEPORTS")
+print("[Vortex Hub]   - PULL ITEMS (6 botões de executar)")
+print("[Vortex Hub]   - UTILITIES (4 toggles ON/OFF)")
+print("[Vortex Hub] 2. Sistema completo e funcional!")
 print("[Vortex Hub] Use INSERT para abrir/fechar a interface!")

@@ -1,0 +1,31 @@
+-- [[ ANTI-AFK SYSTEM GLOBAL - ENABLE ]]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local VirtualUser = game:GetService("VirtualUser")
+
+-- Inicializa a estrutura global se não existir
+if not _G.GlobalAntiAFK then
+    _G.GlobalAntiAFK = {
+        Active = false,
+        Connection = nil
+    }
+end
+
+local AntiAFK = _G.GlobalAntiAFK
+
+function AntiAFK:Enable()
+    if self.Active then return end
+    
+    self.Active = true
+    
+    -- Conecta ao evento de IDLE (inatividade) do jogador
+    self.Connection = LocalPlayer.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+    
+    print("[Vortex Hub] Anti-AFK Global ATIVADO!")
+end
+
+-- Executa a ativação
+AntiAFK:Enable()
