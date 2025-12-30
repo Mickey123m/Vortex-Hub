@@ -1,0 +1,77 @@
+-- [[ BRAINROT FARM - ENABLE (PURSUIT MODE) ]]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+_G.States = _G.States or {}
+_G.States.Brainrot_Farm = true
+
+local function StartPursuitFarm()
+    task.spawn(function()
+        print("[Vortex] Iniciando Farm de Itens Móveis...")
+        
+        while _G.States.Brainrot_Farm do
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChild("Humanoid")
+            
+            local folder = workspace:FindFirstChild("Brainrots")
+            local collected = LocalPlayer:FindFirstChild("brainrotsCollected")
+            
+            if root and hum and hum.Health > 0 and folder and collected then
+                local initialPos = root.CFrame
+                local items = folder:GetChildren()
+                local farmouAlgo = false
+
+                for i = 1, #items do
+                    if not _G.States.Brainrot_Farm or hum.Health <= 0 then break end
+                    
+                    local item = items[i]
+                    
+                    -- Verifica se você ainda não coletou
+                    if not collected:FindFirstChild(item.Name) then
+                        local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
+                        
+                        if targetPart then
+                            farmouAlgo = true
+                            
+                            -- MODO PERSEGUIÇÃO: "Cola" no item por 0.5 segundos ou até coletar
+                            local timeout = 0
+                            repeat
+                                if not targetPart or not targetPart.Parent then break end
+                                
+                                -- Teleporta constantemente para a posição ATUAL do item (mesmo se ele andar)
+                                root.CFrame = targetPart.CFrame
+                                
+                                if firetouchinterest then
+                                    firetouchinterest(root, targetPart, 0)
+                                    firetouchinterest(root, targetPart, 1)
+                                end
+                                
+                                task.wait(0.05) -- Taxa de atualização da perseguição
+                                timeout = timeout + 0.05
+                            until timeout >= 0.5 or collected:FindFirstChild(item.Name) or not _G.States.Brainrot_Farm
+                        end
+                    end
+                end
+                
+                -- Retorno após limpar a lista atual
+                if farmouAlgo and root and hum.Health > 0 then
+                    root.CFrame = initialPos
+                end
+            end
+            task.wait(0.5) -- Intervalo para re-scanear o mapa
+        end
+    end)
+end
+
+-- Auto-reconexão ao resetar
+if _G.BrainrotMoveConn then _G.BrainrotMoveConn:Disconnect() end
+_G.BrainrotMoveConn = LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1.5)
+    if _G.States.Brainrot_Farm then
+        StartPursuitFarm()
+    end
+end)
+
+-- Execução Imediata
+StartPursuitFarm()

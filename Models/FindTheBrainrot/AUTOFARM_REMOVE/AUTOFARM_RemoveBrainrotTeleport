@@ -1,0 +1,9 @@
+-- [[ BRAINROT FARM - DISABLE ]]
+_G.States.Brainrot_Farm = false
+
+if _G.BrainrotMoveConn then
+    _G.BrainrotMoveConn:Disconnect()
+    _G.BrainrotMoveConn = nil
+end
+
+print("[Vortex] Farm de itens móveis desligado.")
