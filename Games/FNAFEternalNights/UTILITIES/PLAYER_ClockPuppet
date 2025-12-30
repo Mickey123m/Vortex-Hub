@@ -1,0 +1,60 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Criar Interface
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PuppetMusicGui"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999999
+screenGui.Parent = playerGui
+
+local musicLabel = Instance.new("TextLabel")
+musicLabel.Name = "MusicBoxLabel"
+musicLabel.Size = UDim2.new(0, 400, 0, 50)
+musicLabel.Position = UDim2.new(0.5, -200, 0.05, 0) -- Posição de Baixo (Abaixo do clock)
+musicLabel.BackgroundTransparency = 1
+musicLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+musicLabel.TextSize = 24
+musicLabel.Font = Enum.Font.SourceSansBold
+musicLabel.TextStrokeTransparency = 0
+musicLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+musicLabel.Parent = screenGui
+
+local function updateMusicBox()
+    pcall(function()
+        local gs = ReplicatedStorage:FindFirstChild("GameSettings")
+        local coisas = gs and gs:FindFirstChild("Coisas")
+        local puppet = coisas and coisas:FindFirstChild("Puppet")
+        local musicBoxValue = puppet and puppet:FindFirstChild("MusicBox")
+        
+        if musicBoxValue then
+            local val = math.floor(musicBoxValue.Value)
+            musicLabel.Text = "MUSIC BOX: " .. tostring(val) .. "%"
+            
+            -- Lógica de cores (Branco -> Amarelo -> Vermelho)
+            if val <= 20 then
+                musicLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+            elseif val <= 50 then
+                musicLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+            else
+                musicLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            end
+        else
+            musicLabel.Text = "MUSIC BOX: BUSCANDO..."
+        end
+    end)
+end
+
+local musicLoop = task.spawn(function()
+    while true do
+        updateMusicBox()
+        task.wait(0.5)
+    end
+end)
+
+-- Script para remover apenas a Music Box
+-- Para remover: game:GetService("Players").LocalPlayer.PlayerGui.PuppetMusicGui:Destroy()

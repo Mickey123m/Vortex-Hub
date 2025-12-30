@@ -1,0 +1,35 @@
+local Lighting = game:GetService("Lighting")
+
+-- Armazenar configurações originais
+if not _G.OriginalSettings then
+    _G.OriginalSettings = {
+        Ambient = Lighting.Ambient,
+        OutdoorAmbient = Lighting.OutdoorAmbient,
+        ColorShift_Bottom = Lighting.ColorShift_Bottom,
+        ColorShift_Top = Lighting.ColorShift_Top,
+        ExposureCompensation = Lighting.ExposureCompensation,
+        FogStart = Lighting.FogStart,
+        FogEnd = Lighting.FogEnd,
+        Brightness = Lighting.Brightness,
+        GlobalShadows = Lighting.GlobalShadows,
+    }
+end
+
+local function applySoftBright()
+    Lighting.Ambient = Color3.fromRGB(150, 150, 150) -- Cinza claro (não branco puro)
+    Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 150)
+    Lighting.Brightness = 1 -- Brilho padrão
+    Lighting.ExposureCompensation = 0.5 -- Aumento leve na exposição
+    Lighting.GlobalShadows = false -- Remove as sombras (essencial)
+    Lighting.FogEnd = 100000 -- Remove a neblina
+end
+
+-- Desconecta loop anterior se existir
+if _G.FullBrightLoop then
+    _G.FullBrightLoop:Disconnect()
+end
+
+applySoftBright()
+_G.FullBrightLoop = Lighting.Changed:Connect(applySoftBright)
+
+print("Full Brightness Suave Ativado.")

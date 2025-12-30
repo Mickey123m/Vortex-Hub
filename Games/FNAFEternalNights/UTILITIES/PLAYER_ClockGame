@@ -1,0 +1,51 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Criar Interface
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GameClockGui_RS"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999999
+screenGui.Parent = playerGui
+
+local timeLabel = Instance.new("TextLabel")
+timeLabel.Name = "ClockLabel"
+timeLabel.Size = UDim2.new(0, 400, 0, 50)
+timeLabel.Position = UDim2.new(0.5, -200, 0.01, 0) -- Posição de Cima
+timeLabel.BackgroundTransparency = 1
+timeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+timeLabel.TextSize = 28
+timeLabel.Font = Enum.Font.SourceSansBold
+timeLabel.TextStrokeTransparency = 0
+timeLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+timeLabel.Parent = screenGui
+
+local function updateClock()
+    pcall(function()
+        local gs = ReplicatedStorage:FindFirstChild("GameSettings")
+        local coisas = gs and gs:FindFirstChild("Coisas")
+        local ct = coisas and coisas:FindFirstChild("ClockTime")
+        local mins = ct and ct:FindFirstChild("Minutes")
+        local secs = ct and ct:FindFirstChild("Seconds")
+        
+        if mins and secs then
+            timeLabel.Text = string.format("%02d:%02d", mins.Value, secs.Value)
+        else
+            timeLabel.Text = "AGUARDANDO RELÓGIO..."
+        end
+    end)
+end
+
+local clockLoop = task.spawn(function()
+    while true do
+        updateClock()
+        task.wait(0.5)
+    end
+end)
+
+-- Script para remover apenas o Relógio
+-- Para remover: game:GetService("Players").LocalPlayer.PlayerGui.GameClockGui_RS:Destroy()

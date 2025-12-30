@@ -1,0 +1,37 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local velocidadeDesejada = 30 -- Altere aqui para a velocidade que quiser
+
+-- Função para forçar a velocidade
+local function forceSpeed()
+    local character = player.Character
+    if character then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            -- Força no Humanoid diretamente
+            humanoid.WalkSpeed = velocidadeDesejada
+            
+            -- Tenta forçar no valor da pasta Values também
+            local values = character:FindFirstChild("Values")
+            if values then
+                local speedVal = values:FindFirstChild("Speed")
+                if speedVal then
+                    speedVal.Value = velocidadeDesejada
+                end
+            end
+        end
+    end
+end
+
+-- Conecta ao Heartbeat para garantir que a velocidade seja aplicada 
+-- mesmo que o jogo tente resetar (roda toda vez que o frame renderiza)
+_G.SpeedEnabled = true
+_G.SpeedConnection = RunService.Heartbeat:Connect(function()
+    if _G.SpeedEnabled then
+        forceSpeed()
+    end
+end)
+
+print("Speed Hack Ativado: " .. velocidadeDesejada)

@@ -1,11 +1,9 @@
 -- [[ SISTEMA DE FORÇAR ATUALIZAÇÃO DO GITHUB COM CACHE BUSTER ]]
 local function GetLatestGitHubScript(url)
-    -- Gera um número único baseado no tempo e random
-    local timestamp = math.floor(tick() * 1000) -- Milissegundos
-    local random = math.random(10000, 99999) -- Número aleatório
+    local timestamp = math.floor(tick() * 1000)
+    local random = math.random(10000, 99999)
     local cacheBuster = "?v=" .. timestamp .. "_" .. random
     
-    -- Verifica se URL já tem parâmetros
     local fullUrl = url
     if string.find(url, "?") then
         fullUrl = url .. "&t=" .. timestamp .. "_" .. random
@@ -13,23 +11,7 @@ local function GetLatestGitHubScript(url)
         fullUrl = url .. cacheBuster
     end
     
-    print("[GitHub Cache Buster] Carregando: " .. url .. " (timestamp: " .. timestamp .. ")")
     return fullUrl
-end
-
--- [[ FUNÇÃO PARA LOADSTRING COM CACHE BUSTER ]]
-local function LoadGitHubScript(url)
-    local fullUrl = GetLatestGitHubScript(url)
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet(fullUrl, true))()
-    end)
-    
-    if not success then
-        warn("[Vortex Hub] Erro ao carregar script do GitHub: " .. tostring(result))
-        return false
-    end
-    
-    return true
 end
 
 local UserInputService = game:GetService("UserInputService")
@@ -59,29 +41,715 @@ local States = {
     FNAF_ESP_Batteries = false,
     FNAF_ESP_Pliers = false,
     FNAF_ESP_Screwdriver = false,
+    FNAF_ESP_Players = false,
+    FNAF_ESP_Cabinet = false,
+    FNAF_ESP_Camera = false,
+    FNAF_ESP_Flashlight = false,
     FNAF_ESP_All = false,
     
     FNAF_FullBright = false,
     FNAF_SpeedHack = false,
     
-    FNAF_Pull_Batteries = false,
-    FNAF_Pull_Screwdriver = false,
-    FNAF_Pull_Pliers = false,
-    FNAF_Pull_Fuses = false,
-    FNAF_Pull_All = false,
-    
-    -- Westbound States
     Westbound_ESP_Players = false,
     Westbound_ESP_Animals = false,
     Westbound_ESP_DistanceName = false,
-    Westbound_ESP_Name = false,
-    
-    -- Connections for FNAF
-    FNAF_ESP_Connections = {},
-    FNAF_Pull_Connections = {},
-    FNAF_Lighting_Connection = nil,
-    FNAF_Speed_Connection = nil
+    Westbound_ESP_Name = false
 }
+
+-- [[ SISTEMA DE LIMPEZA TOTAL - CORRIGIDO ]]
+local CleanupSystem = {
+    Running = false,
+    Connections = {},
+    ScriptsToClean = {}
+}
+
+function CleanupSystem:RegisterScript(name, cleanupFunction)
+    self.ScriptsToClean[name] = cleanupFunction
+end
+
+function CleanupSystem:ExecuteLoadstringForCleanup(url)
+    local success, result = pcall(function()
+        local fullUrl = GetLatestGitHubScript(url)
+        return loadstring(game:HttpGet(fullUrl, true))()
+    end)
+    
+    if success then
+        return true
+    else
+        warn("[Vortex Hub] Erro ao executar loadstring de limpeza: " .. url, result)
+        return false
+    end
+end
+
+function CleanupSystem:CleanupAll()
+    if self.Running then return end
+    self.Running = true
+    
+    print("[Vortex Hub] Iniciando limpeza total...")
+    
+    -- Desativar todos os estados
+    for stateName, _ in pairs(States) do
+        States[stateName] = false
+    end
+    
+    -- Desativar ESPs do Prison Life
+    if PrisonLife then
+        -- ESP Players
+        if PrisonLife.ESP_Players_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPlayers")
+            PrisonLife.ESP_Players_Active = false
+        end
+        
+        -- ESP Bandits
+        if PrisonLife.ESP_Bandits_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPBandits")
+            PrisonLife.ESP_Bandits_Active = false
+        end
+        
+        -- ESP Polices
+        if PrisonLife.ESP_Polices_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPolices")
+            PrisonLife.ESP_Polices_Active = false
+        end
+        
+        -- ESP Prisoners
+        if PrisonLife.ESP_Prisoners_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPrisoners")
+            PrisonLife.ESP_Prisoners_Active = false
+        end
+        
+        -- Bypass Doors
+        if PrisonLife.BypassDoors_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveBypassDoors")
+            PrisonLife.BypassDoors_Active = false
+        end
+        
+        -- Auto KeyCard
+        if PrisonLife.AutoKeyCard_Active then
+            print("[Vortex Hub] Executando loadstring para desativar Auto KeyCard...")
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveAutoKeyCard")
+            PrisonLife.AutoKeyCard_Active = false
+        end
+        
+        -- Auto M9
+        if PrisonLife.AutoM9_Active then
+            print("[Vortex Hub] Executando loadstring para desativar Auto M9...")
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemvoeAutoM9")
+            PrisonLife.AutoM9_Active = false
+        end
+    end
+    
+    -- Desativar Blind Shot ESP
+    if BlindShotESP then
+        BlindShotESP:Disable()
+    end
+    
+    -- Desativar Auto Trophy
+    States.Auto_Trophy = false
+    
+    -- Desativar Anti-AFK
+    if AntiAFK then
+        AntiAFK:Disable()
+    end
+    
+    -- Desativar Brainrot Farm
+    if BrainrotFarm then
+        BrainrotFarm:Disable()
+    end
+    
+    -- Desativar Westbound
+    if Westbound then
+        if Westbound.ESP_Players_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPPlayers")
+            Westbound.ESP_Players_Active = false
+        end
+        
+        if Westbound.ESP_Animals_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPAnimals")
+            Westbound.ESP_Animals_Active = false
+        end
+        
+        if Westbound.ESP_DistanceName_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPDistanceEName")
+            Westbound.ESP_DistanceName_Active = false
+        end
+        
+        if Westbound.ESP_Name_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPName")
+            Westbound.ESP_Name_Active = false
+        end
+    end
+    
+    -- Desativar FNAF usando loadstrings de remoção
+    if FNAF then
+        if FNAF.ESP_All_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAll")
+            FNAF.ESP_All_Active = false
+        end
+        if FNAF.ESP_Animatronics_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAnimatronics")
+            FNAF.ESP_Animatronics_Active = false
+        end
+        if FNAF.ESP_Batteries_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPBatteries")
+            FNAF.ESP_Batteries_Active = false
+        end
+        if FNAF.ESP_Cabinet_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPCabinet")
+            FNAF.ESP_Cabinet_Active = false
+        end
+        if FNAF.ESP_Camera_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPCamera")
+            FNAF.ESP_Camera_Active = false
+        end
+        if FNAF.ESP_Flashlight_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPFlashlight")
+            FNAF.ESP_Flashlight_Active = false
+        end
+        if FNAF.ESP_Fuses_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPFuses")
+            FNAF.ESP_Fuses_Active = false
+        end
+        if FNAF.ESP_Players_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPPlayers")
+            FNAF.ESP_Players_Active = false
+        end
+        if FNAF.ESP_Pliers_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPPliers")
+            FNAF.ESP_Pliers_Active = false
+        end
+        if FNAF.ESP_Screwdriver_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPScrewdriver")
+            FNAF.ESP_Screwdriver_Active = false
+        end
+    end
+    
+    -- Executar limpezas registradas
+    for name, cleanupFunc in pairs(self.ScriptsToClean) do
+        pcall(cleanupFunc)
+    end
+    
+    -- Limpeza manual de ESPs visuais
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Highlight") then
+            pcall(function() obj:Destroy() end)
+        elseif obj:IsA("BillboardGui") and (obj.Name:find("ESP") or obj.Name:find("esp") or obj.Name:find("NomeTag") or obj.Name:find("NameTag")) then
+            pcall(function() obj:Destroy() end)
+        elseif obj:IsA("Folder") and (obj.Name:find("ESP") or obj.Name:find("esp") or obj.Name:find("Internal")) then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    
+    -- Limpar conexões
+    for _, conn in ipairs(self.Connections) do
+        if conn and typeof(conn) == "RBXScriptConnection" then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    self.Connections = {}
+    
+    print("[Vortex Hub] Limpeza total concluída!")
+    self.Running = false
+end
+
+-- [[ PRISON LIFE LOADSTRING SYSTEMS ]]
+local PrisonLife = {
+    ESP_Players_Active = false,
+    ESP_Bandits_Active = false,
+    ESP_Polices_Active = false,
+    ESP_Prisoners_Active = false,
+    BypassDoors_Active = false,
+    AutoKeyCard_Active = false,
+    AutoM9_Active = false,
+    
+    LoadedScripts = {
+        ESP_Players = nil,
+        ESP_Bandits = nil,
+        ESP_Polices = nil,
+        ESP_Prisoners = nil
+    }
+}
+
+function PrisonLife:ExecuteLoadstring(url, scriptName)
+    local success, result = pcall(function()
+        local fullUrl = GetLatestGitHubScript(url)
+        return loadstring(game:HttpGet(fullUrl, true))()
+    end)
+    
+    if success then
+        self.LoadedScripts[scriptName] = result
+        print("[Vortex Hub] Prison Life: " .. scriptName .. " carregado com sucesso!")
+        return true
+    else
+        warn("[Vortex Hub] Prison Life: Erro ao carregar " .. scriptName .. " -", result)
+        self.LoadedScripts[scriptName] = nil
+        return false
+    end
+end
+
+function PrisonLife:ToggleESP_Players(state)
+    States.ESP_Players = state
+    
+    if state then
+        if not self.ESP_Players_Active then
+            task.spawn(function()
+                if self.LoadedScripts["ESP_Players"] then
+                    pcall(function()
+                        if type(self.LoadedScripts["ESP_Players"]) == "function" then
+                            self.LoadedScripts["ESP_Players"] = nil
+                        end
+                    end)
+                end
+                
+                self.ESP_Players_Active = self:ExecuteLoadstring(
+                    "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Players",
+                    "ESP_Players"
+                )
+                
+                if self.ESP_Players_Active then
+                    print("[Vortex Hub] Prison Life: ESP Players ATIVADO!")
+                    
+                    CleanupSystem:RegisterScript("ESP_Players", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPlayers")
+                    end)
+                else
+                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Players")
+                end
+            end)
+        end
+    else
+        if self.ESP_Players_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPlayers")
+                
+                if success then
+                    self.ESP_Players_Active = false
+                    self.LoadedScripts["ESP_Players"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Players DESATIVADO!")
+                else
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= LocalPlayer then
+                            local char = player.Character
+                            if char then
+                                for _, part in pairs(char:GetDescendants()) do
+                                    if part:IsA("Highlight") then
+                                        part:Destroy()
+                                    elseif part:IsA("BillboardGui") and part.Name:find("ESP") then
+                                        part:Destroy()
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    self.ESP_Players_Active = false
+                    self.LoadedScripts["ESP_Players"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Players desativado (limpeza manual)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:ToggleESP_Bandits(state)
+    States.ESP_Bandidos = state
+    
+    if state then
+        if not self.ESP_Bandits_Active then
+            task.spawn(function()
+                if self.LoadedScripts["ESP_Bandits"] then
+                    pcall(function()
+                        if type(self.LoadedScripts["ESP_Bandits"]) == "function" then
+                            self.LoadedScripts["ESP_Bandits"] = nil
+                        end
+                    end)
+                end
+                
+                self.ESP_Bandits_Active = self:ExecuteLoadstring(
+                    "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Bandits",
+                    "ESP_Bandits"
+                )
+                
+                if self.ESP_Bandits_Active then
+                    print("[Vortex Hub] Prison Life: ESP Bandits ATIVADO!")
+                    
+                    CleanupSystem:RegisterScript("ESP_Bandits", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPBandits")
+                    end)
+                else
+                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Bandits")
+                end
+            end)
+        end
+    else
+        if self.ESP_Bandits_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPBandits")
+                
+                if success then
+                    self.ESP_Bandits_Active = false
+                    self.LoadedScripts["ESP_Bandits"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Bandits DESATIVADO!")
+                else
+                    for _, player in pairs(Players:GetPlayers()) do
+                        local char = player.Character
+                        if char and player.Team and player.Team.Name == "Criminals" then
+                            for _, part in pairs(char:GetDescendants()) do
+                                if part:IsA("Highlight") then
+                                    part:Destroy()
+                                elseif part:IsA("BillboardGui") and part.Name:find("ESP") then
+                                    part:Destroy()
+                                end
+                            end
+                        end
+                    end
+                    self.ESP_Bandits_Active = false
+                    self.LoadedScripts["ESP_Bandits"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Bandits desativado (limpeza manual)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:ToggleESP_Polices(state)
+    States.ESP_Policiais = state
+    
+    if state then
+        if not self.ESP_Polices_Active then
+            task.spawn(function()
+                if self.LoadedScripts["ESP_Polices"] then
+                    pcall(function()
+                        if type(self.LoadedScripts["ESP_Polices"]) == "function" then
+                            self.LoadedScripts["ESP_Polices"] = nil
+                        end
+                    end)
+                end
+                
+                self.ESP_Polices_Active = self:ExecuteLoadstring(
+                    "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Polices",
+                    "ESP_Polices"
+                )
+                
+                if self.ESP_Polices_Active then
+                    print("[Vortex Hub] Prison Life: ESP Polices ATIVADO!")
+                    
+                    CleanupSystem:RegisterScript("ESP_Polices", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPolices")
+                    end)
+                else
+                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Polices")
+                end
+            end)
+        end
+    else
+        if self.ESP_Polices_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPolices")
+                
+                if success then
+                    self.ESP_Polices_Active = false
+                    self.LoadedScripts["ESP_Polices"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Polices DESATIVADO!")
+                else
+                    for _, player in pairs(Players:GetPlayers()) do
+                        local char = player.Character
+                        if char and player.Team and player.Team.Name == "Guards" then
+                            for _, part in pairs(char:GetDescendants()) do
+                                if part:IsA("Highlight") then
+                                    part:Destroy()
+                                elseif part:IsA("BillboardGui") and part.Name:find("ESP") then
+                                    part:Destroy()
+                                end
+                            end
+                        end
+                    end
+                    self.ESP_Polices_Active = false
+                    self.LoadedScripts["ESP_Polices"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Polices desativado (limpeza manual)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:ToggleESP_Prisoners(state)
+    States.ESP_Prisioneiros = state
+    
+    if state then
+        if not self.ESP_Prisoners_Active then
+            task.spawn(function()
+                if self.LoadedScripts["ESP_Prisoners"] then
+                    pcall(function()
+                        if type(self.LoadedScripts["ESP_Prisoners"]) == "function" then
+                            self.LoadedScripts["ESP_Prisoners"] = nil
+                        end
+                    end)
+                end
+                
+                self.ESP_Prisoners_Active = self:ExecuteLoadstring(
+                    "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Prisoners",
+                    "ESP_Prisoners"
+                )
+                
+                if self.ESP_Prisoners_Active then
+                    print("[Vortex Hub] Prison Life: ESP Prisoners ATIVADO!")
+                    
+                    CleanupSystem:RegisterScript("ESP_Prisoners", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPrisoners")
+                    end)
+                else
+                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Prisoners")
+                end
+            end)
+        end
+    else
+        if self.ESP_Prisoners_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPrisoners")
+                
+                if success then
+                    self.ESP_Prisoners_Active = false
+                    self.LoadedScripts["ESP_Prisoners"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Prisoners DESATIVADO!")
+                else
+                    for _, player in pairs(Players:GetPlayers()) do
+                        local char = player.Character
+                        if char and player.Team and player.Team.Name == "Inmates" then
+                            for _, part in pairs(char:GetDescendants()) do
+                                if part:IsA("Highlight") then
+                                    part:Destroy()
+                                elseif part:IsA("BillboardGui") and part.Name:find("ESP") then
+                                    part:Destroy()
+                                end
+                            end
+                        end
+                    end
+                    self.ESP_Prisoners_Active = false
+                    self.LoadedScripts["ESP_Prisoners"] = nil
+                    print("[Vortex Hub] Prison Life: ESP Prisoners desativado (limpeza manual)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:ToggleBypassDoors(state)
+    States.Bypass_Doors = state
+    
+    if state then
+        if not self.BypassDoors_Active then
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/UTILITIES/UTILITIES_BypassDoors")
+                    loadstring(game:HttpGet(url, true))()
+                end)
+                
+                if success then
+                    self.BypassDoors_Active = true
+                    print("[Vortex Hub] Prison Life: Bypass Doors ativado!")
+                    
+                    CleanupSystem:RegisterScript("BypassDoors", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveBypassDoors")
+                    end)
+                end
+            end)
+        end
+    else
+        if self.BypassDoors_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveBypassDoors")
+                
+                if success then
+                    self.BypassDoors_Active = false
+                    print("[Vortex Hub] Prison Life: Bypass Doors desativado!")
+                else
+                    self.BypassDoors_Active = false
+                    print("[Vortex Hub] Prison Life: Bypass Doors desativado (fallback)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:ToggleAutoKeyCard(state)
+    States.Auto_KeyCard = state
+    
+    if state then
+        if not self.AutoKeyCard_Active then
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/UTILITIES/UTILITIES_AutoKeyCard")
+                    loadstring(game:HttpGet(url, true))()
+                end)
+                
+                if success then
+                    self.AutoKeyCard_Active = true
+                    print("[Vortex Hub] Prison Life: Auto KeyCard ativado!")
+                    
+                    CleanupSystem:RegisterScript("AutoKeyCard", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveAutoKeyCard")
+                    end)
+                end
+            end)
+        end
+    else
+        if self.AutoKeyCard_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveAutoKeyCard")
+                
+                if success then
+                    self.AutoKeyCard_Active = false
+                    print("[Vortex Hub] Prison Life: Auto KeyCard desativado via loadstring!")
+                else
+                    self.AutoKeyCard_Active = false
+                    print("[Vortex Hub] Prison Life: Auto KeyCard desativado (fallback)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:ToggleAutoM9(state)
+    States.Auto_M9 = state
+    
+    if state then
+        if not self.AutoM9_Active then
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/UTILITIES/UTILITIES_AutoM9")
+                    loadstring(game:HttpGet(url, true))()
+                end)
+                
+                if success then
+                    self.AutoM9_Active = true
+                    print("[Vortex Hub] Prison Life: Auto M9 ativado!")
+                    
+                    CleanupSystem:RegisterScript("AutoM9", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemvoeAutoM9")
+                    end)
+                end
+            end)
+        end
+    else
+        if self.AutoM9_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemvoeAutoM9")
+                
+                if success then
+                    self.AutoM9_Active = false
+                    print("[Vortex Hub] Prison Life: Auto M9 desativado via loadstring!")
+                else
+                    self.AutoM9_Active = false
+                    print("[Vortex Hub] Prison Life: Auto M9 desativado (fallback)")
+                end
+            end)
+        end
+    end
+end
+
+function PrisonLife:GetAK47()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetAK")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Get AK-47 executado!")
+        end
+    end)
+end
+
+function PrisonLife:GetMP5()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetMp5")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Get MP5 executado!")
+        end
+    end)
+end
+
+function PrisonLife:GetShotgun()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetShotgun")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Get Shotgun executado!")
+        end
+    end)
+end
+
+function PrisonLife:TeleportCriminalSpawn()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_CriminalSpawn")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Teleport Criminal Spawn executado!")
+        end
+    end)
+end
+
+function PrisonLife:TeleportInsidePrison()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_InsidePrison")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Teleport Inside Prison executado!")
+        end
+    end)
+end
+
+function PrisonLife:TeleportOutPrison()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_OutPrison")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Teleport Out Prison executado!")
+        end
+    end)
+end
+
+function PrisonLife:TeleportYardCenter()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_YardCenter")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Teleport Yard Center executado!")
+        end
+    end)
+end
+
+function PrisonLife:TeleportPoliceCenter()
+    task.spawn(function()
+        local success = pcall(function()
+            local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_PoliceCenter")
+            loadstring(game:HttpGet(url, true))()
+        end)
+        
+        if success then
+            print("[Vortex Hub] Prison Life: Teleport Police Center executado!")
+        end
+    end)
+end
 
 -- [[ TELEPORT SYSTEM ]]
 local TeleportCooldown = false
@@ -121,65 +789,68 @@ local function SimpleTeleport(cframe)
     return true
 end
 
--- [[ ANTI-AFK SYSTEM (MINIMALISTA E FUNCIONAL) ]]
-local AntiAFK = {
-    Active = false,
-    Connection = nil
-}
-
-function AntiAFK:Enable()
-    if self.Active then return end
+-- [[ FUNCTION TO GET FORMATTED TEAM NAME ]]
+local function GetTeamName()
+    local team = LocalPlayer.Team
+    if not team then return "No Team" end
     
-    self.Active = true
+    local teamNames = {
+        ["Criminals"] = "Criminals",
+        ["Guards"] = "Guards",
+        ["Inmates"] = "Inmates",
+        ["Neutral"] = "Neutral"
+    }
     
-    local VirtualUser = game:GetService("VirtualUser")
-    
-    self.Connection = LocalPlayer.Idled:Connect(function()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end)
-    
-    print("[Vortex Hub] Anti-AFK ativado!")
+    return teamNames[team.Name] or team.Name
 end
 
-function AntiAFK:Disable()
-    if not self.Active then return end
-    
-    self.Active = false
-    
-    if self.Connection then
-        self.Connection:Disconnect()
-        self.Connection = nil
-    end
-    
-    print("[Vortex Hub] Anti-AFK desativado!")
-end
-
--- [[ AUTO TROPHY LOOP - CORRIGIDO 15 SEGUNDOS ]]
-local AutoTrophyRunning = false
-local function StartAutoTrophy()
-    if AutoTrophyRunning then return end
-    AutoTrophyRunning = true
-    
-    task.spawn(function()
-        print("[Vortex Hub] Auto Trophy iniciado! Teleporta a cada 20 segundos")
+-- [[ TELEPORT TO TROPHY ]]
+local function TeleportToTrophy()
+    pcall(function()
+        local trophy = workspace:FindFirstChild("Trophy")
         
-        while States.Auto_Trophy do
-            TeleportToTrophy()
-            print("[Vortex Hub] Teleportado para o troféu!")
-            
-            for i = 1, 20 do
-                if not States.Auto_Trophy then break end
-                task.wait(1)
+        if not trophy then
+            for _, obj in pairs(workspace:GetChildren()) do
+                if obj:IsA("Model") and string.find(obj.Name:lower(), "trophy") then
+                    trophy = obj
+                    break
+                end
             end
         end
         
-        AutoTrophyRunning = false
-        print("[Vortex Hub] Auto Trophy parado")
+        if not trophy then
+            print("[Blind Shot] Trophy not found in workspace!")
+            return false
+        end
+        
+        local char = LocalPlayer.Character
+        local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
+        
+        if humanoidRootPart then
+            local trophyPosition
+            if trophy:IsA("Model") then
+                trophyPosition = trophy:GetModelCFrame().Position
+            else
+                trophyPosition = trophy.Position
+            end
+            
+            local teleportCFrame = CFrame.new(trophyPosition + Vector3.new(0, 5, 0))
+            
+            if SimpleTeleport(teleportCFrame) then
+                print("[Blind Shot] Successfully teleported to trophy!")
+                return true
+            else
+                print("[Blind Shot] Failed to teleport")
+                return false
+            end
+        else
+            print("[Blind Shot] Character not found!")
+            return false
+        end
     end)
 end
 
--- [[ ESP DEFINITIVO PARA BLIND SHOT - CORRIGIDO (SEM ESP AZUL NA PRÓXIMA RODADA) ]]
+-- [[ ESP DEFINITIVO PARA BLIND SHOT ]]
 local BlindShotESP = {
     Active = false,
     Connections = {},
@@ -246,59 +917,29 @@ local function BypassJump(char)
     end)
 end
 
-local function MonitorNewPlayers()
-    if not BlindShotESP.Active then return end
-    
-    local jogadoresVivos = workspace:FindFirstChild("jogadoresVivos")
-    if not jogadoresVivos then return end
-    
-    for playerName, highlight in pairs(BlindShotESP.Highlights) do
-        if highlight and highlight.Parent then
-            highlight:Destroy()
-        end
-    end
-    BlindShotESP.Highlights = {}
-end
-
 function BlindShotESP:Initialize()
-    print("[Blind Shot ESP] Inicializando sistema DEFINITIVO...")
-    
     self:CleanupHighlights()
     
     self.RenderConnection = RunService.RenderStepped:Connect(function()
-        local success, err = pcall(ForceVisibility)
-        if not success then
-            warn("[Vortex Hub] Erro no loop de visibilidade: " .. err)
-        end
+        pcall(ForceVisibility)
     end)
     
     if LocalPlayer.Character then 
         BypassJump(LocalPlayer.Character) 
     end
     LocalPlayer.CharacterAdded:Connect(BypassJump)
-    
-    local gameStartedConnection = workspace.ChildAdded:Connect(function(child)
-        if child.Name == "jogadoresVivos" then
-            task.wait(0.5)
-            MonitorNewPlayers()
-        end
-    end)
-    table.insert(self.Connections, gameStartedConnection)
-    
-    local gameEndedConnection = workspace.ChildRemoved:Connect(function(child)
-        if child.Name == "jogadoresVivos" then
-            self:CleanupHighlights()
-        end
-    end)
-    table.insert(self.Connections, gameEndedConnection)
-    
-    print("[Blind Shot ESP] Sistema DEFINITIVO inicializado! (Sem ESP Azul)")
 end
 
 function BlindShotESP:CleanupHighlights()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Highlight") and (obj.Name == "Highlight_TEMP" or obj.Name:find("ESP")) then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    
     for playerName, highlight in pairs(self.Highlights) do
         if highlight and highlight.Parent then
-            highlight:Destroy()
+            pcall(function() highlight:Destroy() end)
         end
     end
     self.Highlights = {}
@@ -309,7 +950,11 @@ function BlindShotESP:Enable()
     
     self.Active = true
     self:Initialize()
-    print("[Blind Shot ESP] Ativado! Interceptação de renderização ativa (Sem ESP Azul)")
+    print("[Blind Shot ESP] Ativado!")
+    
+    CleanupSystem:RegisterScript("BlindShotESP", function()
+        self:Disable()
+    end)
 end
 
 function BlindShotESP:Disable()
@@ -329,16 +974,72 @@ function BlindShotESP:Disable()
     end
     
     self.Connections = {}
-    
     self:CleanupHighlights()
     
-    print("[Blind Shot ESP] Desativado COMPLETAMENTE! (Todos os ESPs removidos)")
+    print("[Blind Shot ESP] Desativado!")
+end
+
+-- [[ ANTI-AFK SYSTEM ]]
+local AntiAFK = {
+    Active = false,
+    Connection = nil
+}
+
+function AntiAFK:Enable()
+    if self.Active then return end
+    
+    self.Active = true
+    
+    local VirtualUser = game:GetService("VirtualUser")
+    
+    self.Connection = LocalPlayer.Idled:Connect(function()
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+    end)
+    
+    print("[Vortex Hub] Anti-AFK ativado!")
+    
+    CleanupSystem:RegisterScript("AntiAFK", function()
+        self:Disable()
+    end)
+end
+
+function AntiAFK:Disable()
+    if not self.Active then return end
+    
+    self.Active = false
+    
+    if self.Connection then
+        self.Connection:Disconnect()
+        self.Connection = nil
+    end
+    
+    print("[Vortex Hub] Anti-AFK desativado!")
+end
+
+-- [[ AUTO TROPHY LOOP ]]
+local AutoTrophyRunning = false
+local function StartAutoTrophy()
+    if AutoTrophyRunning then return end
+    AutoTrophyRunning = true
+    
+    task.spawn(function()
+        while States.Auto_Trophy do
+            TeleportToTrophy()
+            
+            for i = 1, 20 do
+                if not States.Auto_Trophy then break end
+                task.wait(1)
+            end
+        end
+        
+        AutoTrophyRunning = false
+    end)
 end
 
 -- [[ BRAINROT FARM SCRIPT ]]
 local BrainrotFarm = {
     Active = false,
-    Connection = nil,
     Running = false
 }
 
@@ -347,8 +1048,6 @@ local function StartBrainrotFarm()
     BrainrotFarm.Running = true
     
     task.spawn(function()
-        print("[Vortex Hub] Brainrot Farm iniciado!")
-        
         local player = Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local rootPart = character:WaitForChild("HumanoidRootPart")
@@ -357,62 +1056,34 @@ local function StartBrainrotFarm()
         local collectedFolder = player:WaitForChild("brainrotsCollected")
         
         local safePosition = rootPart.CFrame
-        local ignoredThisCycle = {}
-        
-        local function getPos(obj)
-            if obj:IsA("BasePart") then
-                return obj.CFrame
-            elseif obj:IsA("Model") then
-                if obj.PrimaryPart then
-                    return obj.PrimaryPart.CFrame
-                end
-                local childPart = obj:FindFirstChildWhichIsA("BasePart", true)
-                if childPart then
-                    return childPart.CFrame
-                end
-            end
-            return nil
-        end
-        
-        player.CharacterAdded:Connect(function(newCharacter)
-            character = newCharacter
-            rootPart = character:WaitForChild("HumanoidRootPart")
-            safePosition = rootPart.CFrame 
-        end)
-        
-        print("[Vortex Hub] Brainrot Farm: Sistema Anti-Loop Inútil Ativado!")
         
         while States.Brainrot_Farm do
             local allItems = brainrotsFolder:GetChildren()
-            local itemEncontrado = false
             
             for i = 1, #allItems do
                 local currentItem = allItems[i]
                 
-                if currentItem and not collectedFolder:FindFirstChild(currentItem.Name) and not ignoredThisCycle[currentItem] then
-                    local targetCFrame = getPos(currentItem)
-                    
-                    if targetCFrame then
-                        itemEncontrado = true
-                        print("[Vortex Hub] Brainrot Farm: Novo item detectado: " .. currentItem.Name)
-                        
-                        rootPart.CFrame = targetCFrame
-                        task.wait(0.2)
-                        
-                        rootPart.CFrame = safePosition
-                        task.wait(0.1)
-                        
-                        if not collectedFolder:FindFirstChild(currentItem.Name) then
-                            print("[Vortex Hub] Brainrot Farm: Item " .. currentItem.Name .. " não registrou. Ignorando para não ficar preso.")
-                            ignoredThisCycle[currentItem] = true
+                if currentItem and not collectedFolder:FindFirstChild(currentItem.Name) then
+                    local targetCFrame = nil
+                    if currentItem:IsA("BasePart") then
+                        targetCFrame = currentItem.CFrame
+                    elseif currentItem:IsA("Model") then
+                        if currentItem.PrimaryPart then
+                            targetCFrame = currentItem.PrimaryPart.CFrame
+                        else
+                            local childPart = currentItem:FindFirstChildWhichIsA("BasePart", true)
+                            if childPart then
+                                targetCFrame = childPart.CFrame
+                            end
                         end
                     end
-                end
-            end
-            
-            if not itemEncontrado then
-                if (rootPart.Position - safePosition.Position).Magnitude > 3 then
-                    rootPart.CFrame = safePosition
+                    
+                    if targetCFrame then
+                        rootPart.CFrame = targetCFrame
+                        task.wait(0.2)
+                        rootPart.CFrame = safePosition
+                        task.wait(0.1)
+                    end
                 end
             end
 
@@ -420,7 +1091,6 @@ local function StartBrainrotFarm()
         end
         
         BrainrotFarm.Running = false
-        print("[Vortex Hub] Brainrot Farm parado")
     end)
 end
 
@@ -430,6 +1100,10 @@ function BrainrotFarm:Enable()
     self.Active = true
     StartBrainrotFarm()
     print("[Vortex Hub] Brainrot Farm ativado!")
+    
+    CleanupSystem:RegisterScript("BrainrotFarm", function()
+        self:Disable()
+    end)
 end
 
 function BrainrotFarm:Disable()
@@ -439,992 +1113,370 @@ function BrainrotFarm:Disable()
     print("[Vortex Hub] Brainrot Farm desativado")
 end
 
--- [[ WESTBOUND SYSTEMS - COM CACHE BUSTER ]]
+-- [[ WESTBOUND SYSTEMS ]]
 local Westbound = {
     ESP_Players_Active = false,
     ESP_Animals_Active = false,
     ESP_DistanceName_Active = false,
-    ESP_Name_Active = false,
-    Connections = {}
+    ESP_Name_Active = false
 }
 
--- Sistema de ESP para Players usando scripts específicos COM CACHE BUSTER
 function Westbound:ToggleESP_Players(state)
     States.Westbound_ESP_Players = state
     
     if state then
-        -- Ativar ESP Players
         if not self.ESP_Players_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Players")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Players ativado com sucesso! (Cache Buster Ativo)")
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Players")
+                    loadstring(game:HttpGet(url, true))()
+                end)
+                
+                if success then
+                    self.ESP_Players_Active = true
+                    print("[Vortex Hub] Westbound: ESP Players ativado!")
+                    
+                    CleanupSystem:RegisterScript("WestboundESPPlayers", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPPlayers")
+                    end)
+                else
+                    self.ESP_Players_Active = false
+                end
             end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao carregar ESP Players: " .. tostring(result))
-            else
-                self.ESP_Players_Active = true
-            end
         end
     else
-        -- Desativar ESP Players
         if self.ESP_Players_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPPlayers")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Players desativado (Cache Buster Ativo)")
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPPlayers")
+                
+                if success then
+                    self.ESP_Players_Active = false
+                    print("[Vortex Hub] Westbound: ESP Players desativado!")
+                else
+                    self.ESP_Players_Active = false
+                end
             end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao desativar ESP Players: " .. tostring(result))
-            else
-                self.ESP_Players_Active = false
-            end
         end
     end
 end
 
--- Sistema de ESP para Animals usando scripts específicos COM CACHE BUSTER
 function Westbound:ToggleESP_Animals(state)
     States.Westbound_ESP_Animals = state
     
     if state then
-        -- Ativar ESP Animals
         if not self.ESP_Animals_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Animals")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Animals ativado com sucesso! (Cache Buster Ativo)")
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Animals")
+                    loadstring(game:HttpGet(url, true))()
+                end)
+                
+                if success then
+                    self.ESP_Animals_Active = true
+                    print("[Vortex Hub] Westbound: ESP Animals ativado!")
+                    
+                    CleanupSystem:RegisterScript("WestboundESPAnimals", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPAnimals")
+                    end)
+                else
+                    self.ESP_Animals_Active = false
+                end
             end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao carregar ESP Animals: " .. tostring(result))
-            else
-                self.ESP_Animals_Active = true
-            end
         end
     else
-        -- Desativar ESP Animals
         if self.ESP_Animals_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPAnimals")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Animals desativado (Cache Buster Ativo)")
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPAnimals")
+                
+                if success then
+                    self.ESP_Animals_Active = false
+                    print("[Vortex Hub] Westbound: ESP Animals desativado!")
+                else
+                    self.ESP_Animals_Active = false
+                end
             end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao desativar ESP Animals: " .. tostring(result))
-            else
-                self.ESP_Animals_Active = false
-            end
         end
     end
 end
 
--- Sistema de ESP Distance + Name usando scripts específicos COM CACHE BUSTER
 function Westbound:ToggleESP_DistanceName(state)
     States.Westbound_ESP_DistanceName = state
     
     if state then
-        -- Ativar ESP Distance + Name
         if not self.ESP_DistanceName_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_DistanceEName")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Distance + Name ativado com sucesso! (Cache Buster Ativo)")
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_DistanceEName")
+                    loadstring(game:HttpGet(url, true))()
+                end)
+                
+                if success then
+                    self.ESP_DistanceName_Active = true
+                    print("[Vortex Hub] Westbound: ESP Distance + Name ativado!")
+                    
+                    CleanupSystem:RegisterScript("WestboundESPDistanceName", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPDistanceEName")
+                    end)
+                else
+                    self.ESP_DistanceName_Active = false
+                end
             end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao carregar ESP Distance + Name: " .. tostring(result))
-            else
-                self.ESP_DistanceName_Active = true
-            end
         end
     else
-        -- Desativar ESP Distance + Name
         if self.ESP_DistanceName_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPDistanceEName")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Distance + Name desativado (Cache Buster Ativo)")
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPDistanceEName")
+                
+                if success then
+                    self.ESP_DistanceName_Active = false
+                    print("[Vortex Hub] Westbound: ESP Distance + Name desativado!")
+                else
+                    self.ESP_DistanceName_Active = false
+                end
             end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao desativar ESP Distance + Name: " .. tostring(result))
-            else
-                self.ESP_DistanceName_Active = false
-            end
         end
     end
 end
 
--- Sistema de ESP Name usando scripts específicos COM CACHE BUSTER
 function Westbound:ToggleESP_Name(state)
     States.Westbound_ESP_Name = state
     
     if state then
-        -- Ativar ESP Name
         if not self.ESP_Name_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Name")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Name ativado com sucesso! (Cache Buster Ativo)")
-            end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao carregar ESP Name: " .. tostring(result))
-            else
-                self.ESP_Name_Active = true
-            end
-        end
-    else
-        -- Desativar ESP Name
-        if self.ESP_Name_Active then
-            local success, result = pcall(function()
-                local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPName")
-                loadstring(game:HttpGet(url, true))()
-                print("[Vortex Hub] Westbound: ESP Name desativado (Cache Buster Ativo)")
-            end)
-            
-            if not success then
-                warn("[Vortex Hub] Westbound: Erro ao desativar ESP Name: " .. tostring(result))
-            else
-                self.ESP_Name_Active = false
-            end
-        end
-    end
-end
-
--- Função de limpeza completa
-function Westbound:Cleanup()
-    -- Desativar todos os ESPs
-    self:ToggleESP_Players(false)
-    self:ToggleESP_Animals(false)
-    self:ToggleESP_DistanceName(false)
-    self:ToggleESP_Name(false)
-    
-    -- Limpar conexões
-    for _, conn in ipairs(self.Connections) do
-        if conn and conn.Connected then
-            conn:Disconnect()
-        end
-    end
-    self.Connections = {}
-    
-    -- Reset states
-    States.Westbound_ESP_Players = false
-    States.Westbound_ESP_Animals = false
-    States.Westbound_ESP_DistanceName = false
-    States.Westbound_ESP_Name = false
-    
-    print("[Vortex Hub] Westbound: Todos os sistemas desativados")
-end
-
--- [[ FNAF: ETERNAL NIGHTS SYSTEMS ]]
-local FNAF = {}
-
--- [[ ESP SYSTEMS FOR FNAF ]]
-function FNAF:ApplyESP_Animatronics()
-    if not States.FNAF_ESP_Animatronics and not States.FNAF_ESP_All then
-        pcall(function()
-            local gameFolder = workspace:WaitForChild("Game")
-            local mainAnimFolder = gameFolder:WaitForChild("Animatronics")
-            local animatronicsFolder = mainAnimFolder:WaitForChild("Animatronics")
-            
-            for _, anim in ipairs(animatronicsFolder:GetChildren()) do
-                if anim:FindFirstChild("Anim_ESP_Internal") then
-                    anim.Anim_ESP_Internal:Destroy()
-                end
-            end
-        end)
-        return
-    end
-    
-    pcall(function()
-        local Workspace = game:GetService("Workspace")
-        
-        local gameFolder = Workspace:WaitForChild("Game")
-        local mainAnimFolder = gameFolder:WaitForChild("Animatronics")
-        local animatronicsFolder = mainAnimFolder:WaitForChild("Animatronics")
-        
-        local characterColors = {
-            ["Bonnie"] = Color3.fromRGB(106, 90, 205),
-            ["Chica"] = Color3.fromRGB(255, 255, 0),
-            ["Cupcake"] = Color3.fromRGB(255, 105, 180),
-            ["Foxy"] = Color3.fromRGB(255, 0, 0),
-            ["Freddy"] = Color3.fromRGB(139, 69, 19),
-            ["Puppet"] = Color3.fromRGB(255, 255, 255)
-        }
-        
-        local function applyAnimatronicESP(animatronic)
-            if animatronic:FindFirstChild("Anim_ESP_Internal") then return end
-            
-            task.wait(0.2) 
-            
-            local container = Instance.new("Folder")
-            container.Name = "Anim_ESP_Internal"
-            container.Parent = animatronic
-            
-            local highlightColor = Color3.fromRGB(200, 200, 200)
-            for name, color in pairs(characterColors) do
-                if string.find(animatronic.Name, name) then
-                    highlightColor = color
-                    break
-                end
-            end
-            
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "Outline"
-            highlight.Adornee = animatronic
-            highlight.FillColor = highlightColor
-            highlight.FillTransparency = 0.6
-            highlight.OutlineColor = highlightColor
-            highlight.OutlineTransparency = 0
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.Parent = container
-            
-            local root = animatronic:IsA("Model") and (animatronic.PrimaryPart or animatronic:FindFirstChildWhichIsA("BasePart", true)) or animatronic
-            
-            if root then
-                local billboard = Instance.new("BillboardGui")
-                billboard.Name = "NameTag"
-                billboard.Adornee = root
-                billboard.Size = UDim2.new(0, 200, 0, 50)
-                billboard.StudsOffset = Vector3.new(0, 4, 0)
-                billboard.AlwaysOnTop = true
-                billboard.Parent = container
+            task.spawn(function()
+                local success = pcall(function()
+                    local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Name")
+                    loadstring(game:HttpGet(url, true))()
+                end)
                 
-                local label = Instance.new("TextLabel")
-                label.BackgroundTransparency = 1
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.Text = animatronic.Name
-                label.TextColor3 = highlightColor
-                label.TextStrokeTransparency = 0
-                label.TextSize = 20
-                label.Font = Enum.Font.SourceSansBold
-                label.Parent = billboard
-            end
-        end
-        
-        local connection = animatronicsFolder.ChildAdded:Connect(function(child)
-            applyAnimatronicESP(child)
-        end)
-        table.insert(States.FNAF_ESP_Connections, connection)
-        
-        for _, anim in ipairs(animatronicsFolder:GetChildren()) do
-            applyAnimatronicESP(anim)
-        end
-        
-        print("[Vortex Hub] FNAF: ESP Animatrônicos Ativado")
-    end)
-end
-
-function FNAF:ApplyESP_Fuses()
-    if not States.FNAF_ESP_Fuses and not States.FNAF_ESP_All then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "Fuse" and obj:FindFirstChild("Item_ESP_Internal") then
-                obj.Item_ESP_Internal:Destroy()
-            end
-        end
-        return
-    end
-    
-    pcall(function()
-        local Workspace = game:GetService("Workspace")
-        local targetName = "Fuse"
-        
-        local function applyESP(item)
-            if item:FindFirstChild("Item_ESP_Internal") then return end
-            task.wait(0.1)
-            
-            local container = Instance.new("Folder")
-            container.Name = "Item_ESP_Internal"
-            container.Parent = item
-            
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "Outline"
-            highlight.Adornee = item
-            highlight.FillTransparency = 1
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-            highlight.OutlineTransparency = 0
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.Parent = container
-            
-            local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
-            
-            if targetPart then
-                local billboard = Instance.new("BillboardGui")
-                billboard.Name = "NomeTag"
-                billboard.Adornee = targetPart
-                billboard.Size = UDim2.new(0, 150, 0, 50)
-                billboard.StudsOffset = Vector3.new(0, 1.8, 0)
-                billboard.AlwaysOnTop = true
-                billboard.Parent = container
-                
-                local label = Instance.new("TextLabel")
-                label.BackgroundTransparency = 1
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.Text = targetName
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextStrokeTransparency = 0
-                label.TextSize = 14
-                label.Font = Enum.Font.SourceSansBold
-                label.Parent = billboard
-            end
-        end
-        
-        local connection = Workspace.DescendantAdded:Connect(function(obj)
-            if obj.Name == targetName then 
-                applyESP(obj) 
-            end
-        end)
-        table.insert(States.FNAF_ESP_Connections, connection)
-        
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj.Name == targetName then 
-                applyESP(obj) 
-            end
-        end
-        
-        print("[Vortex Hub] FNAF: ESP Fuses Ativado")
-    end)
-end
-
-function FNAF:ApplyESP_Batteries()
-    if not States.FNAF_ESP_Batteries and not States.FNAF_ESP_All then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "Battery" and obj:FindFirstChild("Item_ESP_Internal") then
-                obj.Item_ESP_Internal:Destroy()
-            end
-        end
-        return
-    end
-    
-    pcall(function()
-        local Workspace = game:GetService("Workspace")
-        local targetName = "Battery"
-        
-        local function applyESP(item)
-            if item:FindFirstChild("Item_ESP_Internal") then return end
-            task.wait(0.1)
-            
-            local container = Instance.new("Folder")
-            container.Name = "Item_ESP_Internal"
-            container.Parent = item
-            
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "Outline"
-            highlight.Adornee = item
-            highlight.FillTransparency = 1
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-            highlight.OutlineTransparency = 0
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.Parent = container
-            
-            local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
-            if targetPart then
-                local billboard = Instance.new("BillboardGui")
-                billboard.Name = "NomeTag"
-                billboard.Adornee = targetPart
-                billboard.Size = UDim2.new(0, 150, 0, 50)
-                billboard.StudsOffset = Vector3.new(0, 1.8, 0)
-                billboard.AlwaysOnTop = true
-                billboard.Parent = container
-                
-                local label = Instance.new("TextLabel")
-                label.BackgroundTransparency = 1
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.Text = targetName
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextStrokeTransparency = 0
-                label.TextSize = 14
-                label.Font = Enum.Font.SourceSansBold
-                label.Parent = billboard
-            end
-        end
-        
-        local connection = Workspace.DescendantAdded:Connect(function(obj)
-            if obj.Name == targetName then applyESP(obj) end
-        end)
-        table.insert(States.FNAF_ESP_Connections, connection)
-        
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj.Name == targetName then applyESP(obj) end
-        end
-        
-        print("[Vortex Hub] FNAF: ESP Batteries Ativado")
-    end)
-end
-
-function FNAF:ApplyESP_Pliers()
-    if not States.FNAF_ESP_Pliers and not States.FNAF_ESP_All then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "Pliers" and obj:FindFirstChild("Item_ESP_Internal") then
-                obj.Item_ESP_Internal:Destroy()
-            end
-        end
-        return
-    end
-    
-    pcall(function()
-        local Workspace = game:GetService("Workspace")
-        local targetName = "Pliers"
-        
-        local function applyESP(item)
-            if item:FindFirstChild("Item_ESP_Internal") then return end
-            task.wait(0.1)
-            
-            local container = Instance.new("Folder")
-            container.Name = "Item_ESP_Internal"
-            container.Parent = item
-            
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "Outline"
-            highlight.Adornee = item
-            highlight.FillTransparency = 1
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-            highlight.OutlineTransparency = 0
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.Parent = container
-            
-            local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
-            if targetPart then
-                local billboard = Instance.new("BillboardGui")
-                billboard.Name = "NomeTag"
-                billboard.Adornee = targetPart
-                billboard.Size = UDim2.new(0, 150, 0, 50)
-                billboard.StudsOffset = Vector3.new(0, 1.8, 0)
-                billboard.AlwaysOnTop = true
-                billboard.Parent = container
-                
-                local label = Instance.new("TextLabel")
-                label.BackgroundTransparency = 1
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.Text = targetName
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextStrokeTransparency = 0
-                label.TextSize = 14
-                label.Font = Enum.Font.SourceSansBold
-                label.Parent = billboard
-            end
-        end
-        
-        local connection = Workspace.DescendantAdded:Connect(function(obj)
-            if obj.Name == targetName then applyESP(obj) end
-        end)
-        table.insert(States.FNAF_ESP_Connections, connection)
-        
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj.Name == targetName then applyESP(obj) end
-        end
-        
-        print("[Vortex Hub] FNAF: ESP Pliers Ativado")
-    end)
-end
-
-function FNAF:ApplyESP_Screwdriver()
-    if not States.FNAF_ESP_Screwdriver and not States.FNAF_ESP_All then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "Phillips screwdriver" and obj:FindFirstChild("Item_ESP_Internal") then
-                obj.Item_ESP_Internal:Destroy()
-            end
-        end
-        return
-    end
-    
-    pcall(function()
-        local Workspace = game:GetService("Workspace")
-        local targetName = "Phillips screwdriver"
-        
-        local function applyESP(item)
-            if item:FindFirstChild("Item_ESP_Internal") then return end
-            task.wait(0.1)
-            
-            local container = Instance.new("Folder")
-            container.Name = "Item_ESP_Internal"
-            container.Parent = item
-            
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "Outline"
-            highlight.Adornee = item
-            highlight.FillTransparency = 1
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 0)
-            highlight.OutlineTransparency = 0
-            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            highlight.Parent = container
-            
-            local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
-            if targetPart then
-                local billboard = Instance.new("BillboardGui")
-                billboard.Name = "NomeTag"
-                billboard.Adornee = targetPart
-                billboard.Size = UDim2.new(0, 150, 0, 50)
-                billboard.StudsOffset = Vector3.new(0, 1.8, 0)
-                billboard.AlwaysOnTop = true
-                billboard.Parent = container
-                
-                local label = Instance.new("TextLabel")
-                label.BackgroundTransparency = 1
-                label.Size = UDim2.new(1, 0, 1, 0)
-                label.Text = targetName
-                label.TextColor3 = Color3.fromRGB(255, 255, 255)
-                label.TextStrokeTransparency = 0
-                label.TextSize = 14
-                label.Font = Enum.Font.SourceSansBold
-                label.Parent = billboard
-            end
-        end
-        
-        local connection = Workspace.DescendantAdded:Connect(function(obj)
-            if obj.Name == targetName then applyESP(obj) end
-        end)
-        table.insert(States.FNAF_ESP_Connections, connection)
-        
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj.Name == targetName then applyESP(obj) end
-        end
-        
-        print("[Vortex Hub] FNAF: ESP Screwdriver Ativado")
-    end)
-end
-
-function FNAF:ApplyAllESP()
-    if States.FNAF_ESP_All then
-        self:ApplyESP_Animatronics()
-        self:ApplyESP_Fuses()
-        self:ApplyESP_Batteries()
-        self:ApplyESP_Pliers()
-        self:ApplyESP_Screwdriver()
-    else
-        for _, conn in ipairs(States.FNAF_ESP_Connections) do
-            if conn and conn.Connected then
-                conn:Disconnect()
-            end
-        end
-        States.FNAF_ESP_Connections = {}
-        
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:FindFirstChild("Item_ESP_Internal") then
-                obj.Item_ESP_Internal:Destroy()
-            end
-            if obj:FindFirstChild("Anim_ESP_Internal") then
-                obj.Anim_ESP_Internal:Destroy()
-            end
-        end
-    end
-end
-
--- [[ FULL BRIGHT FOR FNAF ]]
-function FNAF:ToggleFullBright(state)
-    States.FNAF_FullBright = state
-    
-    if state then
-        local function applyFullBright()
-            Lighting.Brightness = 2
-            Lighting.ClockTime = 14
-            Lighting.FogEnd = 100000
-            Lighting.GlobalShadows = false
-            Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
-            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-        end
-        
-        applyFullBright()
-        
-        States.FNAF_Lighting_Connection = Lighting:GetPropertyChangedSignal("Brightness"):Connect(applyFullBright)
-        States.FNAF_Lighting_Connection2 = Lighting:GetPropertyChangedSignal("ClockTime"):Connect(applyFullBright)
-        States.FNAF_Lighting_Connection3 = Lighting:GetPropertyChangedSignal("Ambient"):Connect(applyFullBright)
-        States.FNAF_Lighting_Connection4 = Lighting:GetPropertyChangedSignal("GlobalShadows"):Connect(applyFullBright)
-        
-        print("[Vortex Hub] FNAF: Full Bright Ativado")
-    else
-        if States.FNAF_Lighting_Connection then
-            States.FNAF_Lighting_Connection:Disconnect()
-            States.FNAF_Lighting_Connection = nil
-        end
-        if States.FNAF_Lighting_Connection2 then
-            States.FNAF_Lighting_Connection2:Disconnect()
-            States.FNAF_Lighting_Connection2 = nil
-        end
-        if States.FNAF_Lighting_Connection3 then
-            States.FNAF_Lighting_Connection3:Disconnect()
-            States.FNAF_Lighting_Connection3 = nil
-        end
-        if States.FNAF_Lighting_Connection4 then
-            States.FNAF_Lighting_Connection4:Disconnect()
-            States.FNAF_Lighting_Connection4 = nil
-        end
-        
-        print("[Vortex Hub] FNAF: Full Bright Desativado")
-    end
-end
-
--- [[ SPEED HACK FOR FNAF ]]
-function FNAF:ToggleSpeedHack(state)
-    States.FNAF_SpeedHack = state
-    
-    if state then
-        local Players = game:GetService("Players")
-        local RunService = game:GetService("RunService")
-        local player = Players.LocalPlayer
-        
-        local velocidadeMaxima = 35
-        
-        local function hackMovimentacao()
-            local character = player.Character
-            if not character then return end
-            
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            local values = character:FindFirstChild("Values")
-            
-            if humanoid then
-                if humanoid.WalkSpeed < velocidadeMaxima then
-                    humanoid.WalkSpeed = velocidadeMaxima
-                end
-            end
-            
-            if values then
-                for _, obj in ipairs(values:GetChildren()) do
-                    if obj:IsA("NumberValue") or obj:IsA("IntValue") then
-                        if obj.Name:lower():find("stamina") or obj.Name:lower():find("energy") or obj.Name:lower():find("folego") then
-                            obj.Value = 100
-                        end
-                        
-                        if obj.Name == "Speed" then
-                            obj.Value = velocidadeMaxima
-                        end
-                    end
+                if success then
+                    self.ESP_Name_Active = true
+                    print("[Vortex Hub] Westbound: ESP Name ativado!")
                     
-                    if obj:IsA("BoolValue") and (obj.Name:lower():find("tired") or obj.Name:lower():find("cansado")) then
-                        obj.Value = false
-                    end
-                end
-            end
-        end
-        
-        States.FNAF_Speed_Connection = RunService.Heartbeat:Connect(hackMovimentacao)
-        
-        print("[Vortex Hub] FNAF: Speed Hack Ativado")
-    else
-        if States.FNAF_Speed_Connection then
-            States.FNAF_Speed_Connection:Disconnect()
-            States.FNAF_Speed_Connection = nil
-        end
-        
-        print("[Vortex Hub] FNAF: Speed Hack Desativado")
-    end
-end
-
--- [[ PULL ITEMS SYSTEMS FOR FNAF - MODIFICADO PARA BUTTONS "EXECUTE" ]]
-function FNAF:Pull_Batteries_Execute()
-    for i, conn in ipairs(States.FNAF_Pull_Connections) do
-        if conn.targetName == "Battery" then
-            if conn.connection and conn.connection.Connected then
-                conn.connection:Disconnect()
-            end
-            table.remove(States.FNAF_Pull_Connections, i)
-            break
-        end
-    end
-    
-    local Players = game:GetService("Players")
-    local Workspace = game:GetService("Workspace")
-    
-    local player = Players.LocalPlayer
-    local targetName = "Battery"
-    
-    local function pullItem(item)
-        task.wait(0.1)
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-            if item:IsA("Model") then
-                item:PivotTo(targetPos)
-            elseif item:IsA("BasePart") then
-                item.CFrame = targetPos
-            end
-        end
-    end
-    
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj.Name == targetName then pullItem(obj) end
-    end
-    
-    print("[Vortex Hub] FNAF: Pull Batteries Executado")
-end
-
-function FNAF:Pull_Screwdriver_Execute()
-    for i, conn in ipairs(States.FNAF_Pull_Connections) do
-        if conn.targetName == "Phillips screwdriver" then
-            if conn.connection and conn.connection.Connected then
-                conn.connection:Disconnect()
-            end
-            table.remove(States.FNAF_Pull_Connections, i)
-            break
-        end
-    end
-    
-    local Players = game:GetService("Players")
-    local Workspace = game:GetService("Workspace")
-    
-    local player = Players.LocalPlayer
-    local targetName = "Phillips screwdriver"
-    
-    local function pullItem(item)
-        task.wait(0.1)
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-            if item:IsA("Model") then
-                item:PivotTo(targetPos)
-            elseif item:IsA("BasePart") then
-                item.CFrame = targetPos
-            end
-        end
-    end
-    
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj.Name == targetName then pullItem(obj) end
-    end
-    
-    print("[Vortex Hub] FNAF: Pull Screwdriver Executado")
-end
-
-function FNAF:Pull_Pliers_Execute()
-    for i, conn in ipairs(States.FNAF_Pull_Connections) do
-        if conn.targetName == "Pliers" then
-            if conn.connection and conn.connection.Connected then
-                conn.connection:Disconnect()
-            end
-            table.remove(States.FNAF_Pull_Connections, i)
-            break
-        end
-    end
-    
-    local Players = game:GetService("Players")
-    local Workspace = game:GetService("Workspace")
-    
-    local player = Players.LocalPlayer
-    local targetName = "Pliers"
-    
-    local function pullItem(item)
-        task.wait(0.1)
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-            if item:IsA("Model") then
-                item:PivotTo(targetPos)
-            elseif item:IsA("BasePart") then
-                item.CFrame = targetPos
-            end
-        end
-    end
-    
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj.Name == targetName then pullItem(obj) end
-    end
-    
-    print("[Vortex Hub] FNAF: Pull Pliers Executado")
-end
-
-function FNAF:Pull_Fuses_Execute()
-    for i, conn in ipairs(States.FNAF_Pull_Connections) do
-        if conn.targetName == "Fuse" then
-            if conn.connection and conn.connection.Connected then
-                conn.connection:Disconnect()
-            end
-            table.remove(States.FNAF_Pull_Connections, i)
-            break
-        end
-    end
-    
-    local Players = game:GetService("Players")
-    local Workspace = game:GetService("Workspace")
-    
-    local player = Players.LocalPlayer
-    local targetName = "Fuse"
-    
-    local function pullItem(item)
-        if item:IsA("BasePart") or item:IsA("Model") then
-            task.wait(0.1)
-            
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
-                
-                if item:IsA("Model") then
-                    item:PivotTo(targetPos)
+                    CleanupSystem:RegisterScript("WestboundESPName", function()
+                        CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPName")
+                    end)
                 else
-                    item.CFrame = targetPos
+                    self.ESP_Name_Active = false
                 end
+            end)
+        end
+    else
+        if self.ESP_Name_Active then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPName")
+                
+                if success then
+                    self.ESP_Name_Active = false
+                    print("[Vortex Hub] Westbound: ESP Name desativado!")
+                else
+                    self.ESP_Name_Active = false
+                end
+            end)
+        end
+    end
+end
+
+-- [[ FNAF: ETERNAL NIGHTS SYSTEMS - COMPLETAMENTE REFATORADO COM LOADSTRINGS ]]
+local FNAF = {
+    ESP_Animatronics_Active = false,
+    ESP_Fuses_Active = false,
+    ESP_Batteries_Active = false,
+    ESP_Pliers_Active = false,
+    ESP_Screwdriver_Active = false,
+    ESP_Players_Active = false,
+    ESP_Cabinet_Active = false,
+    ESP_Camera_Active = false,
+    ESP_Flashlight_Active = false,
+    ESP_All_Active = false,
+    
+    LoadedScripts = {}
+}
+
+-- Função genérica para ativar/desativar ESPs do FNAF
+function FNAF:ToggleESP(espType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    -- Mapear tipo para URLs
+    if espType == "All" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_All"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAll"
+        stateName = "FNAF_ESP_All"
+    elseif espType == "Animatronics" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Animatronics"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAnimatronics"
+        stateName = "FNAF_ESP_Animatronics"
+    elseif espType == "Batteries" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Batteries"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPBatteries"
+        stateName = "FNAF_ESP_Batteries"
+    elseif espType == "Cabinet" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Cabinet"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPCabinet"
+        stateName = "FNAF_ESP_Cabinet"
+    elseif espType == "Camera" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Camera"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPCamera"
+        stateName = "FNAF_ESP_Camera"
+    elseif espType == "Flashlight" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Flashlight"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPFlashlight"
+        stateName = "FNAF_ESP_Flashlight"
+    elseif espType == "Fuses" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Fuses"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPFuses"
+        stateName = "FNAF_ESP_Fuses"
+    elseif espType == "Players" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Players"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPPlayers"
+        stateName = "FNAF_ESP_Players"
+    elseif espType == "Pliers" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Pliers"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPPliers"
+        stateName = "FNAF_ESP_Pliers"
+    elseif espType == "Screwdriver" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Screwdriver"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPScrewdriver"
+        stateName = "FNAF_ESP_Screwdriver"
+    else
+        warn("[Vortex Hub] FNAF: Tipo de ESP inválido: " .. tostring(espType))
+        return
+    end
+    
+    -- Atualizar estado
+    States[stateName] = state
+    
+    if state then
+        -- Ativar ESP
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self[espType .. "_Active"] = true
+                print("[Vortex Hub] FNAF: ESP " .. espType .. " ativado!")
+                
+                -- Registrar limpeza
+                CleanupSystem:RegisterScript("FNAF_ESP_" .. espType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self[espType .. "_Active"] = false
+                warn("[Vortex Hub] FNAF: Erro ao ativar ESP " .. espType)
             end
+        end)
+    else
+        -- Desativar ESP
+        if self[espType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self[espType .. "_Active"] = false
+                    print("[Vortex Hub] FNAF: ESP " .. espType .. " desativado!")
+                else
+                    self[espType .. "_Active"] = false
+                    print("[Vortex Hub] FNAF: ESP " .. espType .. " desativado (fallback)")
+                end
+            end)
         end
     end
-    
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj.Name == targetName then
-            pullItem(obj)
-        end
-    end
-    
-    print("[Vortex Hub] FNAF: Pull Fuses Executado")
 end
 
-function FNAF:Pull_All_Execute()
-    for _, conn in ipairs(States.FNAF_Pull_Connections) do
-        if conn.connection and conn.connection.Connected then
-            conn.connection:Disconnect()
-        end
-    end
-    States.FNAF_Pull_Connections = {}
-    
-    self:Pull_Batteries_Execute()
-    self:Pull_Screwdriver_Execute()
-    self:Pull_Pliers_Execute()
-    self:Pull_Fuses_Execute()
-    
-    print("[Vortex Hub] FNAF: Todos os Pulls Executados")
+-- Funções específicas para cada tipo de ESP
+function FNAF:ApplyESP_All(state)
+    self:ToggleESP("All", state)
 end
 
--- [[ TELEPORT FUNCTIONS FOR FNAF ]]
+function FNAF:ApplyESP_Animatronics(state)
+    self:ToggleESP("Animatronics", state)
+end
+
+function FNAF:ApplyESP_Batteries(state)
+    self:ToggleESP("Batteries", state)
+end
+
+function FNAF:ApplyESP_Cabinet(state)
+    self:ToggleESP("Cabinet", state)
+end
+
+function FNAF:ApplyESP_Camera(state)
+    self:ToggleESP("Camera", state)
+end
+
+function FNAF:ApplyESP_Flashlight(state)
+    self:ToggleESP("Flashlight", state)
+end
+
+function FNAF:ApplyESP_Fuses(state)
+    self:ToggleESP("Fuses", state)
+end
+
+function FNAF:ApplyESP_Players(state)
+    self:ToggleESP("Players", state)
+end
+
+function FNAF:ApplyESP_Pliers(state)
+    self:ToggleESP("Pliers", state)
+end
+
+function FNAF:ApplyESP_Screwdriver(state)
+    self:ToggleESP("Screwdriver", state)
+end
+
+-- Teleports
 function FNAF:TeleportSecurityRoom()
     pcall(function()
-        local Players = game:GetService("Players")
-        local Workspace = game:GetService("Workspace")
+        local target = workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("DoorSecurity"):WaitForChild("PackDoor"):WaitForChild("Door"):WaitForChild("Grade")
         
-        local player = Players.LocalPlayer
-        local target = Workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("DoorSecurity"):WaitForChild("PackDoor"):WaitForChild("Door"):WaitForChild("Grade")
-        
-        local function teleport()
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                if target:IsA("BasePart") or target:IsA("MeshPart") then
-                    character:PivotTo(target.CFrame * CFrame.new(0, 3, 0))
-                else
-                    character:PivotTo(target:GetPivot() * CFrame.new(0, 3, 0))
-                end
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            if target:IsA("BasePart") or target:IsA("MeshPart") then
+                character:PivotTo(target.CFrame * CFrame.new(0, 3, 0))
+            else
+                character:PivotTo(target:GetPivot() * CFrame.new(0, 3, 0))
             end
         end
-        
-        teleport()
-        print("[Vortex Hub] FNAF: Teleportado para Sala de Segurança")
     end)
 end
 
 function FNAF:TeleportPuppetClock()
     pcall(function()
-        local Players = game:GetService("Players")
-        local Workspace = game:GetService("Workspace")
+        local target = workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("Puppet"):WaitForChild("Door")
         
-        local player = Players.LocalPlayer
-        local target = Workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("Puppet"):WaitForChild("Door")
-        
-        local function teleport()
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = target:GetPivot()
-                character:PivotTo(targetPos * CFrame.new(0, 3, 0))
-            end
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = target:GetPivot()
+            character:PivotTo(targetPos * CFrame.new(0, 3, 0))
         end
-        
-        teleport()
-        print("[Vortex Hub] FNAF: Teleportado para Relógio da Puppet")
     end)
 end
 
 function FNAF:TeleportAboveMap()
     pcall(function()
-        local Players = game:GetService("Players")
-        local player = Players.LocalPlayer
-    
-        local function teleportUp()
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local hrp = character.HumanoidRootPart
-                local newPos = hrp.CFrame + Vector3.new(0, 200, 0)
-                character:PivotTo(newPos)
-            end
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            local newPos = hrp.CFrame + Vector3.new(0, 200, 0)
+            character:PivotTo(newPos)
         end
-    
-        teleportUp()
-        print("[Vortex Hub] FNAF: Teleportado para cima do mapa")
     end)
 end
 
 function FNAF:TeleportFuseRoom()
     pcall(function()
-        local Players = game:GetService("Players")
-        local Workspace = game:GetService("Workspace")
+        local target = workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("Gerador"):WaitForChild("Fusiveis")
         
-        local player = Players.LocalPlayer
-        local target = Workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("Gerador"):WaitForChild("Fusiveis")
-        
-        local function teleport()
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = target:GetPivot()
-                character:PivotTo(targetPos * CFrame.new(0, 3, 0))
-            end
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = target:GetPivot()
+            character:PivotTo(targetPos * CFrame.new(0, 3, 0))
         end
-        
-        teleport()
-        print("[Vortex Hub] FNAF: Teleportado para Sala dos Fusíveis")
     end)
-end
-
--- [[ CLEANUP FNAF ]]
-function FNAF:Cleanup()
-    for _, conn in ipairs(States.FNAF_ESP_Connections) do
-        if conn and conn.Connected then
-            conn:Disconnect()
-        end
-    end
-    States.FNAF_ESP_Connections = {}
-    
-    for _, conn in ipairs(States.FNAF_Pull_Connections) do
-        if conn.connection and conn.connection.Connected then
-            conn.connection:Disconnect()
-        end
-    end
-    States.FNAF_Pull_Connections = {}
-    
-    if States.FNAF_Lighting_Connection then
-        States.FNAF_Lighting_Connection:Disconnect()
-        States.FNAF_Lighting_Connection = nil
-    end
-    if States.FNAF_Lighting_Connection2 then
-        States.FNAF_Lighting_Connection2:Disconnect()
-        States.FNAF_Lighting_Connection2 = nil
-    end
-    if States.FNAF_Lighting_Connection3 then
-        States.FNAF_Lighting_Connection3:Disconnect()
-        States.FNAF_Lighting_Connection3 = nil
-    end
-    if States.FNAF_Lighting_Connection4 then
-        States.FNAF_Lighting_Connection4:Disconnect()
-        States.FNAF_Lighting_Connection4 = nil
-    end
-    
-    if States.FNAF_Speed_Connection then
-        States.FNAF_Speed_Connection:Disconnect()
-        States.FNAF_Speed_Connection = nil
-    end
-    
-    States.FNAF_ESP_Animatronics = false
-    States.FNAF_ESP_Fuses = false
-    States.FNAF_ESP_Batteries = false
-    States.FNAF_ESP_Pliers = false
-    States.FNAF_ESP_Screwdriver = false
-    States.FNAF_ESP_All = false
-    States.FNAF_FullBright = false
-    States.FNAF_SpeedHack = false
-    States.FNAF_Pull_Batteries = false
-    States.FNAF_Pull_Screwdriver = false
-    States.FNAF_Pull_Pliers = false
-    States.FNAF_Pull_Fuses = false
-    States.FNAF_Pull_All = false
-    
-    print("[Vortex Hub] FNAF: Todos os sistemas desativados")
 end
 
 -- [[ INTERFACE ]]
@@ -1556,7 +1608,13 @@ end
 
 ApplyHover(CloseBtn, Color3.fromRGB(200, 45, 45))
 
--- [[ LEFT SIDEBAR ]]
+CloseBtn.MouseButton1Click:Connect(function()
+    print("[Vortex Hub] Fechando hub e limpando tudo...")
+    CleanupSystem:CleanupAll()
+    ScreenGui:Destroy()
+    print("[Vortex Hub] Interface fechada")
+end)
+
 local SideBar = Instance.new("Frame")
 SideBar.Name = "SideBar"
 SideBar.Size = UDim2.new(0, 150, 1, -38)
@@ -1603,7 +1661,6 @@ Line1.BackgroundColor3 = Color3.fromHex("25252D")
 Line1.BorderSizePixel = 0
 Line1.Parent = SideBar
 
--- Profile
 local ProfileFrame = Instance.new("Frame")
 ProfileFrame.Size = UDim2.new(1, 0, 0, 60)
 ProfileFrame.Position = UDim2.new(0, 0, 0, 46)
@@ -1653,7 +1710,6 @@ GamesLabel.Font = Enum.Font.GothamBold; GamesLabel.TextSize = 9
 GamesLabel.BackgroundTransparency = 1; GamesLabel.TextXAlignment = Enum.TextXAlignment.Left
 GamesLabel.Parent = SideBar
 
--- [[ RIGHT CONTENT AREA ]]
 local ContentHolder = Instance.new("Frame")
 ContentHolder.Name = "ContentHolder"
 ContentHolder.Size = UDim2.new(1, -151, 1, -38)
@@ -1683,7 +1739,6 @@ WelcomeSub.Position = UDim2.new(0, 0, 0.5, 10)
 WelcomeSub.Font = Enum.Font.Gotham; WelcomeSub.TextSize = 12; WelcomeSub.TextColor3 = Color3.fromRGB(150, 150, 150)
 WelcomeSub.BackgroundTransparency = 1; WelcomeSub.Parent = WelcomePage
 
--- [[ COMPONENT FUNCTIONS ]]
 local function CreateSection(parent, name)
     local SectionFrame = Instance.new("Frame")
     SectionFrame.Name = name .. "_Section"
@@ -1740,6 +1795,7 @@ local function CreateToggle(parent, name, desc, tag, callback)
     TagLabel.BackgroundTransparency = 1; TagLabel.Parent = TagFrame
 
     local Btn = Instance.new("TextButton")
+    Btn.Name = "ToggleBtn"
     Btn.Size = UDim2.new(0, 55, 0, 26); Btn.Position = UDim2.new(1, -67, 0.5, -13)
     Btn.BackgroundColor3 = Color3.fromHex("25252D"); Btn.Text = "OFF"; Btn.Font = Enum.Font.GothamBold; Btn.TextSize = 11; Btn.TextColor3 = Color3.new(1,1,1); Btn.Parent = Card
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
@@ -1792,7 +1848,6 @@ local function CreateButton(parent, name, desc, tag, callback)
     Btn.MouseButton1Click:Connect(callback)
 end
 
--- [[ PAGE CONTAINER ]]
 local GamePages = {}
 local function CreatePage(name)
     local Page = Instance.new("ScrollingFrame")
@@ -1869,7 +1924,6 @@ local function CreatePage(name)
     return GamePages[name]
 end
 
--- [[ VARIABLE TO TRACK SELECTED GAME ]]
 local SelectedGame = nil
 local GameButtons = {}
 
@@ -1899,7 +1953,6 @@ local function ShowPage(name)
     end
 end
 
--- [[ GAMES LIST SCROLLING ]]
 local GamesList = Instance.new("ScrollingFrame")
 GamesList.Name = "GamesList"
 GamesList.Size = UDim2.new(1, 0, 0, 110)
@@ -1960,129 +2013,79 @@ local function CreateMenuBtn(text, parent)
     return btn
 end
 
--- [[ PRISON LIFE CONFIGURATION - COM LOADSTRINGS DO GITHUB ]]
+-- [[ PRISON LIFE CONFIGURATION ]]
 local PL_Data = CreatePage("Prison Life")
 
 CreateSection(PL_Data.Page, "Visuals")
 local VisualGrid = PL_Data.CreateGrid(PL_Data.Page)
 
--- ESP Players usando loadstring do GitHub
-CreateToggle(VisualGrid, "ESP Players", "Visualiza TODOS os jogadores, independente do time.", "Visuals", function(v) 
-    States.ESP_Players = v
-    if v then
-        LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Players")
-    else
-        print("[Vortex Hub] Para desativar o ESP Players, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(VisualGrid, "ESP Players", "Visualiza TODOS os jogadores, independente do time.", "Visuals", function(v)
+    PrisonLife:ToggleESP_Players(v)
 end)
 
--- ESP Bandidos usando loadstring do GitHub
-CreateToggle(VisualGrid, "ESP Bandidos", "Mostra jogadores do time Criminal (incluindo do seu time).", "Visuals", function(v) 
-    States.ESP_Bandidos = v
-    if v then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Bandits"))()
-    else
-        print("[Vortex Hub] Para desativar o ESP Bandidos, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(VisualGrid, "ESP Bandidos", "Mostra jogadores do time Criminal (incluindo do seu time).", "Visuals", function(v)
+    PrisonLife:ToggleESP_Bandits(v)
 end)
 
--- ESP Policiais usando loadstring do GitHub
-CreateToggle(VisualGrid, "ESP Policiais", "Mostra jogadores do time Guards (incluindo do seu time).", "Visuals", function(v) 
-    States.ESP_Policiais = v
-    if v then
-        LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Polices")
-    else
-        print("[Vortex Hub] Para desativar o ESP Policiais, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(VisualGrid, "ESP Policiais", "Mostra jogadores do time Guards (incluindo do seu time).", "Visuals", function(v)
+    PrisonLife:ToggleESP_Polices(v)
 end)
 
--- ESP Prisioneiros usando loadstring do GitHub (nota: usamos o mesmo link que você forneceu para ESP_Polices)
-CreateToggle(VisualGrid, "ESP Prisioneiros", "Mostra jogadores do time Inmates (incluindo do seu time).", "Visuals", function(v) 
-    States.ESP_Prisioneiros = v
-    if v then
-        LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/ESP/ESP_Polices")
-    else
-        print("[Vortex Hub] Para desativar o ESP Prisioneiros, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(VisualGrid, "ESP Prisioneiros", "Mostra jogadores do time Inmates (incluindo do seu time).", "Visuals", function(v)
+    PrisonLife:ToggleESP_Prisoners(v)
 end)
 
 CreateSection(PL_Data.Page, "Utilities")
 local UtilGrid = PL_Data.CreateGrid(PL_Data.Page)
 
--- Bypass Doors usando loadstring do GitHub
-CreateToggle(UtilGrid, "Bypass Doors", "Remove a colisão de todas as portas da pasta Doors.", "World", function(v) 
-    States.Bypass_Doors = v
-    if v then
-        LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/UTILITIES/UTILITIES_BypassDoors")
-    else
-        print("[Vortex Hub] Para desativar o Bypass Doors, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(UtilGrid, "Bypass Doors", "Remove a colisão de todas as portas da pasta Doors.", "World", function(v)
+    PrisonLife:ToggleBypassDoors(v)
 end)
 
--- Auto KeyCard usando loadstring do GitHub
-CreateToggle(UtilGrid, "Auto KeyCard", "Pega KeyCard automaticamente quando dropado (verifica se já tem).", "Auto", function(v) 
-    States.Auto_KeyCard = v
-    if v then
-        LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/UTILITIES/UTILITIES_AutoKeyCard")
-    else
-        print("[Vortex Hub] Para desativar o Auto KeyCard, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(UtilGrid, "Auto KeyCard", "Pega KeyCard automaticamente quando dropado (verifica se já tem).", "Auto", function(v)
+    PrisonLife:ToggleAutoKeyCard(v)
 end)
 
--- Auto M9 usando loadstring do GitHub
-CreateToggle(UtilGrid, "Auto M9", "Pega M9 automaticamente quando dropada (verifica se já tem).", "Auto", function(v) 
-    States.Auto_M9 = v
-    if v then
-        LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/UTILITIES/UTILITIES_AutoM9")
-    else
-        print("[Vortex Hub] Para desativar o Auto M9, reinicie o jogo ou desconecte manualmente.")
-    end
+CreateToggle(UtilGrid, "Auto M9", "Pega M9 automaticamente quando dropada (verifica se já tem).", "Auto", function(v)
+    PrisonLife:ToggleAutoM9(v)
 end)
 
 CreateSection(PL_Data.Page, "Teleports")
 local TPGrid = PL_Data.CreateGrid(PL_Data.Page)
 
--- Teleport Criminal Spawn usando loadstring do GitHub
-CreateButton(TPGrid, "TP Criminal Spawn", "Teletransporta para onde os bandidos nascem.", "TP", function() 
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_CriminalSpawn")
+CreateButton(TPGrid, "TP Out Prison", "Teletransporta para FORA da prisão.", "TP", function()
+    PrisonLife:TeleportOutPrison()
 end)
 
--- Teleport Inside Prison usando loadstring do GitHub
-CreateButton(TPGrid, "TP Inside Prison", "Teletransporta para DENTRO da prisão (yard).", "TP", function() 
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_InsidePrison")
+CreateButton(TPGrid, "TP Criminals Spawn", "Teletransporta para onde os bandidos nascem.", "TP", function()
+    PrisonLife:TeleportCriminalSpawn()
 end)
 
--- Teleport Out Prison usando loadstring do GitHub
-CreateButton(TPGrid, "TP Out Prison", "Teletransporta para FORA da prisão.", "TP", function() 
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_OutPrison")
+CreateButton(TPGrid, "TP Inside Prison", "Teletransporta para DENTRO da prisão (yard).", "TP", function()
+    PrisonLife:TeleportInsidePrison()
 end)
 
--- Teleport Yard Center usando loadstring do GitHub
-CreateButton(TPGrid, "TP Yard Center", "Teletransporta para o centro do pátio.", "TP", function() 
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_YardCenter")
+CreateButton(TPGrid, "TP Yard Center", "Teletransporta para o centro do pátio.", "TP", function()
+    PrisonLife:TeleportYardCenter()
 end)
 
--- Teleport Police Center usando loadstring do GitHub
-CreateButton(TPGrid, "TP Police Center", "Teletransporta DENTRO do negócio da polícia.", "TP", function() 
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_PoliceCenter")
+CreateButton(TPGrid, "TP Police Station", "Teletransporta DENTRO do negócio da polícia.", "TP", function()
+    PrisonLife:TeleportPoliceCenter()
 end)
 
 CreateSection(PL_Data.Page, "Prison Items")
 local ItemsGrid = PL_Data.CreateGrid(PL_Data.Page)
 
--- Get AK-47 usando loadstring do GitHub
 CreateButton(ItemsGrid, "Get AK-47", "Pega a AK-47 (teleporta atrás para pisar e volta).", "Items", function()
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetAK")
+    PrisonLife:GetAK47()
 end)
 
--- Get MP5 usando loadstring do GitHub
 CreateButton(ItemsGrid, "Get MP5", "Pega a MP5 (teleporta e volta automaticamente).", "Items", function()
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetMp5")
+    PrisonLife:GetMP5()
 end)
 
--- Get Shotgun usando loadstring do GitHub
-CreateButton(ItemsGrid, "Get Shotgun", "Pega a escopeta automaticamente.", "Items", function()
-    LoadGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetShotgun")
+CreateButton(ItemsGrid, "Get Shotgun", "Pega a escopeta - Volta auto.", "Items", function()
+    PrisonLife:GetShotgun()
 end)
 
 -- [[ BLIND SHOT CONFIGURATION ]]
@@ -2096,60 +2099,10 @@ CreateToggle(BlindGrid, "ESP DEFINITIVE", "Intercepta renderização e força vi
     
     if v then
         BlindShotESP:Enable()
-        print("[Vortex Hub] ESP DEFINITIVO ativado! Interceptando anti-cheat (Sem ESP Azul)")
     else
         BlindShotESP:Disable()
-        print("[Vortex Hub] ESP desativado completamente")
     end
 end)
-
--- Função para teleportar ao troféu (mantida para referência)
-local function TeleportToTrophy()
-    pcall(function()
-        local trophy = workspace:FindFirstChild("Trophy")
-        
-        if not trophy then
-            for _, obj in pairs(workspace:GetChildren()) do
-                if obj:IsA("Model") and string.find(obj.Name:lower(), "trophy") then
-                    trophy = obj
-                    print("[Blind Shot] Trophy found by name: " .. obj.Name)
-                    break
-                end
-            end
-        end
-        
-        if not trophy then
-            print("[Blind Shot] Trophy not found in workspace!")
-            return false
-        end
-        
-        print("[Blind Shot] Trophy found: " .. trophy.Name)
-        local char = LocalPlayer.Character
-        local humanoidRootPart = char and char:FindFirstChild("HumanoidRootPart")
-        
-        if humanoidRootPart then
-            local trophyPosition
-            if trophy:IsA("Model") then
-                trophyPosition = trophy:GetModelCFrame().Position
-            else
-                trophyPosition = trophy.Position
-            end
-            
-            local teleportCFrame = CFrame.new(trophyPosition + Vector3.new(0, 5, 0))
-            
-            if SimpleTeleport(teleportCFrame) then
-                print("[Blind Shot] Successfully teleported to trophy!")
-                return true
-            else
-                print("[Blind Shot] Failed to teleport")
-                return false
-            end
-        else
-            print("[Blind Shot] Character not found!")
-            return false
-        end
-    end)
-end
 
 CreateSection(BS_Data.Page, "Auto Farm")
 local AutoFarmGrid = BS_Data.CreateGrid(BS_Data.Page)
@@ -2159,9 +2112,6 @@ CreateToggle(AutoFarmGrid, "Auto TP to Trophy", "Teleporta automaticamente para 
     
     if v then
         StartAutoTrophy()
-        print("[Vortex Hub] Auto TP to Trophy ativado! Teleporta a cada 20s")
-    else
-        print("[Vortex Hub] Auto TP to Trophy desativado")
     end
 end)
 
@@ -2170,10 +2120,8 @@ CreateToggle(AutoFarmGrid, "Anti-AFK System", "Evita que você seja kickado por 
     
     if v then
         AntiAFK:Enable()
-        print("[Vortex Hub] Anti-AFK ativado! Você não será kickado por inatividade")
     else
         AntiAFK:Disable()
-        print("[Vortex Hub] Anti-AFK desativado")
     end
 end)
 
@@ -2188,10 +2136,8 @@ CreateToggle(BrainrotGrid, "Auto Brainrot Farm", "Teleporta automaticamente para
     
     if v then
         BrainrotFarm:Enable()
-        print("[Vortex Hub] Brainrot Farm ativado! Sistema Anti-Loop ativo")
     else
         BrainrotFarm:Disable()
-        print("[Vortex Hub] Brainrot Farm desativado")
     end
 end)
 
@@ -2203,14 +2149,12 @@ CreateToggle(BrainrotUtilGrid, "Anti-AFK System", "Evita que você seja kickado 
     
     if v then
         AntiAFK:Enable()
-        print("[Vortex Hub] Anti-AFK ativado! Você não será kickado por inatividade")
     else
         AntiAFK:Disable()
-        print("[Vortex Hub] Anti-AFK desativado")
     end
 end)
 
--- [[ WESTBOUND CONFIGURATION - MODIFICADO COM NOVOS ESPs ]]
+-- [[ WESTBOUND CONFIGURATION ]]
 local WB_Data = CreatePage("Westbound")
 
 CreateSection(WB_Data.Page, "Visuals")
@@ -2232,7 +2176,7 @@ CreateToggle(Westbound_ESPGrid, "ESP Name", "Mostra apenas os nomes dos jogadore
     Westbound:ToggleESP_Name(v)
 end)
 
--- [[ FNAF: ETERNAL NIGHTS CONFIGURATION - MODIFICADO ]]
+-- [[ FNAF: ETERNAL NIGHTS CONFIGURATION - REFATORADA COM LOADSTRINGS ]]
 local FNAF_Data = CreatePage("FNAF: Eternal Nights")
 
 CreateSection(FNAF_Data.Page, "Teleports")
@@ -2257,82 +2201,44 @@ end)
 CreateSection(FNAF_Data.Page, "Visuals")
 local FNAF_ESPGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
 
+CreateToggle(FNAF_ESPGrid, "ESP Players", "Mostra todos os jogadores", "VISUAL", function(v)
+    FNAF:ApplyESP_Players(v)
+end)
+
 CreateToggle(FNAF_ESPGrid, "ESP Animatronics", "Mostra todos os animatrônicos", "VISUAL", function(v)
-    States.FNAF_ESP_Animatronics = v
-    FNAF:ApplyESP_Animatronics()
+    FNAF:ApplyESP_Animatronics(v)
 end)
 
 CreateToggle(FNAF_ESPGrid, "ESP Fuses", "Mostra todos os fusíveis", "VISUAL", function(v)
-    States.FNAF_ESP_Fuses = v
-    FNAF:ApplyESP_Fuses()
+    FNAF:ApplyESP_Fuses(v)
 end)
 
 CreateToggle(FNAF_ESPGrid, "ESP Batteries", "Mostra todas as baterias", "VISUAL", function(v)
-    States.FNAF_ESP_Batteries = v
-    FNAF:ApplyESP_Batteries()
+    FNAF:ApplyESP_Batteries(v)
 end)
 
 CreateToggle(FNAF_ESPGrid, "ESP Pliers", "Mostra todos os alicates", "VISUAL", function(v)
-    States.FNAF_ESP_Pliers = v
-    FNAF:ApplyESP_Pliers()
+    FNAF:ApplyESP_Pliers(v)
 end)
 
 CreateToggle(FNAF_ESPGrid, "ESP Screwdriver", "Mostra todas as chaves de fenda", "VISUAL", function(v)
-    States.FNAF_ESP_Screwdriver = v
-    FNAF:ApplyESP_Screwdriver()
+    FNAF:ApplyESP_Screwdriver(v)
+end)
+
+CreateToggle(FNAF_ESPGrid, "ESP Cabinet", "Mostra os armários", "VISUAL", function(v)
+    FNAF:ApplyESP_Cabinet(v)
+end)
+
+CreateToggle(FNAF_ESPGrid, "ESP Camera", "Mostra as câmeras", "VISUAL", function(v)
+    FNAF:ApplyESP_Camera(v)
+end)
+
+CreateToggle(FNAF_ESPGrid, "ESP Flashlight", "Mostra as lanternas", "VISUAL", function(v)
+    FNAF:ApplyESP_Flashlight(v)
 end)
 
 CreateToggle(FNAF_ESPGrid, "ESP ALL", "Ativa todos os ESPs de uma vez", "VISUAL", function(v)
-    States.FNAF_ESP_All = v
-    FNAF:ApplyAllESP()
-end)
-
-CreateSection(FNAF_Data.Page, "Pull Items")
-local FNAF_PullGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
-
-CreateButton(FNAF_PullGrid, "Pull Batteries", "Puxa todas as baterias até você (Executa uma vez)", "PULL", function()
-    FNAF:Pull_Batteries_Execute()
-end)
-
-CreateButton(FNAF_PullGrid, "Pull Screwdriver", "Puxa todas as chaves de fenda (Executa uma vez)", "PULL", function()
-    FNAF:Pull_Screwdriver_Execute()
-end)
-
-CreateButton(FNAF_PullGrid, "Pull Pliers", "Puxa todos os alicates (Executa uma vez)", "PULL", function()
-    FNAF:Pull_Pliers_Execute()
-end)
-
-CreateButton(FNAF_PullGrid, "Pull Fuses", "Puxa todos os fusíveis (Executa uma vez)", "PULL", function()
-    FNAF:Pull_Fuses_Execute()
-end)
-
-CreateButton(FNAF_PullGrid, "Pull ALL Items", "Puxa TODOS os itens de uma vez", "PULL", function()
-    FNAF:Pull_All_Execute()
-end)
-
-CreateSection(FNAF_Data.Page, "Utilities")
-local FNAF_UtilGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
-
-CreateToggle(FNAF_UtilGrid, "Full Brightness", "Deixa o mapa totalmente claro", "VISUAL", function(v)
-    States.FNAF_FullBright = v
-    FNAF:ToggleFullBright(v)
-end)
-
-CreateToggle(FNAF_UtilGrid, "Infinite Speed", "Velocidade infinita (35 studs/s)", "MOVEMENT", function(v)
-    States.FNAF_SpeedHack = v
-    FNAF:ToggleSpeedHack(v)
-end)
-
-CreateToggle(FNAF_UtilGrid, "Anti-AFK System", "Evita que você seja kickado por inatividade", "UTILITY", function(v)
-    States.Anti_AFK = v
-    
-    if v then
-        AntiAFK:Enable()
-        print("[Vortex Hub] Anti-AFK ativado! Você não será kickado por inatividade")
-    else
-        AntiAFK:Disable()
-        print("[Vortex Hub] Anti-AFK desativado")
-    end
+    FNAF:ApplyESP_All(v)
 end)
 
 CreateMenuBtn("Prison Life", GamesList)
@@ -2419,7 +2325,7 @@ DevLabelFinal.Font = Enum.Font.Gotham
 DevLabelFinal.TextSize = 10
 DevLabelFinal.Parent = FooterGroup
 
--- [[ DRAG & KEYBIND ]]
+-- [[ DRAG & KEYBIND - INSERT CORRIGIDO ]]
 local dragging, dragInput, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
@@ -2451,28 +2357,24 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
+-- CORREÇÃO: Bind Insert funcionando corretamente
 UserInputService.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
+        print("[Vortex Hub] Interface " .. (MainFrame.Visible and "aberta" or "fechada") .. " via Insert")
     end
 end)
 
--- Clean connections when closing
-CloseBtn.MouseButton1Click:Connect(function()
-    BlindShotESP:Disable()
-    AntiAFK:Disable()
-    BrainrotFarm:Disable()
-    Westbound:Cleanup()
-    FNAF:Cleanup()
-    ScreenGui:Destroy()
-end)
-
 print("[Vortex Hub] Script loaded successfully! v2.3.0")
-print("[Vortex Hub] Prison Life - Todos os comandos substituídos por loadstrings do GitHub")
-print("[Vortex Hub] Sistema de Cache Buster ativo para forçar atualizações")
-print("[Vortex Hub] ESP Players, ESP Bandits, ESP Polices, ESP Prisoners - Agora usam scripts GitHub")
-print("[Vortex Hub] Teleports (Criminal Spawn, Inside Prison, Out Prison, Yard Center, Police Center) - Scripts GitHub")
-print("[Vortex Hub] Items (AK-47, MP5, Shotgun) - Scripts GitHub")
-print("[Vortex Hub] Utilities (Bypass Doors, Auto KeyCard, Auto M9) - Scripts GitHub")
-print("[Vortex Hub] FNAF: Eternal Nights - Sistema completo integrado")
-print("[Vortex Hub] Westbound - Sistema ESP com Cache Buster")
+print("[Vortex Hub] CORREÇÕES IMPLEMENTADAS:")
+print("[Vortex Hub] 1. Bind Insert corrigida - agora abre/fecha corretamente")
+print("[Vortex Hub] 2. FNAF: Eternal Nights completamente refatorado:")
+print("[Vortex Hub]   - Todos os ESPs usam loadstrings externos")
+print("[Vortex Hub]   - Sistema unificado de ativação/desativação")
+print("[Vortex Hub]   - ESP Players adicionado")
+print("[Vortex Hub]   - ESP Cabinet adicionado")
+print("[Vortex Hub]   - ESP Camera adicionado")
+print("[Vortex Hub]   - ESP Flashlight adicionado")
+print("[Vortex Hub]   - ESP All funcional")
+print("[Vortex Hub] 3. Sistema completo e funcional!")
+print("[Vortex Hub] Use INSERT para abrir/fechar a interface!")

@@ -1,0 +1,4 @@
+local pGui = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+if pGui and pGui:FindFirstChild("PuppetMusicGui") then
+    pGui.PuppetMusicGui:Destroy()
+end

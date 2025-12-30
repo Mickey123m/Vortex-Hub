@@ -1,0 +1,34 @@
+local Lighting = game:GetService("Lighting")
+
+-- 1. Matar o loop de conexão de forma bruta
+if _G.FullBrightLoop then
+    _G.FullBrightLoop:Disconnect()
+    _G.FullBrightLoop = nil
+end
+
+-- 2. Restaurar propriedades básicas de escuridão
+Lighting.Ambient = Color3.fromRGB(0, 0, 0)
+Lighting.OutdoorAmbient = Color3.fromRGB(0, 0, 0)
+Lighting.Brightness = 1
+Lighting.GlobalShadows = true
+Lighting.ExposureCompensation = 0
+
+-- 3. Resetar neblina (Fog) para o padrão de jogo de terror
+Lighting.FogEnd = 500
+Lighting.FogStart = 0
+
+-- 4. Procurar e resetar efeitos de Atmosphere e ColorCorrection
+for _, effect in ipairs(Lighting:GetChildren()) do
+    if effect:IsA("ColorCorrectionEffect") then
+        effect.Brightness = 0
+        effect.Contrast = 0
+        effect.TintColor = Color3.fromRGB(255, 255, 255)
+    elseif effect:IsA("Atmosphere") then
+        effect.Density = 0.3 -- Volta a densidade da neblina
+    end
+end
+
+-- 5. Limpar backup de configurações
+_G.OriginalSettings = nil
+
+print("Full Bright TOTALMENTE desativado e iluminação resetada.")
