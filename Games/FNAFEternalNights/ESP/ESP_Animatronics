@@ -1,0 +1,83 @@
+local Workspace = game:GetService("Workspace")
+
+-- Caminho corrigido: Game -> Animatronics -> Animatronics
+local gameFolder = Workspace:WaitForChild("Game")
+local mainAnimFolder = gameFolder:WaitForChild("Animatronics")
+local animatronicsFolder = mainAnimFolder:WaitForChild("Animatronics")
+
+-- Tabela de cores para os 6 animatrônicos
+local characterColors = {
+    ["Bonnie"] = Color3.fromRGB(106, 90, 205),   -- Roxo
+    ["Chica"] = Color3.fromRGB(255, 255, 0),     -- Amarelo
+    ["Cupcake"] = Color3.fromRGB(255, 105, 180), -- Rosa
+    ["Foxy"] = Color3.fromRGB(255, 0, 0),        -- Vermelho
+    ["Freddy"] = Color3.fromRGB(139, 69, 19),    -- Marrom
+    ["Puppet"] = Color3.fromRGB(255, 255, 255)   -- Branco
+}
+
+local function applyAnimatronicESP(animatronic)
+    -- Evita duplicatas
+    if animatronic:FindFirstChild("Anim_ESP_Internal") then return end
+
+    -- Tempo para o modelo carregar as partes físicas
+    task.wait(0.2) 
+
+    local container = Instance.new("Folder")
+    container.Name = "Anim_ESP_Internal"
+    container.Parent = animatronic
+
+    -- Define a cor baseada no nome
+    local highlightColor = Color3.fromRGB(200, 200, 200) -- Cinza padrão
+    for name, color in pairs(characterColors) do
+        if string.find(animatronic.Name, name) then
+            highlightColor = color
+            break
+        end
+    end
+
+    -- 1. OUTLINE (Highlight)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "Outline"
+    highlight.Adornee = animatronic
+    highlight.FillColor = highlightColor
+    highlight.FillTransparency = 0.6 -- Silhueta visível
+    highlight.OutlineColor = highlightColor
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = container
+
+    -- 2. NOME (BillboardGui)
+    local root = animatronic:IsA("Model") and (animatronic.PrimaryPart or animatronic:FindFirstChildWhichIsA("BasePart", true)) or animatronic
+    
+    if root then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "NameTag"
+        billboard.Adornee = root
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 4, 0) -- Altura acima do animatrônico
+        billboard.AlwaysOnTop = true
+        billboard.Parent = container
+
+        local label = Instance.new("TextLabel")
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Text = animatronic.Name
+        label.TextColor3 = highlightColor
+        label.TextStrokeTransparency = 0
+        label.TextSize = 20
+        label.Font = Enum.Font.SourceSansBold
+        label.Parent = billboard
+    end
+end
+
+-- Monitorar novos que entrarem na pasta específica
+animatronicsFolder.ChildAdded:Connect(function(child)
+    applyAnimatronicESP(child)
+end)
+
+-- Varredura inicial para o que já está na pasta
+for _, anim in ipairs(animatronicsFolder:GetChildren()) do
+    applyAnimatronicESP(anim)
+end
+
+print("ESP Animatrônicos Ativado: Workspace.Game.Animatronics.Animatronics")

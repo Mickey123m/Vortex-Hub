@@ -1,0 +1,24 @@
+local Workspace = game:GetService("Workspace")
+
+-- Caminho da hierarquia
+local gameFolder = Workspace:WaitForChild("Game")
+local sistemaFolder = gameFolder:WaitForChild("Sistema")
+local armarioFolder = sistemaFolder:WaitForChild("Armario")
+
+local function removeArmarioESP(pasta)
+    for _, item in ipairs(pasta:GetChildren()) do
+        local espFolder = item:FindFirstChild("Armario_ESP_Internal")
+        if espFolder then
+            espFolder:Destroy()
+        end
+    end
+end
+
+-- Remove das duas pastas
+local normalFolder = armarioFolder:FindFirstChild("Normal")
+local pequenoFolder = armarioFolder:FindFirstChild("Pequeno")
+
+if normalFolder then removeArmarioESP(normalFolder) end
+if pequenoFolder then removeArmarioESP(pequenoFolder) end
+
+print("ESP de Armários removido com sucesso.")

@@ -1,0 +1,25 @@
+local Workspace = game:GetService("Workspace")
+
+-- Caminho conforme o script original
+local gameFolder = Workspace:WaitForChild("Game")
+local mainAnimFolder = gameFolder:WaitForChild("Animatronics")
+local animatronicsFolder = mainAnimFolder:WaitForChild("Animatronics")
+
+local function removeAnimatronicESP(animatronic)
+    -- Procura a pasta interna que criamos no script de ESP
+    local espFolder = animatronic:FindFirstChild("Anim_ESP_Internal")
+    if espFolder then
+        espFolder:Destroy()
+    end
+end
+
+-- 1. Varredura para remover de quem já está na pasta
+for _, anim in ipairs(animatronicsFolder:GetChildren()) do
+    removeAnimatronicESP(anim)
+end
+
+-- 2. Opcional: Desconectar funções de monitoramento (se você rodar em um script separado)
+-- Caso você queira parar de aplicar o ESP em novos animatronics, 
+-- o script que CRIA o ESP deve ser parado ou desabilitado.
+
+print("ESP Animatrônicos Removido: Workspace.Game.Animatronics.Animatronics")

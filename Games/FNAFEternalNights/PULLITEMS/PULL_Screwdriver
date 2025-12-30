@@ -1,0 +1,28 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local targetName = "Phillips screwdriver"
+
+local function pullItem(item)
+    task.wait(0.1)
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+        if item:IsA("Model") then
+            item:PivotTo(targetPos)
+        elseif item:IsA("BasePart") then
+            item.CFrame = targetPos
+        end
+    end
+end
+
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj.Name == targetName then pullItem(obj) end
+end
+
+Workspace.DescendantAdded:Connect(function(obj)
+    if obj.Name == targetName then pullItem(obj) end
+end)
+
+print("Magnet de Phillips screwdriver ativado.")

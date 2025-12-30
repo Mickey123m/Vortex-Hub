@@ -1,0 +1,42 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local targetName = "Fuse"
+
+-- Função para trazer o item até o jogador
+local function pullItem(item)
+    if item:IsA("BasePart") or item:IsA("Model") then
+        task.wait(0.1) -- Garante que o item carregou
+        
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2) -- 2 studs na frente do jogador
+            
+            if item:IsA("Model") then
+                item:PivotTo(targetPos)
+            else
+                item.CFrame = targetPos
+            end
+        end
+    end
+end
+
+-- 1. Puxar todos os que já existem no mapa agora
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj.Name == targetName then
+        pullItem(obj)
+    end
+end
+
+-- 2. Lógica: "Espere aparecer e puxe" (Caso novos fusiveis spawnem)
+local connection = Workspace.DescendantAdded:Connect(function(obj)
+    if obj.Name == targetName then
+        pullItem(obj)
+    end
+end)
+
+print("Magnet de Fuses ativado: Todos os fusiveis foram trazidos até você.")
+
+-- Nota: Para parar de puxar novos fusiveis que spawnarem, você pode usar: 
+-- connection:Disconnect()

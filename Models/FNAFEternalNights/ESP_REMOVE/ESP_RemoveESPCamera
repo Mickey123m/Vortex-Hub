@@ -1,0 +1,17 @@
+local Workspace = game:GetService("Workspace")
+local targetName = "Photo Camera"
+
+local function removeESP(item)
+    local espFolder = item:FindFirstChild("Item_ESP_Internal")
+    if espFolder then
+        espFolder:Destroy()
+    end
+end
+
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj.Name == targetName then
+        removeESP(obj)
+    end
+end
+
+print("ESP da Photo Camera removido.")

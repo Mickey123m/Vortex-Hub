@@ -1,0 +1,135 @@
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+
+-- ==========================================
+-- CONFIGURAÇÕES DE CAMINHOS E CORES
+-- ==========================================
+
+-- Caminhos das pastas
+local gameFolder = Workspace:WaitForChild("Game")
+local mainAnimFolder = gameFolder:WaitForChild("Animatronics")
+local animatronicsFolder = mainAnimFolder:WaitForChild("Animatronics")
+
+local sistemaFolder = gameFolder:WaitForChild("Sistema")
+local armarioFolder = sistemaFolder:WaitForChild("Armario")
+local normalFolder = armarioFolder:WaitForChild("Normal")
+local pequenoFolder = armarioFolder:WaitForChild("Pequeno")
+
+-- Tabela de cores para os animatrônicos
+local animColors = {
+    ["Bonnie"] = Color3.fromRGB(106, 90, 205),
+    ["Chica"] = Color3.fromRGB(255, 255, 0),
+    ["Cupcake"] = Color3.fromRGB(255, 105, 180),
+    ["Foxy"] = Color3.fromRGB(255, 0, 0),
+    ["Freddy"] = Color3.fromRGB(139, 69, 19),
+    ["Puppet"] = Color3.fromRGB(255, 255, 255)
+}
+
+-- ==========================================
+-- FUNÇÕES DE APLICAÇÃO
+-- ==========================================
+
+local function createESP(parent, name, color, offset, isFullHighlight)
+    if parent:FindFirstChild("Universal_ESP_Internal") then return end
+    task.wait(0.1)
+
+    local container = Instance.new("Folder")
+    container.Name = "Universal_ESP_Internal"
+    container.Parent = parent
+
+    -- 1. Highlight
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = parent
+    highlight.OutlineColor = color
+    highlight.FillColor = color
+    highlight.FillTransparency = isFullHighlight and 0.6 or 1
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = container
+
+    -- 2. BillboardGui
+    local root = parent:IsA("Model") and (parent.PrimaryPart or parent:FindFirstChildWhichIsA("BasePart", true)) or parent
+    if root then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Adornee = root
+        billboard.Size = UDim2.new(0, 150, 0, 50)
+        billboard.StudsOffset = offset
+        billboard.AlwaysOnTop = true
+        billboard.Parent = container
+
+        local label = Instance.new("TextLabel")
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Text = name
+        label.TextColor3 = color
+        label.TextStrokeTransparency = 0
+        label.TextSize = 16
+        label.Font = Enum.Font.SourceSansBold
+        label.Parent = billboard
+    end
+end
+
+-- ==========================================
+-- LÓGICA POR CATEGORIA
+-- ==========================================
+
+-- 1. Animatrônicos
+local function applyAnimESP(anim)
+    local highlightColor = Color3.fromRGB(200, 200, 200)
+    for name, color in pairs(animColors) do
+        if string.find(anim.Name, name) then
+            highlightColor = color
+            break
+        end
+    end
+    createESP(anim, anim.Name, highlightColor, Vector3.new(0, 4, 0), true)
+end
+
+-- 2. Itens Genéricos
+local function checkItem(obj)
+    if obj.Name == "Battery" then
+        createESP(obj, "Battery", Color3.fromRGB(255, 255, 255), Vector3.new(0, 1.8, 0), false)
+    elseif obj.Name == "Phillips screwdriver" then
+        createESP(obj, "Screwdriver", Color3.fromRGB(115, 115, 115), Vector3.new(0, 1.8, 0), false)
+    elseif obj.Name == "Pliers" then
+        createESP(obj, "Pliers", Color3.fromRGB(247, 58, 58), Vector3.new(0, 1.8, 0), false)
+    elseif obj.Name == "Fuse" then
+        createESP(obj, "Fuse", Color3.fromRGB(255, 255, 0), Vector3.new(0, 1.8, 0), false)
+    elseif obj.Name == "OldFlashlight" then
+        createESP(obj, "Lantern", Color3.fromRGB(245, 13, 241), Vector3.new(0, 1.8, 0), false)
+    elseif obj.Name == "Photo Camera" then
+        createESP(obj, "Camera", Color3.fromRGB(57, 255, 20), Vector3.new(0, 1.8, 0), false)
+    end
+end
+
+-- 3. Jogadores
+local function applyPlayerESP(char)
+    if not char then return end
+    createESP(char, char.Name, Color3.fromRGB(0, 255, 0), Vector3.new(0, 3, 0), true)
+end
+
+-- ==========================================
+-- INICIALIZAÇÃO E MONITORAMENTO
+-- ==========================================
+
+-- Jogadores
+Players.PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(applyPlayerESP) end)
+for _, p in ipairs(Players:GetPlayers()) do if p.Character then applyPlayerESP(p.Character) end end
+
+-- Animatrônicos
+animatronicsFolder.ChildAdded:Connect(applyAnimESP)
+for _, a in ipairs(animatronicsFolder:GetChildren()) do applyAnimESP(a) end
+
+-- Armários
+local function monitorArmarios(pasta, tipo, cor)
+    pasta.ChildAdded:Connect(function(c) createESP(c, "Armário ("..tipo..")", cor, Vector3.new(0, 5, 0), true) end)
+    for _, a in ipairs(pasta:GetChildren()) do createESP(a, "Armário ("..tipo..")", cor, Vector3.new(0, 5, 0), true) end
+end
+monitorArmarios(normalFolder, "Normal", Color3.fromRGB(0, 120, 255))
+monitorArmarios(pequenoFolder, "Pequeno", Color3.fromRGB(0, 255, 255))
+
+-- Itens Gerais
+Workspace.DescendantAdded:Connect(checkItem)
+for _, obj in ipairs(Workspace:GetDescendants()) do checkItem(obj) end
+
+print("SISTEMA MESTRE ESP ATIVADO")

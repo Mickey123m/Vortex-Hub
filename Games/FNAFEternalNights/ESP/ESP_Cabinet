@@ -1,0 +1,79 @@
+local Workspace = game:GetService("Workspace")
+
+-- Caminho da hierarquia solicitada
+local gameFolder = Workspace:WaitForChild("Game")
+local sistemaFolder = gameFolder:WaitForChild("Sistema")
+local armarioFolder = sistemaFolder:WaitForChild("Armario")
+
+-- Pastas específicas dos tipos de armários
+local normalFolder = armarioFolder:WaitForChild("Normal")
+local pequenoFolder = armarioFolder:WaitForChild("Pequeno")
+
+local function applyArmarioESP(armario, tipo)
+    -- Evita duplicatas
+    if armario:FindFirstChild("Armario_ESP_Internal") then return end
+
+    -- Pequeno atraso para carregamento
+    task.wait(0.1)
+
+    local container = Instance.new("Folder")
+    container.Name = "Armario_ESP_Internal"
+    container.Parent = armario
+
+    -- Define a cor: Azul para Normal, Ciano para Pequeno
+    local espColor = (tipo == "Normal") and Color3.fromRGB(0, 120, 255) or Color3.fromRGB(0, 255, 255)
+
+    -- 1. HIGHLIGHT (Silhueta)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "Outline"
+    highlight.Adornee = armario
+    highlight.FillTransparency = 0.8
+    highlight.FillColor = espColor
+    highlight.OutlineColor = espColor
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = container
+
+    -- 2. TEXTO (BillboardGui)
+    local root = armario:IsA("Model") and (armario.PrimaryPart or armario:FindFirstChildWhichIsA("BasePart", true)) or armario
+    
+    if root then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "NameTag"
+        billboard.Adornee = root
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 5, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = container
+
+        local label = Instance.new("TextLabel")
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Text = "Armário (" .. tipo .. ")"
+        label.TextColor3 = espColor
+        label.TextStrokeTransparency = 0
+        label.TextSize = 16
+        label.Font = Enum.Font.SourceSansBold
+        label.Parent = billboard
+    end
+end
+
+-- Monitorar e Aplicar na pasta "Normal"
+normalFolder.ChildAdded:Connect(function(child)
+    applyArmarioESP(child, "Normal")
+end)
+
+for _, obj in ipairs(normalFolder:GetChildren()) do
+    applyArmarioESP(obj, "Normal")
+end
+
+-- Monitorar e Aplicar na pasta "Pequeno"
+pequenoFolder.ChildAdded:Connect(function(child)
+    applyArmarioESP(child, "Pequeno")
+end)
+
+for _, obj in ipairs(pequenoFolder:GetChildren()) do
+    applyArmarioESP(obj, "Pequeno")
+end
+
+print("ESP de Armários Ativado: Normal e Pequeno")

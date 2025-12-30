@@ -1,0 +1,16 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local target = Workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("Gerador"):WaitForChild("Fusiveis")
+
+local function teleport()
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local targetPos = target:GetPivot()
+        character:PivotTo(targetPos * CFrame.new(0, 3, 0)) -- Teleporta 3 studs acima para não prender no chão
+    end
+end
+
+teleport()
+print("Teleportado para: Gerador (Fusiveis)")

@@ -1,0 +1,19 @@
+local Workspace = game:GetService("Workspace")
+local targetName = "OldFlashlight"
+
+local function removeESP(item)
+    -- Procura a pasta interna de ESP criada (Item_ESP_Internal)
+    local espFolder = item:FindFirstChild("Item_ESP_Internal")
+    if espFolder then
+        espFolder:Destroy()
+    end
+end
+
+-- Varredura para remover o ESP de todos os modelos OldFlashlight
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj.Name == targetName then
+        removeESP(obj)
+    end
+end
+
+print("ESP de " .. targetName .. " removido com sucesso.")

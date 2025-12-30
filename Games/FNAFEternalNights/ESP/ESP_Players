@@ -1,0 +1,67 @@
+local Players = game:GetService("Players")
+
+local function applyPlayerESP(character)
+    if not character then return end
+    
+    -- Evita duplicatas
+    if character:FindFirstChild("Player_ESP_Internal") then return end
+
+    -- Espera o tronco carregar para anexar o BillboardGui
+    local rootPart = character:WaitForChild("HumanoidRootPart", 5)
+    if not rootPart then return end
+
+    local container = Instance.new("Folder")
+    container.Name = "Player_ESP_Internal"
+    container.Parent = character
+
+    local playerColor = Color3.fromRGB(169, 245, 13) -- Verde
+
+    -- 1. HIGHLIGHT (Silhueta)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "Outline"
+    highlight.Adornee = character
+    highlight.FillColor = playerColor
+    highlight.FillTransparency = 0.7
+    highlight.OutlineColor = playerColor
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = container
+
+    -- 2. NOME DO JOGADOR (BillboardGui)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "PlayerTag"
+    billboard.Adornee = rootPart
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = container
+
+    local label = Instance.new("TextLabel")
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Text = character.Name
+    label.TextColor3 = playerColor
+    label.TextStrokeTransparency = 0
+    label.TextSize = 18
+    label.Font = Enum.Font.SourceSansBold
+    label.Parent = billboard
+end
+
+-- Monitora novos jogadores e personagens que spawnarem
+local function onPlayerAdded(player)
+    player.CharacterAdded:Connect(function(character)
+        applyPlayerESP(character)
+    end)
+    if player.Character then
+        applyPlayerESP(player.Character)
+    end
+end
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+
+-- Aplica para quem já está no servidor
+for _, player in ipairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
+
+print("ESP de Players (Verde) ativado.")

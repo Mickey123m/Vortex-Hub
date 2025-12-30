@@ -1,0 +1,17 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function teleportUp()
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        local hrp = character.HumanoidRootPart
+        
+        -- Pega a posição atual e adiciona 200 studs de altura no eixo Y
+        local newPos = hrp.CFrame + Vector3.new(0, 200, 0)
+
+        character:PivotTo(newPos)
+    end
+end
+
+teleportUp()
+print("Teleportado para cima do mapa.")

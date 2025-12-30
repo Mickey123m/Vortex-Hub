@@ -1,0 +1,19 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local target = Workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("DoorSecurity"):WaitForChild("PackDoor"):WaitForChild("Door"):WaitForChild("Grade")
+
+local function teleport()
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        if target:IsA("BasePart") or target:IsA("MeshPart") then
+            character:PivotTo(target.CFrame * CFrame.new(0, 3, 0))
+        else
+            character:PivotTo(target:GetPivot() * CFrame.new(0, 3, 0))
+        end
+    end
+end
+
+teleport()
+print("Teleportado para: Grade (DoorSecurity)")

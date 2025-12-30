@@ -1,0 +1,63 @@
+local Workspace = game:GetService("Workspace")
+local targetName = "Fuse"
+
+local function applyESP(item)
+    -- Evita duplicatas caso o script seja executado mais de uma vez
+    if item:FindFirstChild("Item_ESP_Internal") then return end
+    
+    -- Pequeno atraso para garantir que o objeto carregou completamente
+    task.wait(0.1)
+
+    local container = Instance.new("Folder")
+    container.Name = "Item_ESP_Internal"
+    container.Parent = item
+
+    -- 1. OUTLINE (Bordas no formato do item)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "Outline"
+    highlight.Adornee = item
+    highlight.FillTransparency = 1 -- Mantém o centro do item original
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 0) -- Cor amarela
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Parent = container
+
+    -- 2. NOME DO ITEM (BillboardGui)
+    local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
+    
+    if targetPart then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "NomeTag"
+        billboard.Adornee = targetPart
+        billboard.Size = UDim2.new(0, 150, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 1.8, 0) -- Distância acima do item
+        billboard.AlwaysOnTop = true
+        billboard.Parent = container
+
+        local label = Instance.new("TextLabel")
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Text = targetName
+        label.TextColor3 = Color3.fromRGB(255, 255, 255)
+        label.TextStrokeTransparency = 0
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSansBold
+        label.Parent = billboard
+    end
+end
+
+-- Lógica para itens que aparecem depois (Spawns)
+Workspace.DescendantAdded:Connect(function(obj)
+    if obj.Name == targetName then 
+        applyESP(obj) 
+    end
+end)
+
+-- Varredura para itens que já estão no mapa
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj.Name == targetName then 
+        applyESP(obj) 
+    end
+end
+
+print("ESP de Outline para Fuse ativado com sucesso.")

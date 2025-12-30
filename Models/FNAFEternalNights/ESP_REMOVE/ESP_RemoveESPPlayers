@@ -1,0 +1,17 @@
+local Players = game:GetService("Players")
+
+local function removePlayerESP(character)
+    if character then
+        local espFolder = character:FindFirstChild("Player_ESP_Internal")
+        if espFolder then
+            espFolder:Destroy()
+        end
+    end
+end
+
+-- Remove de todos os personagens atuais
+for _, player in ipairs(Players:GetPlayers()) do
+    removePlayerESP(player.Character)
+end
+
+print("ESP de Players removido.")
