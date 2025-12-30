@@ -40,7 +40,7 @@ local function GetShotgun()
     local camDirection = (Camera.CFrame.Position - itemPos).Unit
     
     -- Mantida a posição exata do seu script da AK: +2 lateral, +10 altura, +4 direção tela
-    local finalPos = itemPos + Vector3.new(0, 0, -2) + (camDirection * 4)
+    local finalPos = itemPos + Vector3.new(1.5, 1, -2.5) + (camDirection * 4)
     
     char:PivotTo(CFrame.new(finalPos, itemPos))
     

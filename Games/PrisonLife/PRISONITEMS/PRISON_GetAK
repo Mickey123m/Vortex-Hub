@@ -37,7 +37,7 @@ local function GetAK47()
     local itemPos = ak47:GetPivot().Position
     local camDirection = (Camera.CFrame.Position - itemPos).Unit
     
-    local finalPos = itemPos + Vector3.new(2, 10, 0) + (camDirection * 4)
+    local finalPos = itemPos + Vector3.new(3, 2, 1) + (camDirection * 4)
     
     char:PivotTo(CFrame.new(finalPos, itemPos))
     
