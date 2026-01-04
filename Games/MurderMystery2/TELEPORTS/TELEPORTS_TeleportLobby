@@ -5,22 +5,18 @@ local function teleportToLobby()
     local player = Players.LocalPlayer
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
-    local lobby = Workspace:FindFirstChild("Lobby")
+    
+    -- Posição exata fornecida
+    local targetPos = Vector3.new(-5060.4384765625, 284.6402893066406, 77.59838104248047)
 
-    if root and lobby then
-        -- Calcula a posição central do modelo do Lobby
-        local lobbyPos = lobby:IsA("Model") and lobby:GetModelCFrame() or lobby:IsA("BasePart") and lobby.CFrame
-        
-        if lobbyPos then
-            -- Teleporta o jogador para o Lobby com um pequeno ajuste de altura para não bugar no chão
-            root.CFrame = lobbyPos + Vector3.new(0, 3, 0)
-            print("Teleportado para o Lobby com sucesso.")
-        else
-            warn("Não foi possível calcular a posição do Lobby.")
-        end
+    if root then
+        -- Teleporta o jogador para a posição exata com um pequeno ajuste de altura para evitar colisão com o chão
+        root.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+        print("Teleportado para a posição do Lobby com sucesso.")
     else
-        if not root then warn("Personagem não encontrado.") end
-        if not lobby then warn("O modelo 'Lobby' não foi encontrado na Workspace.") end
+        if not root then 
+            warn("Personagem ou HumanoidRootPart não encontrado.") 
+        end
     end
 end
 
