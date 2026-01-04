@@ -1,0 +1,11 @@
+_G.AutoKillEnabled = false
+
+local lp = game:GetService("Players").LocalPlayer
+local char = lp.Character
+
+-- Desequipa a faca para parar os golpes
+if char and char:FindFirstChild("Humanoid") then
+    char.Humanoid:UnequipTools()
+end
+
+print("Auto Kill: DESATIVADO")

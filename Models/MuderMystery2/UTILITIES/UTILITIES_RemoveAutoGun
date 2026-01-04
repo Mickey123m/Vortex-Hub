@@ -1,0 +1,20 @@
+_G.AutoGetGunEnabled = false
+
+-- Desconecta o evento que detecta novas armas dropadas
+if _G.GunTeleportConn then 
+    _G.GunTeleportConn:Disconnect() 
+    _G.GunTeleportConn = nil
+end
+
+-- Opcional: Força o personagem a parar qualquer movimento se ele estiver no meio de um teleport
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character
+local root = character and character:FindFirstChild("HumanoidRootPart")
+
+if root then
+    -- Isso garante que se você desativar durante o trajeto, 
+    -- o personagem não fique "preso" em posições estranhas
+    root.Velocity = Vector3.new(0, 0, 0)
+end
+
+print("Auto Get Gun: Desativado")

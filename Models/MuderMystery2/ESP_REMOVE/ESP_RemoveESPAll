@@ -1,0 +1,25 @@
+_G.AllEspEnabled = false
+_G.GunDropEspEnabled = false
+
+if _G.AllEspLoop then
+    _G.AllEspLoop:Disconnect()
+    _G.AllEspLoop = nil
+end
+
+local function forceClean()
+    for _, p in ipairs(game:GetService("Players"):GetPlayers()) do
+        local char = p.Character
+        if char then
+            if char:FindFirstChild("PlayerHighlight") then char.PlayerHighlight:Destroy() end
+            if char:FindFirstChild("PlayerNameTag") then char.PlayerNameTag:Destroy() end
+        end
+    end
+    for _, obj in ipairs(game:GetService("Workspace"):GetDescendants()) do
+        if obj.Name == "GunDrop" then
+            if obj:FindFirstChild("GunHighlight") then obj.GunHighlight:Destroy() end
+            if obj:FindFirstChild("GunNameTag") then obj.GunNameTag:Destroy() end
+        end
+    end
+end
+
+forceClean()

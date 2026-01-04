@@ -1,0 +1,7 @@
+_G.GunDropEspEnabled = false
+if _G.GunEspConn then _G.GunEspConn:Disconnect() end
+for _, obj in ipairs(game.Workspace:GetDescendants()) do 
+    if obj.Name == "GunDrop" and obj:FindFirstChild("GunHighlight") then 
+        obj.GunHighlight:Destroy() 
+    end 
+end

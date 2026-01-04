@@ -1,0 +1,145 @@
+_G.GunDropEspEnabled = true
+_G.AllEspEnabled = true
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local lp = Players.LocalPlayer
+local lastUpdate = 0
+local UPDATE_INTERVAL = 0.03 
+
+-- Cache para armas no chão
+local gunDrops = {}
+local function trackGuns(obj)
+    if obj.Name == "GunDrop" then
+        if not table.find(gunDrops, obj) then table.insert(gunDrops, obj) end
+    end
+end
+
+-- Monitoramento automático
+Workspace.ChildAdded:Connect(trackGuns)
+Workspace.DescendantAdded:Connect(trackGuns)
+for _, obj in ipairs(Workspace:GetDescendants()) do trackGuns(obj) end
+
+-- Funções de limpeza
+local function cleanChar(char)
+    if not char then return end
+    local h = char:FindFirstChild("PlayerHighlight")
+    local b = char:FindFirstChild("PlayerNameTag")
+    if h then h:Destroy() end
+    if b then b:Destroy() end
+end
+
+local function cleanGun(obj)
+    if not obj then return end
+    local h = obj:FindFirstChild("GunHighlight")
+    local b = obj:FindFirstChild("GunNameTag")
+    if h then h:Destroy() end
+    if b then b:Destroy() end
+end
+
+if _G.AllEspLoop then _G.AllEspLoop:Disconnect() end
+
+_G.AllEspLoop = RunService.Heartbeat:Connect(function()
+    local now = os.clock()
+    if now - lastUpdate < UPDATE_INTERVAL then return end
+    lastUpdate = now
+
+    if not _G.AllEspEnabled then 
+        for _, p in ipairs(Players:GetPlayers()) do if p.Character then cleanChar(p.Character) end end
+        for i = #gunDrops, 1, -1 do cleanGun(gunDrops[i]) end
+        return 
+    end
+    
+    local char_lp = lp.Character
+    local localRoot = char_lp and char_lp:FindFirstChild("HumanoidRootPart")
+    local lobby = Workspace:FindFirstChild("Lobby")
+    
+    local inLobby = false
+    if lobby and localRoot then
+        local lobbyPos = lobby:IsA("Model") and (lobby.PrimaryPart and lobby.PrimaryPart.Position or lobby:GetModelCFrame().Position) or (lobby:IsA("BasePart") and lobby.Position)
+        if lobbyPos and (localRoot.Position - lobbyPos).Magnitude < 500 then inLobby = true end
+    end
+
+    -------------------------------------------------------
+    -- ESP JOGADORES
+    -------------------------------------------------------
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp then
+            local char = player.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            
+            if not inLobby and char and hum and hum.Health > 0 and char:FindFirstChild("UpperTorso") and char.UpperTorso.Transparency < 0.7 then
+                local dist = localRoot and root and (localRoot.Position - root.Position).Magnitude or 0
+                if dist < 2500 then
+                    local backpack = player:FindFirstChild("Backpack")
+                    local hasKnife = (backpack and backpack:FindFirstChild("Knife")) or char:FindFirstChild("Knife")
+                    local hasGun = (backpack and backpack:FindFirstChild("Gun")) or char:FindFirstChild("Gun")
+                    
+                    local color = hasKnife and Color3.new(1,0,0) or (hasGun and Color3.new(0,0,1) or Color3.new(0,1,0))
+
+                    local h = char:FindFirstChild("PlayerHighlight") or Instance.new("Highlight")
+                    h.Name = "PlayerHighlight"; h.FillColor = color; h.FillTransparency = 0.5; h.OutlineColor = Color3.new(1,1,1)
+                    if h.Parent ~= char then h.Parent = char end
+                    
+                    local b = char:FindFirstChild("PlayerNameTag") or Instance.new("BillboardGui")
+                    if b.Parent ~= char then
+                        b.Name = "PlayerNameTag"; b.AlwaysOnTop = true; b.Size = UDim2.new(0, 200, 0, 50); b.ExtentsOffset = Vector3.new(0, 3, 0); b.Adornee = char:FindFirstChild("Head")
+                        local l = Instance.new("TextLabel", b)
+                        l.Name = "NameLabel"; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1; l.TextSize = 16; l.Font = Enum.Font.SourceSansBold; l.TextStrokeTransparency = 0
+                        b.Parent = char
+                    end
+                    b.NameLabel.Text = player.Name; b.NameLabel.TextColor3 = color
+                else
+                    cleanChar(char)
+                end
+            else
+                cleanChar(char)
+            end
+        end
+    end
+
+    -------------------------------------------------------
+    -- ESP GUN DROP (CORRIGIDO)
+    -------------------------------------------------------
+    if _G.GunDropEspEnabled then
+        for i = #gunDrops, 1, -1 do
+            local obj = gunDrops[i]
+            if obj and obj.Parent then
+                local gunPart = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
+                
+                if gunPart and not inLobby then
+                    local dist = localRoot and (localRoot.Position - gunPart.Position).Magnitude or 0
+                    
+                    if dist < 2500 then
+                        local gunColor = Color3.fromRGB(0, 255, 255)
+
+                        -- Highlight
+                        local h = obj:FindFirstChild("GunHighlight") or Instance.new("Highlight")
+                        h.Name = "GunHighlight"; h.FillColor = gunColor; h.OutlineColor = Color3.new(1,1,1); h.FillTransparency = 0.5
+                        if h.Parent ~= obj then h.Parent = obj end
+                        
+                        -- NameTag (Fixado exatamente como o do jogador)
+                        local b = obj:FindFirstChild("GunNameTag") or Instance.new("BillboardGui")
+                        if b.Parent ~= obj then
+                            b.Name = "GunNameTag"; b.AlwaysOnTop = true; b.Size = UDim2.new(0, 200, 0, 50); b.ExtentsOffset = Vector3.new(0, 2, 0); b.Adornee = gunPart
+                            local l = Instance.new("TextLabel", b)
+                            l.Name = "NameLabel"; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1; l.TextSize = 18; l.Font = Enum.Font.SourceSansBold; l.TextStrokeTransparency = 0
+                            b.Parent = obj
+                        end
+                        b.NameLabel.Text = "Gun Drop"
+                        b.NameLabel.TextColor3 = gunColor
+                    else
+                        cleanGun(obj)
+                    end
+                else
+                    cleanGun(obj)
+                end
+            else
+                table.remove(gunDrops, i) 
+            end
+        end
+    end
+end)

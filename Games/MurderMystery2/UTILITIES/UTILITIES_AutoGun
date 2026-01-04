@@ -1,0 +1,78 @@
+_G.AutoGetGunEnabled = true
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local function teleportToGun(obj)
+    if not _G.AutoGetGunEnabled then return end
+    
+    local player = Players.LocalPlayer
+    local character = player.Character
+    local localRoot = character and character:FindFirstChild("HumanoidRootPart")
+    local lobby = Workspace:FindFirstChild("Lobby")
+    
+    if not localRoot then return end
+
+    -- VERIFICAÇÃO DE MURDERER (Mesma lógica do ESP)
+    local backpack = player:FindFirstChild("Backpack")
+    local hasKnife = (backpack and backpack:FindFirstChild("Knife")) or (character and character:FindFirstChild("Knife"))
+    
+    -- Se tiver a Knife na bolsa ou na mão, ele cancela o teleport
+    if hasKnife then 
+        return 
+    end
+    
+    -- Verificação de Lobby
+    if lobby then
+        local lobbyPos = lobby:IsA("Model") and lobby:GetModelCFrame().Position or lobby.PrimaryPart and lobby.PrimaryPart.Position
+        if lobbyPos and (localRoot.Position - lobbyPos).Magnitude < 500 then return end
+    end
+
+    -- Calcula posição da arma
+    local gunPos = obj:IsA("BasePart") and obj.Position or obj:GetModelCFrame().Position
+    local dist = (localRoot.Position - gunPos).Magnitude
+    if dist > 2500 then return end 
+
+    -- Salva a posição original
+    local oldPos = localRoot.CFrame
+    
+    -- Primeiro Teleport (Preciso)
+    localRoot.CFrame = CFrame.new(gunPos)
+    task.wait(0.25)
+    
+    -- Verificação de sucesso: Se a arma ainda estiver no mapa, tenta o ajuste fino
+    if _G.AutoGetGunEnabled and (obj.Parent == Workspace or obj.Parent ~= nil) then
+        -- Segundo Teleport: Um pouco abaixo para forçar o toque na hitbox
+        localRoot.CFrame = CFrame.new(gunPos + Vector3.new(0, -1, 0)) 
+        task.wait(0.2)
+    end
+
+    -- Terceira Verificação: Caso a arma tenha quicado ou se movido
+    if _G.AutoGetGunEnabled and (obj.Parent == Workspace or obj.Parent ~= nil) then
+        local newGunPos = obj:IsA("BasePart") and obj.Position or obj:GetModelCFrame().Position
+        localRoot.CFrame = CFrame.new(newGunPos)
+        task.wait(0.2)
+    end
+
+    -- Retorna para a posição de onde você saiu
+    localRoot.CFrame = oldPos
+end
+
+-- Limpa conexões anteriores
+if _G.GunTeleportConn then _G.GunTeleportConn:Disconnect() end
+
+-- Verifica armas já dropadas ao executar o script
+for _, obj in ipairs(Workspace:GetDescendants()) do 
+    if obj.Name == "GunDrop" then 
+        task.spawn(function() teleportToGun(obj) end) 
+    end 
+end
+
+-- Conexão para novas armas dropadas
+_G.GunTeleportConn = Workspace.DescendantAdded:Connect(function(obj) 
+    if obj.Name == "GunDrop" then 
+        -- Task delay para esperar a física da arma (evita teleportar pro ar)
+        task.delay(0.1, function()
+            teleportToGun(obj)
+        end)
+    end 
+end)

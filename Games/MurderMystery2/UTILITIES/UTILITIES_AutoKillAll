@@ -1,0 +1,71 @@
+_G.AutoKillEnabled = true
+_G.KillDistance = 2500 
+_G.KillDelay = 0.2 -- Delay entre facadas no mesmo alvo (mais rápido para garantir)
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local lp = Players.LocalPlayer
+
+local function getKnife()
+    local char = lp.Character
+    if not char then return nil end
+    return char:FindFirstChild("Knife") or (lp:FindFirstChild("Backpack") and lp.Backpack:FindFirstChild("Knife"))
+end
+
+local function autoKill()
+    while _G.AutoKillEnabled do
+        task.wait(0.1)
+        
+        local knife = getKnife()
+        if not knife then continue end
+
+        local character = lp.Character
+        local localRoot = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChild("Humanoid")
+        local lobby = Workspace:FindFirstChild("Lobby")
+
+        -- Verifica Lobby
+        if lobby and localRoot then
+            local lobbyPos = lobby:IsA("Model") and lobby:GetModelCFrame().Position or lobby.PrimaryPart and lobby.PrimaryPart.Position
+            if lobbyPos and (localRoot.Position - lobbyPos).Magnitude < 500 then 
+                continue 
+            end
+        end
+
+        if knife.Parent == lp.Backpack and humanoid then
+            humanoid:EquipTool(knife)
+        end
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if not _G.AutoKillEnabled or not getKnife() then break end
+            
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChild("Humanoid")
+
+            if player ~= lp and char and root and hum and hum.Health > 0 then
+                local dist = (localRoot.Position - root.Position).Magnitude
+                
+                if dist < _G.KillDistance then
+                    -- LOOP DE FOCO: Só sai deste player quando ele morrer
+                    while _G.AutoKillEnabled and char and root and hum and hum.Health > 0 and getKnife() do
+                        -- Teleporta colado no player, seguindo o movimento dele
+                        localRoot.CFrame = root.CFrame * CFrame.new(0, 0, 1.2)
+                        
+                        -- Ataca
+                        knife:Activate()
+                        
+                        -- Espera mínima para o próximo golpe no MESMO player
+                        task.wait(_G.KillDelay)
+                        
+                        -- Verifica distância novamente caso ele tenha sido teleportado pra longe
+                        if (localRoot.Position - root.Position).Magnitude > 50 then break end
+                    end
+                end
+            end
+        end
+    end
+end
+
+if _G.AutoKillLoopTask then _G.AutoKillLoopTask = nil end
+task.spawn(autoKill)

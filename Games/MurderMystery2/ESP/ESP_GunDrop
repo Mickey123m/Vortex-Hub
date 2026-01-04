@@ -1,0 +1,28 @@
+_G.GunDropEspEnabled = true
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local function handleGun(obj)
+    local localRoot = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local lobby = Workspace:FindFirstChild("Lobby")
+    
+    if not localRoot then return end
+    
+    -- Se você estiver no Lobby, não mostra o ESP da arma na partida
+    if lobby then
+        local lobbyPos = lobby:IsA("Model") and lobby:GetModelCFrame().Position or lobby.PrimaryPart and lobby.PrimaryPart.Position
+        if lobbyPos and (localRoot.Position - lobbyPos).Magnitude < 500 then return end
+    end
+
+    local gunPos = obj:IsA("BasePart") and obj.Position or obj:GetModelCFrame().Position
+    local dist = (localRoot.Position - gunPos).Magnitude
+    if dist > 2500 then return end 
+
+    if _G.GunDropEspEnabled and not obj:FindFirstChild("GunHighlight") then
+        local h = Instance.new("Highlight", obj); h.Name = "GunHighlight"; h.FillColor = Color3.fromRGB(0, 255, 0)
+    end
+end
+
+if _G.GunEspConn then _G.GunEspConn:Disconnect() end
+for _, obj in ipairs(Workspace:GetDescendants()) do if obj.Name == "GunDrop" then handleGun(obj) end end
+_G.GunEspConn = Workspace.DescendantAdded:Connect(function(obj) if obj.Name == "GunDrop" then handleGun(obj) end end)

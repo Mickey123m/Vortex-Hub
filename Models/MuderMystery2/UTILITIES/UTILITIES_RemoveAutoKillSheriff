@@ -1,0 +1,5 @@
+_G.AutoKillSheriffEnabled = false
+if game.Players.LocalPlayer.Character then
+    game.Players.LocalPlayer.Character.Humanoid:UnequipTools()
+end
+print("Auto Kill Sheriff: DESATIVADO")

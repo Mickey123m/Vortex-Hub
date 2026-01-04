@@ -1,0 +1,76 @@
+_G.AutoKillSheriffEnabled = true
+_G.KillDistance = 5000 -- Distância aumentada para achar o Sheriff em qualquer lugar
+_G.KillDelay = 0.2 
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local lp = Players.LocalPlayer
+
+local function getKnife()
+    local char = lp.Character
+    if not char then return nil end
+    return char:FindFirstChild("Knife") or (lp:FindFirstChild("Backpack") and lp.Backpack:FindFirstChild("Knife"))
+end
+
+local function isSheriff(player)
+    local char = player.Character
+    local backpack = player:FindFirstChild("Backpack")
+    -- Verifica se o player tem a arma (Sheriff ou Hero)
+    return (backpack and backpack:FindFirstChild("Gun")) or (char and char:FindFirstChild("Gun"))
+end
+
+local function autoKillSheriff()
+    while _G.AutoKillSheriffEnabled do
+        task.wait(0.1)
+        
+        local knife = getKnife()
+        if not knife then continue end
+
+        local character = lp.Character
+        local localRoot = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChild("Humanoid")
+        local lobby = Workspace:FindFirstChild("Lobby")
+
+        -- Verifica se VOCÊ está no lobby
+        if lobby and localRoot then
+            local lobbyPos = lobby:IsA("Model") and lobby:GetModelCFrame().Position or lobby.PrimaryPart and lobby.PrimaryPart.Position
+            if lobbyPos and (localRoot.Position - lobbyPos).Magnitude < 500 then 
+                continue 
+            end
+        end
+
+        -- Equipa a faca
+        if knife.Parent == lp.Backpack and humanoid then
+            humanoid:EquipTool(knife)
+        end
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if not _G.AutoKillSheriffEnabled or not getKnife() then break end
+            
+            -- VERIFICAÇÃO: Só foca se for o Sheriff
+            if player ~= lp and isSheriff(player) then
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local hum = char and char:FindFirstChild("Humanoid")
+
+                if char and root and hum and hum.Health > 0 then
+                    -- LOOP DE FOCO NO SHERIFF
+                    while _G.AutoKillSheriffEnabled and char and root and hum and hum.Health > 0 and getKnife() and isSheriff(player) do
+                        -- Gruda no Sheriff
+                        localRoot.CFrame = root.CFrame * CFrame.new(0, 0, 1.2)
+                        
+                        -- Ataca
+                        knife:Activate()
+                        
+                        task.wait(_G.KillDelay)
+                        
+                        -- Se o Sheriff deslogar ou sumir, quebra o foco
+                        if not root:IsDescendantOf(Workspace) then break end
+                    end
+                end
+            end
+        end
+    end
+end
+
+task.spawn(autoKillSheriff)

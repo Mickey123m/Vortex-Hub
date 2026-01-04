@@ -1,0 +1,47 @@
+_G.MurderEspEnabled = true
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local function clean(char)
+    if char:FindFirstChild("MurdererHighlight") then char.MurdererHighlight:Destroy() end
+    if char:FindFirstChild("MurdererNameTag") then char.MurdererNameTag:Destroy() end
+end
+
+if _G.MurderLoop then _G.MurderLoop:Disconnect() end
+
+_G.MurderLoop = RunService.Heartbeat:Connect(function()
+    if not _G.MurderEspEnabled then 
+        for _, p in ipairs(Players:GetPlayers()) do if p.Character then clean(p.Character) end end
+        return 
+    end
+    
+    local localRoot = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local lobby = Workspace:FindFirstChild("Lobby")
+    local inLobby = false
+    
+    if lobby and localRoot then
+        local lobbyPos = lobby:IsA("Model") and lobby:GetModelCFrame().Position or lobby.PrimaryPart and lobby.PrimaryPart.Position
+        if lobbyPos and (localRoot.Position - lobbyPos).Magnitude < 500 then inLobby = true end
+    end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer then
+            local char = player.Character
+            local isVisible = not inLobby and char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and char:FindFirstChild("UpperTorso") and char.UpperTorso.Transparency < 0.7
+            local isNear = localRoot and char and char:FindFirstChild("HumanoidRootPart") and (localRoot.Position - char.HumanoidRootPart.Position).Magnitude < 2500
+            
+            if isVisible and isNear then
+                local hasKnife = (player:FindFirstChild("Backpack") and player.Backpack:FindFirstChild("Knife")) or char:FindFirstChild("Knife")
+                if hasKnife then
+                    local h = char:FindFirstChild("MurdererHighlight") or Instance.new("Highlight", char)
+                    h.Name = "MurdererHighlight"; h.FillColor = Color3.fromRGB(255, 0, 0)
+                    local b = char:FindFirstChild("MurdererNameTag") or Instance.new("BillboardGui", char)
+                    b.Name = "MurdererNameTag"; b.AlwaysOnTop = true; b.Size = UDim2.new(0, 200, 0, 50); b.Adornee = char:FindFirstChild("Head")
+                    local l = b:FindFirstChild("NameLabel") or Instance.new("TextLabel", b)
+                    l.Name = "NameLabel"; l.Size = UDim2.new(1, 0, 1, 0); l.BackgroundTransparency = 1; l.Text = player.Name; l.TextColor3 = Color3.fromRGB(255, 0, 0); l.TextSize = 16; l.Font = Enum.Font.SourceSansBold
+                else clean(char) end
+            else if char then clean(char) end end
+        end
+    end
+end)
