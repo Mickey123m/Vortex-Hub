@@ -1,0 +1,21 @@
+_G.HitboxEnabled = false
+
+if _G.HitboxLoop then 
+    _G.HitboxLoop:Disconnect() 
+    _G.HitboxLoop = nil
+end
+
+local Players = game:GetService("Players")
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player.Character then
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            -- Remove apenas o efeito visual laranja criado
+            local box = root:FindFirstChild("HitboxVisual")
+            if box then
+                box:Destroy()
+            end
+        end
+    end
+end

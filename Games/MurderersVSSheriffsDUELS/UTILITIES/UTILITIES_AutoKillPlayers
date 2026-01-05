@@ -1,0 +1,94 @@
+_G.KnifeAuraEnabled = true
+_G.KnifeAuraDistance = 1000 
+_G.AttackSpeed = 0.1 -- Velocidade rápida original
+
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+-- Função para identificar a Faca (Default sem "Fire")
+local function findKnife()
+    local tool = lp.Character and lp.Character:FindFirstChild("Default")
+    if tool and not tool:FindFirstChild("Fire") then return tool end
+    local toolInBackpack = lp.Backpack:FindFirstChild("Default")
+    if toolInBackpack and not toolInBackpack:FindFirstChild("Fire") then return toolInBackpack end
+    return nil
+end
+
+-- Função para validar se o alvo está VIVO e NO MAPA (Evita bater no ar/spawn)
+local function isValid(char)
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return false end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    
+    -- Se o player morreu ou o modelo saiu do Workspace (fim de round), retorna falso
+    if not hum or hum.Health <= 0 or not char:IsDescendantOf(game.Workspace) then
+        return false
+    end
+    
+    -- Filtro de altura para evitar o Lobby (ajuste o valor se necessário)
+    if math.abs(char.HumanoidRootPart.Position.Y) > 100 then
+        return false
+    end
+    
+    return true
+end
+
+-- Função para achar o inimigo mais próximo em tempo real
+local function getClosestEnemy()
+    local closestTarget, shortestDistance = nil, _G.KnifeAuraDistance
+    local myRoot = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp and player.Team ~= lp.Team then
+            local char = player.Character
+            if isValid(char) then
+                local root = char.HumanoidRootPart
+                local dist = (myRoot.Position - root.Position).Magnitude
+                if dist < shortestDistance then
+                    closestTarget = char
+                    shortestDistance = dist
+                end
+            end
+        end
+    end
+    return closestTarget
+end
+
+-- Loop de execução
+task.spawn(function()
+    while true do
+        task.wait()
+        
+        if _G.KnifeAuraEnabled then
+            local target = getClosestEnemy()
+            local knife = findKnife()
+            
+            -- Só teleporta se o alvo for validado AGORA
+            if target and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                local targetRoot = target.HumanoidRootPart
+                local myRoot = lp.Character.HumanoidRootPart
+                local hum = lp.Character:FindFirstChildOfClass("Humanoid")
+                
+                -- 1. EQUIPAR
+                if knife and knife.Parent ~= lp.Character and hum then
+                    hum:EquipTool(knife)
+                end
+                
+                -- 2. TELEPORTE RÍGIDO (Colado no alvo atualizado)
+                myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 0.4)
+                
+                -- 3. ATAQUE
+                if knife and knife.Parent == lp.Character then
+                    knife:Activate()
+                end
+                
+                task.wait(_G.AttackSpeed)
+            else
+                -- Se não tem alvo válido, garante que não está batendo e espera
+                task.wait(0.2)
+            end
+        end
+    end
+end)
+
+print("Kill Aura: Atualização de Alvo e Verificação de Vida Ativada!")

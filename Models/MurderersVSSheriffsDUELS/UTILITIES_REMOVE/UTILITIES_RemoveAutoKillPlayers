@@ -1,0 +1,2 @@
+_G.KnifeAuraEnabled = false
+print("Kill Aura de Faca: Desativado.")

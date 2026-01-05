@@ -1,0 +1,19 @@
+_G.HitboxSizeEnabled = false
+
+if _G.HitboxSizeLoop then 
+    _G.HitboxSizeLoop:Disconnect() 
+    _G.HitboxSizeLoop = nil
+end
+
+local Players = game:GetService("Players")
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player.Character then
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            -- Retorna a RootPart para o tamanho padrão do Roblox
+            root.Size = Vector3.new(2, 2, 1)
+            root.Transparency = 1
+        end
+    end
+end

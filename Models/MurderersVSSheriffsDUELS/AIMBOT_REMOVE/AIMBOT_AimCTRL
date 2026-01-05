@@ -1,0 +1,6 @@
+_G.AimbotEnabled = false
+
+if _G.AimbotLoop then 
+    _G.AimbotLoop:Disconnect() 
+    _G.AimbotLoop = nil
+end

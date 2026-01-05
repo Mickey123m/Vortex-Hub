@@ -1,0 +1,78 @@
+_G.AimbotEnabled = true
+_G.AimbotKey = Enum.KeyCode.LeftControl
+_G.AimbotMaxDistance = 150 -- Ajuste a distância conforme necessário
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local lp = Players.LocalPlayer
+local mouse = lp:GetMouse()
+local camera = Workspace.CurrentCamera
+
+-- Função para verificar se o player está realmente na partida/no mundo
+local function isPlayerInMatch(player)
+    if player.Character and player.Character.Parent == Workspace then
+        local hum = player.Character:FindFirstChild("Humanoid")
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        -- Verifica se tem vida e se não está "caído" (opcional dependendo do jogo)
+        if hum and hum.Health > 0 and root then
+            return true
+        end
+    end
+    return false
+end
+
+local function getClosestEnemy()
+    local closestPlayer = nil
+    local shortestScreenDistance = math.huge
+
+    local char_lp = lp.Character
+    local localRoot = char_lp and char_lp:FindFirstChild("HumanoidRootPart")
+    
+    if not localRoot then return nil end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        -- TEAM CHECK + VERIFICAÇÃO DE PARTIDA (Workspace)
+        if player ~= lp and player.Team ~= lp.Team and isPlayerInMatch(player) then
+            local root = player.Character.HumanoidRootPart
+            
+            -- CHECAGEM DE DISTÂNCIA FÍSICA
+            local magnitude = (localRoot.Position - root.Position).Magnitude
+            
+            if magnitude <= _G.AimbotMaxDistance then
+                -- CHECAGEM DE TELA
+                local pos, onScreen = camera:WorldToViewportPoint(root.Position)
+                
+                if onScreen then
+                    local screenDist = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(pos.X, pos.Y)).Magnitude
+                    
+                    if screenDist < shortestScreenDistance then
+                        closestPlayer = player
+                        shortestScreenDistance = screenDist
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+if _G.AimbotLoop then _G.AimbotLoop:Disconnect() end
+
+_G.AimbotLoop = RunService.RenderStepped:Connect(function()
+    if not _G.AimbotEnabled then return end
+    
+    if UserInputService:IsKeyDown(_G.AimbotKey) then
+        local target = getClosestEnemy()
+        
+        if target and target.Character then
+            local root = target.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                -- Trava a câmera suavemente na hitbox
+                camera.CFrame = CFrame.new(camera.CFrame.Position, root.Position)
+            end
+        end
+    end
+end)

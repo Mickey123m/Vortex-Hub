@@ -1,0 +1,31 @@
+_G.HitboxSizeEnabled = true
+_G.DesiredHitboxSize = Vector3.new(10, 10, 10) -- Tamanho da colisão
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local lp = Players.LocalPlayer
+local lastUpdate = 0
+local UPDATE_INTERVAL = 0.1 
+
+if _G.HitboxSizeLoop then _G.HitboxSizeLoop:Disconnect() end
+
+_G.HitboxSizeLoop = RunService.Heartbeat:Connect(function()
+    local now = os.clock()
+    if now - lastUpdate < UPDATE_INTERVAL then return end
+    lastUpdate = now
+
+    if not _G.HitboxSizeEnabled then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp and player.Character then
+            local root = player.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                -- Altera apenas o tamanho físico e propriedades de colisão
+                root.Size = _G.DesiredHitboxSize
+                root.Transparency = 1 
+                root.CanCollide = false
+            end
+        end
+    end
+end)

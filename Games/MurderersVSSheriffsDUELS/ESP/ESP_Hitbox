@@ -1,0 +1,39 @@
+_G.HitboxEnabled = true
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local lp = Players.LocalPlayer
+local lastUpdate = 0
+local UPDATE_INTERVAL = 0.03 
+
+if _G.HitboxLoop then _G.HitboxLoop:Disconnect() end
+
+_G.HitboxLoop = RunService.Heartbeat:Connect(function()
+    local now = os.clock()
+    if now - lastUpdate < UPDATE_INTERVAL then return end
+    lastUpdate = now
+
+    if not _G.HitboxEnabled then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp and player.Character then
+            local root = player.Character:FindFirstChild("HumanoidRootPart")
+            if root then
+                -- Procura ou cria o efeito visual que atravessa parede
+                local box = root:FindFirstChild("HitboxVisual") or Instance.new("BoxHandleAdornment")
+                box.Name = "HitboxVisual"
+                box.Adornee = root
+                box.AlwaysOnTop = true -- Faz ver através da parede
+                box.ZIndex = 10
+                box.Size = root.Size -- Acompanha o tamanho da hitbox
+                box.Color3 = Color3.fromRGB(255, 165, 0) -- Cor Laranja
+                box.Transparency = 0.5
+                
+                if box.Parent ~= root then
+                    box.Parent = root
+                end
+            end
+        end
+    end
+end)

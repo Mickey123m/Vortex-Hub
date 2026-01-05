@@ -1,0 +1,37 @@
+_G.HighlightEspEnabled = true
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local lp = Players.LocalPlayer
+
+if _G.HighlightLoop then _G.HighlightLoop:Disconnect() end
+
+_G.HighlightLoop = RunService.Heartbeat:Connect(function()
+    if not _G.HighlightEspEnabled then 
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("EnemyHighlight") then
+                p.Character.EnemyHighlight:Destroy()
+            end
+        end
+        return 
+    end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp then
+            local char = player.Character
+            if char and player.Team ~= lp.Team then
+                local h = char:FindFirstChild("EnemyHighlight") or Instance.new("Highlight")
+                h.Name = "EnemyHighlight"
+                h.FillColor = Color3.new(1, 0, 0) -- Vermelho
+                h.FillTransparency = 0.5
+                h.OutlineColor = Color3.new(1, 1, 1)
+                h.OutlineTransparency = 0
+                h.Parent = char
+            else
+                if char and char:FindFirstChild("EnemyHighlight") then
+                    char.EnemyHighlight:Destroy()
+                end
+            end
+        end
+    end
+end)

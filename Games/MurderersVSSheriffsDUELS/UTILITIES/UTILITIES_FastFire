@@ -1,0 +1,74 @@
+_G.FastFireEnabled = true
+
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+-- Função para aplicar o patch
+local function patchTool(tool)
+    if not tool:IsA("Tool") or tool.Name ~= "Default" then return end
+    
+    -- Se esta instância de arma já foi processada, ignora completamente
+    if tool:GetAttribute("HasBeenPatched") then return end
+    
+    -- Marca IMEDIATAMENTE como processada para evitar disparos duplicados
+    tool:SetAttribute("HasBeenPatched", true)
+    
+    -- Espera o GunController do jogo carregar os atributos (essencial)
+    task.wait(1.2)
+    
+    if _G.FastFireEnabled and tool.Parent then
+        -- Salva o original
+        if not tool:GetAttribute("OriginalCooldown") then
+            tool:SetAttribute("OriginalCooldown", tool:GetAttribute("Cooldown"))
+        end
+        
+        -- Aplica o tiro rápido
+        tool:SetAttribute("Cooldown", 0.01)
+        
+        -- Verifica se ela está na mão (dentro do Personagem na Workspace)
+        local char = lp.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        
+        if char and tool.Parent == char and hum then
+            -- Só faz o re-equipamento SE estiver na mão, para o GunController ler o novo valor
+            hum:UnequipTools()
+            task.wait(0.3) -- Tempo seguro para a ferramenta ir para a mochila
+            if tool and tool.Parent ~= char then
+                hum:EquipTool(tool)
+                print("Fast Fire: Arma '" .. tool.Name .. "' sincronizada com sucesso.")
+            end
+        end
+    end
+end
+
+-- Monitora o Personagem (Workspace)
+local function onCharacter(char)
+    -- Quando a arma for equipada (entrar no Char)
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and child.Name == "Default" then
+            patchTool(child)
+        end
+    end)
+end
+
+-- Conecta ao entrar e ao renascer
+if lp.Character then onCharacter(lp.Character) end
+lp.CharacterAdded:Connect(onCharacter)
+
+-- Monitora a Mochila (apenas para aplicar o valor inicial, sem desequipar)
+lp.Backpack.ChildAdded:Connect(function(child)
+    if child:IsA("Tool") and child.Name == "Default" then
+        task.wait(0.5)
+        if _G.FastFireEnabled then
+            child:SetAttribute("Cooldown", 0.01)
+        end
+    end
+end)
+
+-- Caso o script seja executado e você já esteja com a arma na mão
+local current = lp.Character and lp.Character:FindFirstChild("Default")
+if current then
+    task.spawn(patchTool, current)
+end
+
+print("Fast Fire: Monitoramento de Instância Ativado.")

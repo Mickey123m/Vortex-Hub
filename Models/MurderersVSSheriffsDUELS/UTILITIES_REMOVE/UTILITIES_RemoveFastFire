@@ -1,0 +1,47 @@
+_G.FastFireEnabled = false
+
+-- 1. Desconecta os monitores para parar de observar a Workspace e a Mochila
+if _G.FastFireMonitor then 
+    _G.FastFireMonitor:Disconnect() 
+    _G.FastFireMonitor = nil 
+end
+
+if _G.CharMonitor then 
+    _G.CharMonitor:Disconnect() 
+    _G.CharMonitor = nil 
+end
+
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+-- Função para restaurar a arma "Default" ao estado original
+local function resetWeapon(tool)
+    if tool:IsA("Tool") and tool.Name == "Default" then
+        -- Devolve o Cooldown original salvo
+        local original = tool:GetAttribute("OriginalCooldown")
+        if original then
+            tool:SetAttribute("Cooldown", original)
+        end
+        
+        -- Remove as marcações de controle para permitir reativação limpa futuramente
+        tool:SetAttribute("HasBeenPatched", nil)
+        tool:SetAttribute("Fixed", nil)
+        
+        print("Arma 'Default' restaurada com sucesso.")
+    end
+end
+
+-- 2. Limpa a arma se estiver na mochila
+for _, tool in ipairs(lp.Backpack:GetChildren()) do
+    resetWeapon(tool)
+end
+
+-- 3. Limpa a arma se estiver na mão (dentro do player na Workspace)
+if lp.Character then
+    local toolInHand = lp.Character:FindFirstChild("Default") or lp.Character:FindFirstChildOfClass("Tool")
+    if toolInHand then
+        resetWeapon(toolInHand)
+    end
+end
+
+print("--- MONITOR DE ARMA 'DEFAULT' DESATIVADO ---")
