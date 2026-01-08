@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local RobEvent = ReplicatedStorage.GeneralEvents.Rob
 
--- Limpeza de segurança
+-- Limpeza de segurança para não acumular loops
 if _G.RobConnection then _G.RobConnection:Disconnect() end
 if _G.CharAddedConn then _G.CharAddedConn:Disconnect() end
 
@@ -13,26 +13,22 @@ _G.AutoRobActive = true
 local playerCooldowns = {} 
 
 -- CONFIGURAÇÕES
-local WORK_TIME = 6      
-local REST_TIME = 1.5    
-local SCAN_DELAY = 0.1   
+local WORK_TIME = 6      -- Tempo roubando
+local REST_TIME = 1.5    -- Tempo de descanso para desbugar o F
 local AURA_DISTANCE = 50 
 local PLAYER_DISTANCE = 12 
 
 local ContextMain, hrp
 local isResting = false
-local lastScan = 0
 
--- Função para verificar se o inventário está cheio
+-- Função para verificar inventário
 local function isInventoryFull()
     local playerGui = player:FindFirstChild("PlayerGui")
     if playerGui then
-        -- Tenta localizar a barra de inventário (ajuste o caminho se o nome for diferente no seu jogo)
         local inventoryGui = playerGui:FindFirstChild("MainGui") or playerGui:FindFirstChild("HUD")
         if inventoryGui then
             local inventoryBar = inventoryGui:FindFirstChild("InventoryBar", true) or inventoryGui:FindFirstChild("WeightBar", true)
             if inventoryBar and inventoryBar:IsA("Frame") then
-                -- Se a barra de preenchimento estiver em 100% (Size.X.Scale >= 1)
                 local fill = inventoryBar:FindFirstChild("Fill", true)
                 if fill and fill.Size.X.Scale >= 0.98 then 
                     return true 
@@ -61,31 +57,29 @@ local function instantClick()
     end
 end
 
--- Ciclo de Vida (Gerencia o descanso do "F")
+-- Ciclo de Vida (Alternância entre roubo e descanso)
 task.spawn(function()
     while _G.AutoRobActive do
         isResting = false
         task.wait(WORK_TIME)
         isResting = true
         if ContextMain and ContextMain.ResetContextHoldGui then
-            ContextMain:ResetContextHoldGui(false)
+            ContextMain:ResetContextHoldGui(false) -- Libera o sistema de interação
         end
         task.wait(REST_TIME)
     end
 end)
 
 local function runRobCycle()
-    if tick() - lastScan < SCAN_DELAY then return end
-    lastScan = tick()
-
+    -- Verifica se o script está ativo, se não está descansando e se há referências
     if not _G.AutoRobActive or not hrp or not ContextMain or isResting then return end
     
-    -- Se o inventário estiver cheio, ele não gasta processamento tentando roubar
+    -- Se o inventário estiver cheio, para de enviar pacotes
     if isInventoryFull() then return end
 
     local currentPos = hrp.Position
 
-    -- Roubo de Registradoras
+    -- Roubo de Registradoras (Loop de Frame)
     if ContextMain.CashRegisters then
         for _, reg in pairs(ContextMain.CashRegisters) do
             if reg.Part and reg.ActiveValue and reg.ActiveValue.Value then
@@ -97,7 +91,7 @@ local function runRobCycle()
         end
     end
 
-    -- Roubo de Cofres
+    -- Roubo de Cofres (Loop de Frame)
     if ContextMain.Safes then
         for _, safe in pairs(ContextMain.Safes) do
             if safe.Safe and not safe.Active then
@@ -109,7 +103,7 @@ local function runRobCycle()
         end
     end
 
-    -- Roubo de Players
+    -- Roubo de Players (Loop de Frame)
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             if not player:IsFriendsWith(plr.UserId) then
@@ -137,6 +131,7 @@ _G.CharAddedConn = player.CharacterAdded:Connect(function(newChar)
     updateReferences(newChar)
 end)
 
+-- Conectado ao Heartbeat (Roda a cada frame do motor físico)
 _G.RobConnection = RunService.Heartbeat:Connect(runRobCycle)
 
-print("🚀 AUTO-ROUBO: Inventário Inteligente e Ciclo de Descanso Ativos")
+print("🚀 AUTO-ROUBO ULTRA RÁPIDO ATIVADO")

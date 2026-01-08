@@ -41,7 +41,7 @@ Environment.Settings = {
     TriggerKey = "E",
     Toggle = false,
     LockPart = "Head",
-    MaxCharacterDistance = 500
+    MaxCharacterDistance = 700
 }
 
 Environment.FOVSettings = {
@@ -210,7 +210,7 @@ function Environment.Functions:ResetSettings()
         TriggerKey = "E",
         Toggle = false,
         LockPart = "Head",
-        MaxCharacterDistance = 500
+        MaxCharacterDistance = 700
     }
     Environment.FOVSettings = {
         Enabled = true,
