@@ -1,6 +1,17 @@
 local Players = game:GetService("Players")
 
--- Percorre todos os jogadores para limpar o ESP unificado
+-- 1. Sinaliza para parar todas as funções
+_G.ESP_Enabled = false
+
+-- 2. Desconecta PlayerAdded e CharacterAdded (evita que o ESP volte ao renascer)
+if _G.ESP_Connections then
+    for _, conn in pairs(_G.ESP_Connections) do
+        if conn then conn:Disconnect() end
+    end
+    _G.ESP_Connections = {}
+end
+
+-- 3. Remove os desenhos da tela imediatamente
 for _, player in pairs(Players:GetPlayers()) do
     local character = player.Character
     if character then
@@ -11,4 +22,4 @@ for _, player in pairs(Players:GetPlayers()) do
     end
 end
 
-print("[ESP NOME + DISTÂNCIA] REMOVIDO COM SUCESSO")
+print("[ESP] DESATIVADO E LIMPO")

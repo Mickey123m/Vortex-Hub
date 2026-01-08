@@ -2,27 +2,29 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
+_G.ESP_Enabled = true
+_G.ESP_Connections = _G.ESP_Connections or {}
+
 local function applyFullESP(player)
-    -- Não aplica em você mesmo
     if player == LocalPlayer then return end
 
     local function onCharacterAdded(character)
-        -- Aguarda a parte principal do corpo
+        -- Se o ESP foi desativado, não prossegue
+        if not _G.ESP_Enabled then return end
+
         local root = character:WaitForChild("HumanoidRootPart", 10)
         if not root then return end
 
-        -- Limpa ESP anterior
+        -- Limpa se já existir
         if character:FindFirstChild("FullPlayerESP") then 
             character.FullPlayerESP:Destroy() 
         end
 
-        -- --- CRIAÇÃO DA INTERFACE ---
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "FullPlayerESP"
         billboard.Adornee = root
         billboard.Parent = character
         billboard.Size = UDim2.new(0, 200, 0, 50)
-        -- Offset fixo no mundo para não ficar torto
         billboard.StudsOffsetWorldSpace = Vector3.new(0, 3.5, 0)
         billboard.AlwaysOnTop = true
         billboard.ResetOnSpawn = false
@@ -31,42 +33,49 @@ local function applyFullESP(player)
         textLabel.Parent = billboard
         textLabel.BackgroundTransparency = 1
         textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.Text = "" -- Será preenchido pelo loop
-        textLabel.TextColor3 = Color3.fromRGB(255, 0, 4) -- Vermelho
-        textLabel.TextStrokeTransparency = 1 -- Sem bordas
+        textLabel.TextColor3 = Color3.fromRGB(255, 0, 4) 
         textLabel.Font = Enum.Font.SourceSansBold
         textLabel.TextSize = 14
         textLabel.TextXAlignment = Enum.TextXAlignment.Center
         textLabel.TextYAlignment = Enum.TextYAlignment.Center
 
-        -- Loop de atualização da distância e nome
         local connection
         connection = RunService.RenderStepped:Connect(function()
+            -- Se for desativado, o próprio loop se encarrega de sumir com o texto
+            if not _G.ESP_Enabled then
+                if billboard then billboard:Destroy() end
+                connection:Disconnect()
+                return
+            end
+
             if character and character.Parent and root and root.Parent then
                 local myChar = LocalPlayer.Character
                 local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
                 if myRoot then
                     local dist = (myRoot.Position - root.Position).Magnitude
-                    -- FORMATO: Nome na linha 1 e [Distância] na linha 2
                     textLabel.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
                 end
             else
-                -- Desconecta se o personagem sumir
                 connection:Disconnect()
             end
         end)
     end
 
+    -- Salva a conexão do personagem
+    local charAddedConn = player.CharacterAdded:Connect(onCharacterAdded)
+    table.insert(_G.ESP_Connections, charAddedConn)
+
     if player.Character then 
         task.spawn(onCharacterAdded, player.Character) 
     end
-    player.CharacterAdded:Connect(onCharacterAdded)
 end
 
--- Inicializa para todos
+-- Salva a conexão de novos jogadores
+local playerAddedConn = Players.PlayerAdded:Connect(applyFullESP)
+table.insert(_G.ESP_Connections, playerAddedConn)
+
 for _, player in pairs(Players:GetPlayers()) do 
     applyFullESP(player) 
 end
 
--- Monitora novos jogadores
-Players.PlayerAdded:Connect(applyFullESP)
+print("[ESP] ATIVADO")
