@@ -1,9 +1,19 @@
 local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
 
--- 1. Sinaliza para parar todas as funções
+-- 1. Desliga as duas variáveis (global e shared) por segurança
 _G.ESP_Enabled = false
+shared.FullPlayerESP_Enabled = false
 
--- 2. Desconecta PlayerAdded e CharacterAdded (evita que o ESP volte ao renascer)
+-- 2. Localiza a pasta segura no CoreGui e limpa tudo
+local ESP_Container = CoreGui:FindFirstChild("ESP_Storage")
+if ESP_Container then
+    ESP_Container:ClearAllChildren()
+    -- Opcional: deletar a pasta também
+    -- ESP_Container:Destroy()
+end
+
+-- 3. Limpa conexões antigas (se houver)
 if _G.ESP_Connections then
     for _, conn in pairs(_G.ESP_Connections) do
         if conn then conn:Disconnect() end
@@ -11,15 +21,15 @@ if _G.ESP_Connections then
     _G.ESP_Connections = {}
 end
 
--- 3. Remove os desenhos da tela imediatamente
+-- 4. Garante que qualquer ESP que tenha ficado no personagem também suma
 for _, player in pairs(Players:GetPlayers()) do
     local character = player.Character
     if character then
-        local fullESP = character:FindFirstChild("FullPlayerESP")
+        local fullESP = character:FindFirstChild("FullPlayerESP") or character:FindFirstChild("OnlyNameESP")
         if fullESP then
             fullESP:Destroy()
         end
     end
 end
 
-print("[ESP] DESATIVADO E LIMPO")
+print("[ESP] TOTALMENTE DESATIVADO E CORE GUI LIMPA")
