@@ -1,14 +1,22 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+_G.NameESP_Enabled = true
+_G.NameESP_Connections = _G.NameESP_Connections or {}
+
 local function applyOnlyNameESP(player)
     if player == LocalPlayer then return end
 
     local function onCharacterAdded(character)
+        -- Verifica se ainda deve aplicar
+        if not _G.NameESP_Enabled then return end
+
         local root = character:WaitForChild("HumanoidRootPart", 10)
         if not root then return end
 
-        if character:FindFirstChild("OnlyNameESP") then character.OnlyNameESP:Destroy() end
+        if character:FindFirstChild("OnlyNameESP") then 
+            character.OnlyNameESP:Destroy() 
+        end
 
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "OnlyNameESP"
@@ -17,6 +25,7 @@ local function applyOnlyNameESP(player)
         billboard.Size = UDim2.new(0, 200, 0, 50)
         billboard.StudsOffsetWorldSpace = Vector3.new(0, 4, 0)
         billboard.AlwaysOnTop = true
+        billboard.ResetOnSpawn = false
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Parent = billboard
@@ -29,11 +38,33 @@ local function applyOnlyNameESP(player)
         textLabel.TextSize = 14
         textLabel.TextXAlignment = Enum.TextXAlignment.Center
         textLabel.TextYAlignment = Enum.TextYAlignment.Center
+        
+        -- Garante que se desativar enquanto o boneco existe, ele suma
+        task.spawn(function()
+            while character and character.Parent and billboard and billboard.Parent do
+                if not _G.NameESP_Enabled then
+                    billboard:Destroy()
+                    break
+                end
+                task.wait(1)
+            end
+        end)
     end
 
-    if player.Character then task.spawn(onCharacterAdded, player.Character) end
-    player.CharacterAdded:Connect(onCharacterAdded)
+    local charAddedConn = player.CharacterAdded:Connect(onCharacterAdded)
+    table.insert(_G.NameESP_Connections, charAddedConn)
+
+    if player.Character then 
+        task.spawn(onCharacterAdded, player.Character) 
+    end
 end
 
-for _, player in pairs(Players:GetPlayers()) do applyOnlyNameESP(player) end
-Players.PlayerAdded:Connect(applyOnlyNameESP)
+-- Salva a conexão de novos jogadores
+local playerAddedConn = Players.PlayerAdded:Connect(applyOnlyNameESP)
+table.insert(_G.NameESP_Connections, playerAddedConn)
+
+for _, player in pairs(Players:GetPlayers()) do 
+    applyOnlyNameESP(player) 
+end
+
+print("[ESP NOME] ATIVADO")

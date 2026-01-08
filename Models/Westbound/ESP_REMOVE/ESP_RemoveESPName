@@ -1,6 +1,17 @@
 local Players = game:GetService("Players")
 
--- Percorre todos os jogadores para limpar o ESP de nome
+-- 1. Desativa a permissão de criação
+_G.NameESP_Enabled = false
+
+-- 2. Mata as conexões de PlayerAdded e CharacterAdded
+if _G.NameESP_Connections then
+    for _, conn in pairs(_G.NameESP_Connections) do
+        if conn then conn:Disconnect() end
+    end
+    _G.NameESP_Connections = {}
+end
+
+-- 3. Remove todos os objetos OnlyNameESP do jogo
 for _, player in pairs(Players:GetPlayers()) do
     local character = player.Character
     if character then
@@ -11,4 +22,4 @@ for _, player in pairs(Players:GetPlayers()) do
     end
 end
 
-print("[ESP NOME] REMOVIDO COM SUCESSO")
+print("[ESP NOME] TOTALMENTE REMOVIDO E DESATIVADO")
