@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui") -- Mais resistente que PlayerGui
 local LocalPlayer = Players.LocalPlayer
 
 -- CONFIG
@@ -7,99 +8,93 @@ local TEXT_COLOR = Color3.fromRGB(255, 0, 4)
 local TEXT_SIZE = 14
 shared.FullPlayerESP_Enabled = true
 
--- Função que aplica e configura o Billboard
-local function ApplyNameESP(player, character)
-    if not character or not shared.FullPlayerESP_Enabled then return end
-    
-    -- Tenta encontrar o RootPart sem travar o script
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+-- Pasta segura para guardar os ESPs fora do alcance do jogo
+local ESP_Container = CoreGui:FindFirstChild("ESP_Storage")
+if not ESP_Container then
+    ESP_Container = Instance.new("Folder")
+    ESP_Container.Name = "ESP_Storage"
+    ESP_Container.Parent = CoreGui
+end
 
-    local billboard = character:FindFirstChild("FullPlayerESP")
-    if not billboard then
-        billboard = Instance.new("BillboardGui")
-        billboard.Name = "FullPlayerESP"
-        billboard.Parent = character
-        
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Name = "ESPLabel"
-        textLabel.Parent = billboard
-        textLabel.BackgroundTransparency = 1
-        textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.TextColor3 = TEXT_COLOR
-        textLabel.Font = Enum.Font.SourceSansBold
-        textLabel.TextSize = TEXT_SIZE
-        textLabel.TextStrokeTransparency = 0.5 -- Adicionado para melhor leitura
-        textLabel.TextXAlignment = Enum.TextXAlignment.Center
-        textLabel.TextYAlignment = Enum.TextYAlignment.Center
-    end
+local function CreateESP(player)
+    if player == LocalPlayer then return end
 
-    billboard.Adornee = root
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP_" .. player.Name
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.StudsOffsetWorldSpace = Vector3.new(0, 3.5, 0)
     billboard.AlwaysOnTop = true
-    billboard.Enabled = true
+    billboard.ResetOnSpawn = false
+    billboard.Parent = ESP_Container
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Name = "ESPLabel"
+    textLabel.Parent = billboard
+    textLabel.BackgroundTransparency = 1
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.TextColor3 = TEXT_COLOR
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextSize = TEXT_SIZE
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.Text = player.Name
+
+    return billboard
 end
 
-local function SetupPlayer(player)
-    if player == LocalPlayer then return end
-
-    local function onCharacter(character)
-        ApplyNameESP(player, character)
-
-        -- Proteção contra deleção
-        character.ChildRemoved:Connect(function(child)
-            if child.Name == "FullPlayerESP" and shared.FullPlayerESP_Enabled then
-                task.wait()
-                ApplyNameESP(player, character)
-            end
-        end)
+-- LOOP AGRESSIVO (Verifica existência, alvo e distância)
+RunService.RenderStepped:Connect(function()
+    if not shared.FullPlayerESP_Enabled then
+        ESP_Container:ClearAllChildren()
+        return
     end
 
-    player.CharacterAdded:Connect(onCharacter)
-    if player.Character then onCharacter(player.Character) end
-end
-
--- Inicializa para todos
-for _, player in ipairs(Players:GetPlayers()) do
-    SetupPlayer(player)
-end
-
-Players.PlayerAdded:Connect(SetupPlayer)
-
--- LOOP AGRESSIVO (Atualiza Distância e Garante Existência)
-RunService.RenderStepped:Connect(function()
-    if not shared.FullPlayerESP_Enabled then return end
-
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
+        if player ~= LocalPlayer then
             local char = player.Character
-            local root = char:FindFirstChild("HumanoidRootPart")
-            local billboard = char:FindFirstChild("FullPlayerESP")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local esp = ESP_Container:FindFirstChild("ESP_" .. player.Name)
 
-            -- Se sumir, força a recriação
-            if not billboard or not billboard:FindFirstChild("ESPLabel") then
-                ApplyNameESP(player, char)
-                billboard = char:FindFirstChild("FullPlayerESP")
-            end
+            -- Se o player está vivo e no jogo
+            if char and root then
+                -- Se o ESP sumiu da pasta segura, recria
+                if not esp then
+                    esp = CreateESP(player)
+                end
 
-            -- Atualiza a distância e o nome em tempo real
-            if billboard and root then
-                local label = billboard:FindFirstChild("ESPLabel")
-                if label then
-                    local myChar = LocalPlayer.Character
-                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                    
-                    if myRoot then
-                        local dist = (myRoot.Position - root.Position).Magnitude
-                        label.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
-                    else
-                        label.Text = player.Name
+                -- Atualiza posição e texto
+                if esp then
+                    esp.Adornee = root
+                    esp.Enabled = true
+                    local label = esp:FindFirstChild("ESPLabel")
+                    if label then
+                        local myChar = LocalPlayer.Character
+                        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                        
+                        if myRoot then
+                            local dist = (myRoot.Position - root.Position).Magnitude
+                            label.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
+                        else
+                            label.Text = player.Name
+                        end
                     end
+                end
+            else
+                -- Se o player morreu ou o char sumiu, esconde o ESP
+                if esp then
+                    esp.Enabled = false
+                    esp.Adornee = nil
                 end
             end
         end
     end
+
+    -- Limpa ESPs de quem saiu do servidor
+    for _, child in ipairs(ESP_Container:GetChildren()) do
+        local pName = child.Name:sub(5)
+        if not Players:FindFirstChild(pName) then
+            child:Destroy()
+        end
+    end
 end)
 
-print("[ESP NOME + DISTÂNCIA] MODO PROTEGIDO ATIVO")
+print("[ESP NOME + DISTÂNCIA] MODO EXTERNO ATIVO")
