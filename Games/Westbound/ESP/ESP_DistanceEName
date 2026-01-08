@@ -2,91 +2,104 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-_G.ESP_Enabled = true
-_G.ESP_Connections = _G.ESP_Connections or {}
+-- CONFIG
+local TEXT_COLOR = Color3.fromRGB(255, 0, 4)
+local TEXT_SIZE = 14
+shared.FullPlayerESP_Enabled = true
 
-local function applyFullESP(player)
-    if player == LocalPlayer then return end
+-- Função que aplica e configura o Billboard
+local function ApplyNameESP(player, character)
+    if not character or not shared.FullPlayerESP_Enabled then return end
+    
+    -- Tenta encontrar o RootPart sem travar o script
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-    local function onCharacterAdded(character)
-        if not _G.ESP_Enabled then return end
-
-        -- Tenta pegar o root part, se falhar o script não trava
-        local root = character:WaitForChild("HumanoidRootPart", 15)
-        if not root then return end
-
-        -- Remove ESP antigo para evitar duplicatas
-        local existing = character:FindFirstChild("FullPlayerESP")
-        if existing then existing:Destroy() end
-
-        local billboard = Instance.new("BillboardGui")
+    local billboard = character:FindFirstChild("FullPlayerESP")
+    if not billboard then
+        billboard = Instance.new("BillboardGui")
         billboard.Name = "FullPlayerESP"
-        billboard.Adornee = root
         billboard.Parent = character
-        billboard.Size = UDim2.new(0, 200, 0, 50)
-        billboard.StudsOffsetWorldSpace = Vector3.new(0, 3.5, 0)
-        billboard.AlwaysOnTop = true
-        billboard.ResetOnSpawn = false
-
+        
         local textLabel = Instance.new("TextLabel")
+        textLabel.Name = "ESPLabel"
         textLabel.Parent = billboard
         textLabel.BackgroundTransparency = 1
         textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.TextColor3 = Color3.fromRGB(255, 0, 4) 
+        textLabel.TextColor3 = TEXT_COLOR
         textLabel.Font = Enum.Font.SourceSansBold
-        textLabel.TextSize = 14
+        textLabel.TextSize = TEXT_SIZE
+        textLabel.TextStrokeTransparency = 0.5 -- Adicionado para melhor leitura
         textLabel.TextXAlignment = Enum.TextXAlignment.Center
         textLabel.TextYAlignment = Enum.TextYAlignment.Center
-        textLabel.Text = player.Name -- Define o nome imediatamente para evitar "Label"
+    end
 
-        local connection
-        connection = RunService.RenderStepped:Connect(function()
-            if not _G.ESP_Enabled then
-                if billboard then billboard:Destroy() end
-                connection:Disconnect()
-                return
-            end
+    billboard.Adornee = root
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffsetWorldSpace = Vector3.new(0, 3.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = true
+end
 
-            if character and character.Parent and root and root.Parent then
-                local myChar = LocalPlayer.Character
-                local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                
-                if myRoot then
-                    local dist = (myRoot.Position - root.Position).Magnitude
-                    textLabel.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
-                else
-                    -- Mesmo sem o seu Root, mantém o nome visível
-                    textLabel.Text = player.Name
-                end
-            else
-                connection:Disconnect()
+local function SetupPlayer(player)
+    if player == LocalPlayer then return end
+
+    local function onCharacter(character)
+        ApplyNameESP(player, character)
+
+        -- Proteção contra deleção
+        character.ChildRemoved:Connect(function(child)
+            if child.Name == "FullPlayerESP" and shared.FullPlayerESP_Enabled then
+                task.wait()
+                ApplyNameESP(player, character)
             end
         end)
     end
 
-    -- Conecta o evento e armazena
-    local charAddedConn = player.CharacterAdded:Connect(onCharacterAdded)
-    table.insert(_G.ESP_Connections, charAddedConn)
+    player.CharacterAdded:Connect(onCharacter)
+    if player.Character then onCharacter(player.Character) end
+end
 
-    -- Se o personagem já existir, aplica imediatamente
-    if player.Character then 
-        task.spawn(onCharacterAdded, player.Character) 
+-- Inicializa para todos
+for _, player in ipairs(Players:GetPlayers()) do
+    SetupPlayer(player)
+end
+
+Players.PlayerAdded:Connect(SetupPlayer)
+
+-- LOOP AGRESSIVO (Atualiza Distância e Garante Existência)
+RunService.RenderStepped:Connect(function()
+    if not shared.FullPlayerESP_Enabled then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local char = player.Character
+            local root = char:FindFirstChild("HumanoidRootPart")
+            local billboard = char:FindFirstChild("FullPlayerESP")
+
+            -- Se sumir, força a recriação
+            if not billboard or not billboard:FindFirstChild("ESPLabel") then
+                ApplyNameESP(player, char)
+                billboard = char:FindFirstChild("FullPlayerESP")
+            end
+
+            -- Atualiza a distância e o nome em tempo real
+            if billboard and root then
+                local label = billboard:FindFirstChild("ESPLabel")
+                if label then
+                    local myChar = LocalPlayer.Character
+                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    
+                    if myRoot then
+                        local dist = (myRoot.Position - root.Position).Magnitude
+                        label.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
+                    else
+                        label.Text = player.Name
+                    end
+                end
+            end
+        end
     end
-end
+end)
 
--- Limpa conexões antigas antes de iniciar (evita bugs de re-execução)
-if _G.ESP_Connections then
-    for _, v in pairs(_G.ESP_Connections) do v:Disconnect() end
-    _G.ESP_Connections = {}
-end
-
--- Inicia para quem já está no servidor
-for _, player in pairs(Players:GetPlayers()) do 
-    applyFullESP(player) 
-end
-
--- Escuta novos jogadores
-local playerAddedConn = Players.PlayerAdded:Connect(applyFullESP)
-table.insert(_G.ESP_Connections, playerAddedConn)
-
-print("[ESP] ATIVADO COM CORREÇÕES")
+print("[ESP NOME + DISTÂNCIA] MODO PROTEGIDO ATIVO")
