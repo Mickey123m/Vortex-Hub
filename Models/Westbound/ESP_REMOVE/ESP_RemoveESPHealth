@@ -1,0 +1,22 @@
+shared.HealthESP_Enabled = false
+
+for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+    if player.Character then
+        -- Procura no HumanoidRootPart onde o GUI foi inserido
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local gui = root:FindFirstChild("Health_ESP_Gui")
+            if gui then 
+                gui:Destroy() 
+            end
+        end
+        
+        -- Busca secundária por segurança em outras partes
+        for _, part in ipairs(player.Character:GetChildren()) do
+            local gui = part:FindFirstChild("Health_ESP_Gui")
+            if gui then gui:Destroy() end
+        end
+    end
+end
+
+print("[HEALTH ESP] DESATIVADO E REMOVIDO")

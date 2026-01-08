@@ -1,0 +1,18 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GunStats = require(ReplicatedStorage.GunScripts.GunStats)
+
+if not getgenv().OriginalGunStats then
+    warn("Cache não encontrado. Ative primeiro.")
+    return
+end
+
+for gunName, originalStats in pairs(getgenv().OriginalGunStats) do
+    local current = GunStats[gunName]
+    if type(current) == "table" then
+        for k, v in pairs(originalStats) do
+            current[k] = v
+        end
+    end
+end
+
+print("NO RECOIL DESATIVADO – valores originais restaurados")

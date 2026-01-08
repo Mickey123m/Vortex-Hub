@@ -1,0 +1,8 @@
+shared.NameESP_Enabled = false -- BLOQUEIA O LOOP
+shared.NameESP_Data = {}
+
+for _, animal in ipairs(game:GetService("Workspace").Animals:GetChildren()) do
+    local gui = animal:FindFirstChild("AnimalNameGui")
+    if gui then gui:Destroy() end
+end
+print("ESP Name Desativado.")

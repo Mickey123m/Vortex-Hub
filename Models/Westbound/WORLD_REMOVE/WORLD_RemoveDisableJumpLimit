@@ -1,0 +1,28 @@
+-- SCRIPT: DESATIVAR E VOLTAR AO NORMAL
+local Player = game.Players.LocalPlayer
+local Character = Player.Character
+local Humanoid = Character and Character:FindFirstChild("Humanoid")
+
+-- 1. Desconecta todos os ouvintes (Listeners)
+if _G.JumpConnections then
+    for _, connection in pairs(_G.JumpConnections) do
+        connection:Disconnect()
+    end
+    _G.JumpConnections = nil
+end
+
+-- 2. Mata o loop de RenderStepped
+if _G.JumpLoop then
+    _G.JumpLoop:Disconnect()
+    _G.JumpLoop = nil
+end
+
+-- 3. Reseta o Humanoid (Permite que o script do jogo tome controle novamente)
+if Humanoid then
+    -- Forçamos um valor neutro; o script do jogo deve aplicar o limite dele logo em seguida
+    Humanoid.JumpPower = 50
+    Humanoid.UseJumpPower = true
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+end
+
+print("Normalização de pulo DESATIVADA. O jogo agora controla o pulo.")

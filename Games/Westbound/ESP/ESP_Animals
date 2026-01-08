@@ -1,108 +1,34 @@
--- SERVIÇOS
+shared.BodyESP_Enabled = true -- TRAVA DE ATIVAÇÃO
+shared.BodyESP_Data = {}
+
 local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local LocalPlayer = Players.LocalPlayer
-
--- CONFIG
-local ESP_COLOR = Color3.fromRGB(255, 255, 0)
-
-shared.AnimalESP_Enabled = true
-shared.AnimalESP_Data = {}
-
-local function GetName(name)
-	return name:match("^(.-)%{") or name
+local function IsSpecial(name)
+    local lower = name:lower()
+    return (lower:find("grizzly") or lower:find("legendary") or lower:find("direwolf"))
 end
 
--- Garante BasePart válida
-local function GetMainPart(animal)
-	return animal:FindFirstChild("HumanoidRootPart")
-		or animal:FindFirstChildWhichIsA("BasePart")
+local function EnsureBodyESP(animal)
+    if not shared.BodyESP_Enabled then return end -- SÓ CRIA SE ESTIVER ATIVADO
+    if not animal or not animal.Parent or shared.BodyESP_Data[animal] then return end
+
+    local special = IsSpecial(animal.Name)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "BodyHighlight"
+    highlight.Parent = animal
+    highlight.FillColor = special and Color3.new(1,1,1) or Color3.new(1,1,0)
+    highlight.OutlineColor = special and Color3.new(0,0,0) or Color3.new(1,1,1)
+    highlight.FillTransparency = 0.5
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    
+    shared.BodyESP_Data[animal] = true
 end
 
--- Garante ESP no animal
-local function EnsureAnimalESP(animal)
-	if not shared.AnimalESP_Enabled then return end
-	if not animal or not animal.Parent then return end
-
-	local main = GetMainPart(animal)
-	if not main then return end
-
-	-- HIGHLIGHT
-	local highlight = animal:FindFirstChild("AnimalHighlight")
-	if not highlight then
-		highlight = Instance.new("Highlight")
-		highlight.Name = "AnimalHighlight"
-		highlight.Parent = animal
-	end
-
-	highlight.Adornee = animal
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.FillColor = ESP_COLOR
-	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-	highlight.FillTransparency = 0.5
-	highlight.OutlineTransparency = 0
-	highlight.Enabled = true
-
-	-- DISTÂNCIA
-	local billboard = animal:FindFirstChild("AnimalDistanceGui")
-	if not billboard then
-		billboard = Instance.new("BillboardGui")
-		billboard.Name = "AnimalDistanceGui"
-		billboard.Parent = animal
-	end
-
-	billboard.Adornee = main
-	billboard.Size = UDim2.fromOffset(200, 50)
-	billboard.StudsOffset = Vector3.new(0, 3.5, 0)
-	billboard.AlwaysOnTop = true
-
-	local text = billboard:FindFirstChild("Text")
-	if not text then
-		text = Instance.new("TextLabel")
-		text.Name = "Text"
-		text.Parent = billboard
-		text.Size = UDim2.new(1, 0, 1, 0)
-		text.BackgroundTransparency = 1
-		text.Font = Enum.Font.SourceSansBold
-		text.TextSize = 14
-		text.RichText = true
-		text.TextStrokeTransparency = 1
-	end
-
-	text.TextColor3 = ESP_COLOR
-
-	shared.AnimalESP_Data[animal] = { Main = main, Text = text }
-end
-
--- Pasta dos animais
 local animalsFolder = Workspace:WaitForChild("Animals", 10)
-if not animalsFolder then return end
-
--- Novos animais
-animalsFolder.ChildAdded:Connect(function(animal)
-	task.wait(0.3)
-	EnsureAnimalESP(animal)
-end)
-
--- LOOP ROBUSTO (ANTI-FALHA)
 RunService.Heartbeat:Connect(function()
-	if not shared.AnimalESP_Enabled then return end
-
-	local char = LocalPlayer.Character
-	local root = char and char:FindFirstChild("HumanoidRootPart")
-
-	for _, animal in ipairs(animalsFolder:GetChildren()) do
-		EnsureAnimalESP(animal)
-
-		local data = shared.AnimalESP_Data[animal]
-		if data and root and data.Main and data.Main.Parent then
-			local dist = (root.Position - data.Main.Position).Magnitude
-			data.Text.Text =
-				GetName(animal.Name) .. "\n[" .. math.floor(dist) .. " m]"
-		end
-	end
+    if not shared.BodyESP_Enabled then return end
+    for _, animal in ipairs(animalsFolder:GetChildren()) do
+        EnsureBodyESP(animal)
+    end
 end)
-
-print("[ANIMAL ESP] ROBUSTO ATIVO")

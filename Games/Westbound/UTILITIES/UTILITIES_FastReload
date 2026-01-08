@@ -1,0 +1,11 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GunStats = require(ReplicatedStorage.GunScripts.GunStats)
+
+for i, v in pairs(GunStats) do
+    if type(v) == "table" then
+        v["ReloadSpeed"] = 0.01          -- Tempo técnico para recarregar
+        v["ReloadAnimationSpeed"] = 50   -- Velocidade da animação de recarga (muito rápida)
+    end
+end
+
+print("Fast Reload ATIVADO. Reequipe a arma para aplicar.")

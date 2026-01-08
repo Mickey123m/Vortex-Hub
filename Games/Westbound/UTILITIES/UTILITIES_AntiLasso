@@ -1,0 +1,57 @@
+-- Anti-Laço (Anti-Lasso) para PAINEL TRXSH HUB OFICIAL - Versão Combinada
+local Player = game.Players.LocalPlayer
+local GeneralEvents = game.ReplicatedStorage:WaitForChild("GeneralEvents")
+local LassoEvents = GeneralEvents:WaitForChild("LassoEvents")
+local States = Player:WaitForChild("States")
+local Lassod = States:WaitForChild("Lassod")
+local Hogtied = States:WaitForChild("Hogtied")
+
+_G.AntiLassoEnabled = true
+
+-- Função de libertação imediata e limpeza de estado
+local function InstantEscape()
+    if not _G.AntiLassoEnabled then return end
+    
+    -- Dispara o Remote para o servidor
+    LassoEvents:FireServer("BreakFree")
+
+    -- Força os valores locais para falso para interromper animações/UI
+    Lassod.Value = false
+    hogtiedValue = false -- Variável interna caso Hogtied seja referenciado diferente
+    Hogtied.Value = false
+end
+
+-- Conexões de Alta Prioridade
+local Connection1 = Lassod:GetPropertyChangedSignal("Value"):Connect(function()
+    if Lassod.Value == true then
+        InstantEscape()
+    end
+end)
+
+local Connection2 = Hogtied:GetPropertyChangedSignal("Value"):Connect(function()
+    if Hogtied.Value == true then
+        InstantEscape()
+    end
+end)
+
+-- Hook de redundância (Changed)
+local Connection3 = Lassod.Changed:Connect(function(val)
+    if val and _G.AntiLassoEnabled then
+        LassoEvents:FireServer("BreakFree")
+    end
+end)
+
+-- Loop de Segurança (Background Check)
+task.spawn(function()
+    while _G.AntiLassoEnabled do
+        if Lassod.Value == true or Hogtied.Value == true then
+            InstantEscape()
+        end
+        task.wait(0.3)
+    end
+end)
+
+-- Armazenar conexões para desativação futura
+_G.AntiLassoConnections = {Connection1, Connection2, Connection3}
+
+print("Anti-Laço Combinado e Otimizado Ativado!")

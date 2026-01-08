@@ -1,0 +1,37 @@
+local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+
+-- Criar um local para armazenar o backup das configurações originais
+local backup = Lighting:FindFirstChild("OriginalSettings")
+if not backup then
+    backup = Instance.new("Configuration")
+    backup.Name = "OriginalSettings"
+    backup.Parent = Lighting
+    
+    -- Salvar propriedades básicas
+    local props = {
+        "FogEnd", "FogStart", "FogColor", "Brightness", 
+        "GlobalShadows", "OutdoorAmbient", "ClockTime"
+    }
+    
+    for _, prop in ipairs(props) do
+        local val = Instance.new("StringValue")
+        val.Name = prop
+        val.Value = tostring(Lighting[prop])
+        val.Parent = backup
+    end
+
+    -- Salvar e desativar Atmosfera/Efeitos sem deletar
+    for _, obj in ipairs(Lighting:GetChildren()) do
+        if obj:IsA("Atmosphere") or obj:IsA("Clouds") then
+            obj.Parent = backup -- Move para a pasta de backup em vez de deletar
+        end
+    end
+end
+
+-- Aplicar remoção de Fog
+Lighting.FogEnd = 9e9
+Lighting.FogStart = 0
+Lighting.GlobalShadows = false
+
+print("Fog removido e configurações originais salvas.")

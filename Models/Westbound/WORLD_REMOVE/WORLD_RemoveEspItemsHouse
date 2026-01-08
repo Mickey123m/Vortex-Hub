@@ -1,0 +1,11 @@
+local Workspace = game:GetService("Workspace")
+
+local function removeESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "ESP_Highlight" or obj.Name == "ESP_Name" then
+            obj:Destroy()
+        end
+    end
+end
+
+removeESP()

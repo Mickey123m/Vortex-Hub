@@ -1,0 +1,77 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local Player = Players.LocalPlayer
+
+-- Controle global
+getgenv().NoFallEnabled = true
+getgenv().NoFallLoop = nil
+
+local function applyNoFall(Character)
+    local Humanoid = Character:WaitForChild("Humanoid")
+    local Root = Character:WaitForChild("HumanoidRootPart")
+
+    -- Bloqueia estados que causam fall damage / ragdoll
+    pcall(function()
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+    end)
+
+    -- Garante PlatformStand desligado
+    Humanoid.PlatformStand = false
+
+    -- Mata loop antigo
+    if getgenv().NoFallLoop then
+        getgenv().NoFallLoop:Disconnect()
+        getgenv().NoFallLoop = nil
+    end
+
+    -- Novo loop (ligado ao personagem atual)
+    getgenv().NoFallLoop = RunService.Heartbeat:Connect(function()
+        if not getgenv().NoFallEnabled then return end
+        if not Root or not Root.Parent then return end
+
+        local vel = Root.Velocity
+        if vel.Y < -120 then
+            Root.Velocity = Vector3.new(vel.X, -2, vel.Z)
+        end
+    end)
+end
+
+-- Aplica no personagem atual
+if Player.Character then
+    task.spawn(applyNoFall, Player.Character)
+end
+
+-- Reaplica sempre que resetar
+Player.CharacterAdded:Connect(function(char)
+    task.wait(0.2)
+    applyNoFall(char)
+end)
+
+--------------------------------------------------
+-- HOOK DE REMOTES (NÃO PRECISA REAPLICAR NO RESET)
+--------------------------------------------------
+
+if not getgenv().NoFallHooked then
+    getgenv().NoFallHooked = true
+
+    local oldNamecall
+    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+
+        if method == "FireServer" or method == "InvokeServer" then
+            local name = tostring(self)
+            if name:lower():find("falldamage")
+            or name:lower():find("fall")
+            or name:lower():find("damage") then
+                return nil
+            end
+        end
+
+        return oldNamecall(self, ...)
+    end)
+end
+
+print("No Fall Damage ATIVADO (Persistente após reset)")

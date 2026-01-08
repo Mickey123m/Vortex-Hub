@@ -1,0 +1,13 @@
+-- Script para DESATIVAR o Anti-Laço
+_G.AntiLassoEnabled = false
+
+if _G.AntiLassoConnections then
+    for _, connection in pairs(_G.AntiLassoConnections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    _G.AntiLassoConnections = nil
+end
+
+print("Anti-Laço foi desativado e as conexões foram encerradas.")

@@ -1,0 +1,43 @@
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+-- Desliga o sistema
+getgenv().NoFallEnabled = false
+
+-- Mata loop de queda
+if getgenv().NoFallLoop then
+    pcall(function()
+        getgenv().NoFallLoop:Disconnect()
+    end)
+    getgenv().NoFallLoop = nil
+end
+
+local function restoreCharacter(Character)
+    local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+    if not Humanoid then return end
+
+    -- Restaura estados padrão
+    pcall(function()
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+    end)
+
+    -- Garante que não fique travado
+    Humanoid.PlatformStand = false
+    Humanoid.AutoRotate = true
+    Humanoid:ChangeState(Enum.HumanoidStateType.Running)
+end
+
+-- Aplica no personagem atual
+if Player.Character then
+    restoreCharacter(Player.Character)
+end
+
+-- Aplica também após reset (IMPORTANTE)
+Player.CharacterAdded:Connect(function(char)
+    task.wait(0.2)
+    restoreCharacter(char)
+end)
+
+print("No Fall Damage DESATIVADO (restaurado corretamente)")

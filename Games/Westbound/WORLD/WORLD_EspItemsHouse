@@ -1,0 +1,75 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+-- Caminho da sua pasta conforme a imagem
+local itemsFolder = ReplicatedStorage:WaitForChild("DisplayItems"):WaitForChild("Items")
+
+-- Tabela de cores personalizada por item
+local itemColors = {
+    ["Copper"] = Color3.fromRGB(184, 115, 51),
+    ["Crown"] = Color3.fromRGB(255, 215, 0),
+    ["Diamond"] = Color3.fromRGB(185, 242, 255),
+    ["Emerald"] = Color3.fromRGB(80, 200, 120),
+    ["Gold"] = Color3.fromRGB(255, 215, 0),
+    ["Gold Jewelry"] = Color3.fromRGB(255, 200, 0),
+    ["Gold Key"] = Color3.fromRGB(255, 220, 50),
+    ["Jewelry"] = Color3.fromRGB(230, 230, 250),
+    ["Mica"] = Color3.fromRGB(200, 200, 200),
+    ["Ruby"] = Color3.fromRGB(224, 17, 95),
+    ["Sapphire"] = Color3.fromRGB(15, 82, 186),
+    ["Silver"] = Color3.fromRGB(192, 192, 192),
+    ["Silver Key"] = Color3.fromRGB(210, 210, 210),
+    ["Silver Skull"] = Color3.fromRGB(220, 220, 220),
+    ["Treasure Chest"] = Color3.fromRGB(139, 69, 19)
+}
+
+-- Função para aplicar o ESP
+local function applyESP(object)
+    local color = itemColors[object.Name] or Color3.fromRGB(255, 255, 255)
+
+    -- Criar Highlight (Brilho)
+    if not object:FindFirstChild("ESP_Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight"
+        highlight.Parent = object
+        highlight.FillColor = color
+        highlight.OutlineColor = Color3.new(1, 1, 1)
+        highlight.FillTransparency = 0.4
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    end
+
+    -- Criar Nome
+    if not object:FindFirstChild("ESP_Name") then
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "ESP_Name"
+        billboard.Parent = object
+        billboard.Size = UDim2.new(0, 100, 0, 40)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+
+        local label = Instance.new("TextLabel")
+        label.Parent = billboard
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = object.Name
+        label.TextColor3 = color
+        label.TextStrokeTransparency = 0
+        label.TextScaled = true
+        label.Font = Enum.Font.SourceSansBold
+    end
+end
+
+-- Scan em todo o Workspace para achar itens que tenham os nomes da sua lista
+for _, obj in pairs(Workspace:GetDescendants()) do
+    if itemColors[obj.Name] and (obj:IsA("Model") or obj:IsA("BasePart")) then
+        applyESP(obj)
+    end
+end
+
+-- Monitorar novos itens que spawnarem
+Workspace.DescendantAdded:Connect(function(obj)
+    task.wait(0.1) -- Espera carregar o nome
+    if itemColors[obj.Name] then
+        applyESP(obj)
+    end
+end)

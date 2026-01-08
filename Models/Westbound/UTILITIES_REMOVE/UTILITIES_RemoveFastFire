@@ -1,0 +1,13 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GunStats = require(ReplicatedStorage.GunScripts.GunStats)
+
+for i, v in pairs(GunStats) do
+    if type(v) == "table" then
+        v["AutoFire"] = false            -- Volta a ser semi-automática (precisa clicar)
+        v["prepTime"] = 0.4              -- Restaura o tempo de disparo padrão
+        v["FanFire"] = false             -- Desativa o modo de tiro rápido
+        v["InstantFireAnimation"] = false -- Retorna as animações originais
+    end
+end
+
+print("Todas as armas voltaram ao normal (Semi-automáticas).")

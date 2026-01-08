@@ -1,17 +1,8 @@
-shared.AnimalESP_Enabled = false
+shared.BodyESP_Enabled = false -- BLOQUEIA O LOOP
+shared.BodyESP_Data = {}
 
-local Workspace = game:GetService("Workspace")
-local animalsFolder = Workspace:FindFirstChild("Animals")
-if not animalsFolder then return end
-
-for _, animal in ipairs(animalsFolder:GetChildren()) do
-	local h = animal:FindFirstChild("AnimalHighlight")
-	if h then h:Destroy() end
-
-	local b = animal:FindFirstChild("AnimalDistanceGui")
-	if b then b:Destroy() end
+for _, animal in ipairs(game:GetService("Workspace").Animals:GetChildren()) do
+    local highlight = animal:FindFirstChild("BodyHighlight")
+    if highlight then highlight:Destroy() end
 end
-
-shared.AnimalESP_Data = {}
-
-print("[ANIMAL ESP] REMOVIDO")
+print("ESP Body Desativado.")

@@ -1,0 +1,14 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GunStats = require(ReplicatedStorage.GunScripts.GunStats)
+
+for i, v in pairs(GunStats) do
+    if type(v) == "table" then
+        v["AutoFire"] = true -- Transforma em automática (segurar o clique)
+        v["prepTime"] = 0.1  -- Define uma velocidade rápida e constante
+        
+        -- Algumas armas usam InstantFireAnimation para evitar delay visual
+        v["InstantFireAnimation"] = true 
+    end
+end
+
+print("Todas as armas agora são automáticas.")

@@ -1,0 +1,107 @@
+-- AUTO-ROUBO AURA (Persistente após morte + Anti-Amigos + Anti-Spam)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local RobEvent = ReplicatedStorage.GeneralEvents.Rob
+
+-- Limpeza de segurança para não duplicar
+if _G.RobConnection then _G.RobConnection:Disconnect() end
+if _G.CharAddedConn then _G.CharAddedConn:Disconnect() end
+
+_G.AutoRobActive = true
+local playerCooldowns = {} 
+local TIME_BETWEEN_ROBS = 15 
+
+local ContextMain, hrp
+
+-- Função para atualizar referências do personagem
+local function updateReferences(char)
+    if not char then return end
+    hrp = char:WaitForChild("HumanoidRootPart", 10)
+    local contextActions = char:WaitForChild("ContextActions", 10)
+    local contextMainModule = contextActions and contextActions:WaitForChild("ContextMain", 10)
+    
+    if contextMainModule then
+        local success, module = pcall(require, contextMainModule)
+        if success then ContextMain = module end
+    end
+end
+
+-- Configurações de Distância
+local AURA_DISTANCE = 50
+local PLAYER_DISTANCE = 10
+
+local function dist(pos)
+    if not hrp then return 999 end
+    return (pos - hrp.Position).Magnitude
+end
+
+local function instantClick()
+    if ContextMain and ContextMain.ResetContextHoldGui then
+        ContextMain:ResetContextHoldGui(true)
+    end
+end
+
+-- Lógica de Roubo
+local function runRobCycle()
+    if not _G.AutoRobActive or not hrp or not ContextMain then return end
+
+    -- Roubo de Objetos
+    if ContextMain.CashRegisters then
+        for _, reg in pairs(ContextMain.CashRegisters) do
+            if reg.Part and reg.ActiveValue and reg.ActiveValue.Value and dist(reg.Part.Position) <= AURA_DISTANCE then
+                instantClick()
+                RobEvent:FireServer("Register", reg)
+            end
+        end
+    end
+
+    if ContextMain.Safes then
+        for _, safe in pairs(ContextMain.Safes) do
+            if safe.Safe and not safe.Active and dist(safe.Safe.Position) <= AURA_DISTANCE then
+                instantClick()
+                RobEvent:FireServer("Safe", safe)
+            end
+        end
+    end
+
+    -- Roubo de Players (Anti-Amigo + Cooldown)
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            if not player:IsFriendsWith(plr.UserId) then
+                if dist(plr.Character.HumanoidRootPart.Position) <= PLAYER_DISTANCE then
+                    local hum = plr.Character:FindFirstChild("Humanoid")
+                    if hum and hum.Health > 0 then
+                        local lastRob = playerCooldowns[plr.UserId] or 0
+                        if (tick() - lastRob) >= TIME_BETWEEN_ROBS then
+                            instantClick()
+                            RobEvent:FireServer("Player", plr)
+                            playerCooldowns[plr.UserId] = tick()
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Inicia as referências atuais
+updateReferences(player.Character)
+
+-- Escuta quando você renasce para reativar as referências automaticamente
+_G.CharAddedConn = player.CharacterAdded:Connect(function(newChar)
+    task.wait(1) -- Pequeno delay para o jogo carregar o ContextMain
+    updateReferences(newChar)
+end)
+
+-- Loop principal eterno (Só para se _G.AutoRobActive for false)
+_G.RobConnection = RunService.Heartbeat:Connect(function()
+    if _G.AutoRobActive then
+        runRobCycle()
+    end
+end)
+
+print("✅ AUTO-ROUBO PERMANENTE ATIVADO")
+print("👥 Amigos ignorados. O script continuará ativo após você morrer.")

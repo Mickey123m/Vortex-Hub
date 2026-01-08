@@ -1,0 +1,6 @@
+if getgenv().Aimbot and getgenv().Aimbot.Functions then
+    getgenv().Aimbot.Functions:Exit()
+    print("Aimbot desativado.")
+else
+    print("Aimbot não está em execução.")
+end

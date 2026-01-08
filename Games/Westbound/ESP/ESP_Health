@@ -1,0 +1,87 @@
+-- SERVIÇOS
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- CONFIG
+local HEALTH_TEXT_COLOR = Color3.fromRGB(0, 255, 0) -- Verde
+
+shared.HealthESP_Enabled = true
+
+-- Função que cria e atualiza o texto de vida
+local function ApplyHealthESP(character)
+    if not character or not shared.HealthESP_Enabled then return end
+    
+    -- Usamos o HumanoidRootPart para posicionar embaixo do personagem
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+
+    local gui = rootPart:FindFirstChild("Health_ESP_Gui")
+    if not gui then
+        gui = Instance.new("BillboardGui")
+        gui.Name = "Health_ESP_Gui"
+        gui.Adornee = rootPart
+        gui.Size = UDim2.new(0, 100, 0, 50)
+        -- Offset negativo no Y para ficar embaixo dos pés
+        gui.StudsOffset = Vector3.new(0, -3.5, 0) 
+        gui.AlwaysOnTop = true
+        
+        local label = Instance.new("TextLabel")
+        label.Name = "HealthLabel"
+        label.Parent = gui
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.TextColor3 = HEALTH_TEXT_COLOR
+        label.TextStrokeTransparency = 0
+        label.TextScaled = false
+        label.TextSize = 16
+        label.Font = Enum.Font.SourceSansBold
+        
+        gui.Parent = rootPart
+    end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        local label = gui:FindFirstChild("HealthLabel")
+        if label then
+            label.Text = math.floor(humanoid.Health + 0.5) .. " HP"
+        end
+    end
+end
+
+local function SetupPlayer(player)
+    if player == LocalPlayer then return end
+
+    local function onCharacter(character)
+        ApplyHealthESP(character)
+
+        character.DescendantRemoving:Connect(function(descendant)
+            if descendant.Name == "Health_ESP_Gui" and shared.HealthESP_Enabled then
+                task.wait()
+                ApplyHealthESP(character)
+            end
+        end)
+    end
+
+    player.CharacterAdded:Connect(onCharacter)
+    if player.Character then onCharacter(player.Character) end
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    SetupPlayer(player)
+end
+
+Players.PlayerAdded:Connect(SetupPlayer)
+
+RunService.RenderStepped:Connect(function()
+    if not shared.HealthESP_Enabled then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            ApplyHealthESP(player.Character)
+        end
+    end
+end)
+
+print("[HEALTH ESP] ATIVO - ABAIXO DOS PÉS")

@@ -1,0 +1,34 @@
+local Lighting = game:GetService("Lighting")
+local backup = Lighting:FindFirstChild("OriginalSettings")
+
+if backup then
+    -- Restaurar propriedades numéricas e de cor
+    Lighting.FogEnd = tonumber(backup.FogEnd.Value) or 100000
+    Lighting.FogStart = tonumber(backup.FogStart.Value) or 0
+    Lighting.Brightness = tonumber(backup.Brightness.Value) or 1
+    Lighting.GlobalShadows = (backup.GlobalShadows.Value == "true")
+    
+    -- Restaurar Cor (Color3)
+    local r, g, b = backup.FogColor.Value:match("([^,]+),%s*([^,]+),%s*([^,]+)")
+    if r and g and b then
+        Lighting.FogColor = Color3.new(tonumber(r), tonumber(g), tonumber(b))
+    end
+    
+    local ar, ag, ab = backup.OutdoorAmbient.Value:match("([^,]+),%s*([^,]+),%s*([^,]+)")
+    if ar and ag and ab then
+        Lighting.OutdoorAmbient = Color3.new(tonumber(ar), tonumber(ag), tonumber(ab))
+    end
+
+    -- Mover objetos de volta para o Lighting
+    for _, obj in ipairs(backup:GetChildren()) do
+        if obj:IsA("Atmosphere") or obj:IsA("Clouds") then
+            obj.Parent = Lighting
+        end
+    end
+
+    -- Deletar a pasta de backup após restaurar
+    backup:Destroy()
+    print("Configurações originais restauradas com sucesso.")
+else
+    warn("Não foi encontrado um backup das configurações. Execute o script de remover primeiro.")
+end

@@ -1,0 +1,47 @@
+-- SCRIPT: ATIVAR NORMALIZAÇÃO
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+
+local JumpPowerValue = 50
+local JumpHeightValue = 7.2
+
+-- Limpeza preventiva (caso já tenha algo rodando)
+if _G.JumpConnections then
+    for _, v in pairs(_G.JumpConnections) do v:Disconnect() end
+end
+if _G.JumpLoop then _G.JumpLoop:Disconnect() end
+
+_G.JumpConnections = {}
+
+local function ForceProperties(h)
+    h.UseJumpPower = true
+    h.JumpPower = JumpPowerValue
+    h.JumpHeight = JumpHeightValue
+    h:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+end
+
+-- Cria as travas de alteração
+table.insert(_G.JumpConnections, Humanoid:GetPropertyChangedSignal("JumpPower"):Connect(function()
+    Humanoid.JumpPower = JumpPowerValue
+end))
+
+table.insert(_G.JumpConnections, Humanoid:GetPropertyChangedSignal("JumpHeight"):Connect(function()
+    Humanoid.JumpHeight = JumpHeightValue
+end))
+
+table.insert(_G.JumpConnections, Humanoid:GetPropertyChangedSignal("UseJumpPower"):Connect(function()
+    Humanoid.UseJumpPower = true
+end))
+
+-- Loop de segurança constante
+_G.JumpLoop = game:GetService("RunService").RenderStepped:Connect(function()
+    if Humanoid and Humanoid.Parent then
+        if not Humanoid:GetStateEnabled(Enum.HumanoidStateType.Jumping) then
+            Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+        end
+    end
+end)
+
+ForceProperties(Humanoid)
+print("Normalização de pulo ATIVADA")

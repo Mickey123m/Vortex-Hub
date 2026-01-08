@@ -1,0 +1,32 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local GunStats = require(ReplicatedStorage.GunScripts.GunStats)
+
+getgenv().OriginalGunStats = getgenv().OriginalGunStats or {}
+
+for gunName, stats in pairs(GunStats) do
+    if type(stats) == "table" then
+        -- Cache
+        if not getgenv().OriginalGunStats[gunName] then
+            getgenv().OriginalGunStats[gunName] = {}
+            for k, v in pairs(stats) do
+                getgenv().OriginalGunStats[gunName][k] = v
+            end
+        end
+
+        -- Camera shake ultra-baixo (≠ 0)
+        if stats.camShake ~= nil then stats.camShake = 0.001 end
+        if stats.camShakeMultiplier ~= nil then stats.camShakeMultiplier = 0.001 end
+        if stats.camShakeResist ~= nil then stats.camShakeResist = 50000 end
+
+        -- Recoil físico
+        if stats.Recoil then stats.Recoil = 0.001 end
+        if stats.KickBack then stats.KickBack = 0.001 end
+
+        -- Precisão total
+        stats.Spread = 0
+        stats.HipFireAccuracy = 0
+        stats.ZoomAccuracy = 0
+    end
+end
+
+print("NO RECOIL ATIVADO – praticamente zero (sem travar câmera)")

@@ -1,0 +1,62 @@
+shared.NameESP_Enabled = true -- TRAVA DE ATIVAÇÃO
+shared.NameESP_Data = {}
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local function GetInternalName(name) return name:match("^(.-)%{") or name end
+
+local function GetAnimalConfig(rawName)
+    local internal = GetInternalName(rawName)
+    local lowerName = internal:lower()
+    local isSpecial = (lowerName:find("grizzly") or lowerName:find("legendary") or lowerName:find("direwolf"))
+    local displayName = internal:gsub("(%l)(%u)", "%1 %2")
+    if isSpecial then
+        displayName = "[LEGENDARY] " .. displayName:gsub("Legendary", ""):gsub("legendary", ""):match("^%s*(.-)%s*$")
+    end
+    return displayName, isSpecial
+end
+
+local function EnsureNameESP(animal)
+    if not shared.NameESP_Enabled then return end -- SÓ CRIA SE ESTIVER ATIVADO
+    if not animal or not animal.Parent or shared.NameESP_Data[animal] then return end
+    local main = animal:FindFirstChild("HumanoidRootPart") or animal:FindFirstChildWhichIsA("BasePart")
+    if not main then return end
+
+    local name, isSpecial = GetAnimalConfig(animal.Name)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "AnimalNameGui"
+    billboard.Parent = animal
+    billboard.Size = UDim2.fromOffset(200, 50)
+    billboard.StudsOffset = Vector3.new(0, 4, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Adornee = main
+
+    local text = Instance.new("TextLabel")
+    text.Name = "Text"
+    text.Parent = billboard
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.BackgroundTransparency = 1
+    text.Font = Enum.Font.SourceSansBold
+    text.TextSize = 14
+    text.RichText = true
+    text.TextColor3 = isSpecial and Color3.new(1,1,1) or Color3.new(1,1,0)
+    text.TextStrokeTransparency = 0
+
+    shared.NameESP_Data[animal] = { Main = main, Text = text, DisplayName = name }
+end
+
+local animalsFolder = Workspace:WaitForChild("Animals", 10)
+RunService.Heartbeat:Connect(function()
+    if not shared.NameESP_Enabled then return end
+    for _, animal in ipairs(animalsFolder:GetChildren()) do
+        EnsureNameESP(animal)
+        local data = shared.NameESP_Data[animal]
+        if data and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (LocalPlayer.Character.HumanoidRootPart.Position - data.Main.Position).Magnitude
+            data.Text.Text = data.DisplayName .. "\n[" .. math.floor(dist) .. " m]"
+        end
+    end
+end)
