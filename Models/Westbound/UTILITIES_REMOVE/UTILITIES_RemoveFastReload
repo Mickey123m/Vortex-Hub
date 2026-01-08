@@ -1,0 +1,25 @@
+local GunStats = require(game:GetService("ReplicatedStorage").GunScripts.GunStats)
+
+local defaults = {
+    ["Pistol"] = {Anim = 1.14, Speed = 0.35},
+    ["Rifle"] = {Anim = 1.14, Speed = 0.35},
+    ["Shotgun"] = {Anim = 0.83, Speed = 1.8},
+    ["Sniper"] = {Anim = 1, Speed = 2.5},
+    ["Bow"] = {Anim = 1.2, Speed = 0.7}
+}
+
+for gunName, stats in pairs(GunStats) do
+    if type(stats) == "table" then
+        local gunType = stats["GunType"]
+        if defaults[gunType] then
+            stats["ReloadAnimationSpeed"] = defaults[gunType].Anim
+            stats["ReloadSpeed"] = defaults[gunType].Speed
+        else
+            -- Fallback caso não identifique o tipo
+            stats["ReloadAnimationSpeed"] = 1
+            stats["ReloadSpeed"] = 0.5
+        end
+    end
+end
+
+print("Recarga restaurada para o padrão.")
