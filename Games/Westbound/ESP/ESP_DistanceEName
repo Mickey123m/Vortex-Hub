@@ -9,16 +9,15 @@ local function applyFullESP(player)
     if player == LocalPlayer then return end
 
     local function onCharacterAdded(character)
-        -- Se o ESP foi desativado, não prossegue
         if not _G.ESP_Enabled then return end
 
-        local root = character:WaitForChild("HumanoidRootPart", 10)
+        -- Tenta pegar o root part, se falhar o script não trava
+        local root = character:WaitForChild("HumanoidRootPart", 15)
         if not root then return end
 
-        -- Limpa se já existir
-        if character:FindFirstChild("FullPlayerESP") then 
-            character.FullPlayerESP:Destroy() 
-        end
+        -- Remove ESP antigo para evitar duplicatas
+        local existing = character:FindFirstChild("FullPlayerESP")
+        if existing then existing:Destroy() end
 
         local billboard = Instance.new("BillboardGui")
         billboard.Name = "FullPlayerESP"
@@ -38,10 +37,10 @@ local function applyFullESP(player)
         textLabel.TextSize = 14
         textLabel.TextXAlignment = Enum.TextXAlignment.Center
         textLabel.TextYAlignment = Enum.TextYAlignment.Center
+        textLabel.Text = player.Name -- Define o nome imediatamente para evitar "Label"
 
         local connection
         connection = RunService.RenderStepped:Connect(function()
-            -- Se for desativado, o próprio loop se encarrega de sumir com o texto
             if not _G.ESP_Enabled then
                 if billboard then billboard:Destroy() end
                 connection:Disconnect()
@@ -51,9 +50,13 @@ local function applyFullESP(player)
             if character and character.Parent and root and root.Parent then
                 local myChar = LocalPlayer.Character
                 local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                
                 if myRoot then
                     local dist = (myRoot.Position - root.Position).Magnitude
                     textLabel.Text = player.Name .. "\n[" .. math.floor(dist) .. "m]"
+                else
+                    -- Mesmo sem o seu Root, mantém o nome visível
+                    textLabel.Text = player.Name
                 end
             else
                 connection:Disconnect()
@@ -61,21 +64,29 @@ local function applyFullESP(player)
         end)
     end
 
-    -- Salva a conexão do personagem
+    -- Conecta o evento e armazena
     local charAddedConn = player.CharacterAdded:Connect(onCharacterAdded)
     table.insert(_G.ESP_Connections, charAddedConn)
 
+    -- Se o personagem já existir, aplica imediatamente
     if player.Character then 
         task.spawn(onCharacterAdded, player.Character) 
     end
 end
 
--- Salva a conexão de novos jogadores
-local playerAddedConn = Players.PlayerAdded:Connect(applyFullESP)
-table.insert(_G.ESP_Connections, playerAddedConn)
+-- Limpa conexões antigas antes de iniciar (evita bugs de re-execução)
+if _G.ESP_Connections then
+    for _, v in pairs(_G.ESP_Connections) do v:Disconnect() end
+    _G.ESP_Connections = {}
+end
 
+-- Inicia para quem já está no servidor
 for _, player in pairs(Players:GetPlayers()) do 
     applyFullESP(player) 
 end
 
-print("[ESP] ATIVADO")
+-- Escuta novos jogadores
+local playerAddedConn = Players.PlayerAdded:Connect(applyFullESP)
+table.insert(_G.ESP_Connections, playerAddedConn)
+
+print("[ESP] ATIVADO COM CORREÇÕES")
