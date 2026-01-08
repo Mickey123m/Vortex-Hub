@@ -5,11 +5,11 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local RobEvent = ReplicatedStorage.GeneralEvents.Rob
 
--- Limpeza de segurança
+-- Limpeza de segurança para evitar duplicatas
 if _G.RobConnection then _G.RobConnection:Disconnect() end
 if _G.CharAddedConn then _G.CharAddedConn:Disconnect() end
-
 _G.AutoRobActive = true
+
 local playerCooldowns = {} 
 
 -- CONFIGURAÇÕES
@@ -24,16 +24,17 @@ local BAG_LIMITS = {40, 50, 60, 70, 80, 90, 100}
 local ContextMain, hrp, statesFolder
 local isResting = false
 
--- Função de Verificação Um por Um
+-- Função de Verificação Corrigida (Pega a referência atualizada sempre)
 local function isBagFull()
+    -- Tenta encontrar a pasta States novamente caso tenha sumido após reset
+    statesFolder = player:FindFirstChild("States")
     if statesFolder then
         local bagValue = statesFolder:FindFirstChild("Bag")
         if bagValue and bagValue:IsA("ValueBase") then
             local currentAmount = bagValue.Value
             
-            -- Verifica se o valor atual corresponde a qualquer um dos limites cheios
             for _, limit in ipairs(BAG_LIMITS) do
-                if currentAmount == limit then
+                if currentAmount >= limit then -- Mudado para >= para evitar bugs de valores acima do limite
                     return true
                 end
             end
@@ -52,7 +53,9 @@ local function updateReferences(char)
     
     if contextMainModule then
         local success, module = pcall(require, contextMainModule)
-        if success then ContextMain = module end
+        if success then 
+            ContextMain = module 
+        end
     end
 end
 
@@ -62,23 +65,29 @@ local function instantClick()
     end
 end
 
--- Ciclo de Vida (Descanso do F)
+-- Ciclo de Vida (Descanso do F) - Corrigido para verificar a flag interna
 task.spawn(function()
-    while _G.AutoRobActive do
-        isResting = false
-        task.wait(WORK_TIME)
-        isResting = true
-        if ContextMain and ContextMain.ResetContextHoldGui then
-            ContextMain:ResetContextHoldGui(false)
+    while true do
+        if _G.AutoRobActive then
+            isResting = false
+            task.wait(WORK_TIME)
+            if _G.AutoRobActive then -- Checa novamente após o wait
+                isResting = true
+                if ContextMain and ContextMain.ResetContextHoldGui then
+                    ContextMain:ResetContextHoldGui(false)
+                end
+                task.wait(REST_TIME)
+            end
+        else
+            task.wait(1) -- Espera em idle se o script estiver desligado
         end
-        task.wait(REST_TIME)
     end
 end)
 
 local function runRobCycle()
     if not _G.AutoRobActive or not hrp or not ContextMain or isResting then return end
     
-    -- Verificação de Bag
+    -- Verificação de Bag (Sempre checa o valor atual)
     if isBagFull() then return end
 
     local currentPos = hrp.Position
@@ -128,13 +137,16 @@ local function runRobCycle()
     end
 end
 
-updateReferences(player.Character)
+-- Inicialização
+if player.Character then
+    updateReferences(player.Character)
+end
 
 _G.CharAddedConn = player.CharacterAdded:Connect(function(newChar)
-    task.wait(1.5)
+    task.wait(1)
     updateReferences(newChar)
 end)
 
 _G.RobConnection = RunService.Heartbeat:Connect(runRobCycle)
 
-print("🚀 AUTO-ROUBO: Verificação Exata (40-100) Ativa")
+print("🚀 AUTO-ROUBO: Ativo e corrigido")
