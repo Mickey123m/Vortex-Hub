@@ -1,0 +1,1 @@
+getgenv().Aimbot.Functions:Exit()

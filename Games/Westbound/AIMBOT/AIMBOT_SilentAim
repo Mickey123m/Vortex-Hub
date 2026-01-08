@@ -1,0 +1,187 @@
+--// Cache
+
+local select = select
+local pcall, getgenv, next, Vector2, mathclamp, type, mousemoverel = select(1, pcall, getgenv, next, Vector2.new, math.clamp, type, mousemoverel or (Input and Input.MouseMove))
+
+--// Preventing Multiple Processes
+
+if getgenv().Aimbot and getgenv().Aimbot.Functions then
+    pcall(function()
+        getgenv().Aimbot.Functions:Exit()
+    end)
+end
+
+--// Environment
+
+getgenv().Aimbot = {}
+local Environment = getgenv().Aimbot
+
+--// Services
+
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+--// Variables
+
+local Typing, ServiceConnections = false, {}
+
+--// Script Settings
+
+Environment.Settings = {
+    Enabled = true,
+    SilentAim = true,
+    TeamCheck = false,
+    AliveCheck = true,
+    WallCheck = false, 
+    LockPart = "Head",
+    MaxCharacterDistance = 1500 -- Distância aumentada
+}
+
+Environment.FOVSettings = {
+    Enabled = true,
+    Visible = true,
+    Amount = 300, -- FOV Aumentado
+    Color = Color3.fromRGB(255, 255, 255),
+    LockedColor = Color3.fromRGB(255, 70, 70),
+    Transparency = 0.5,
+    Sides = 60,
+    Thickness = 1,
+    Filled = false
+}
+
+Environment.FOVCircle = Drawing.new("Circle")
+
+--// Functions
+
+local function CancelLock()
+    Environment.Locked = nil
+    Environment.FOVCircle.Color = Environment.FOVSettings.Color
+end
+
+local function GetClosestPlayer()
+    local ClosestDistance = math.huge
+    local Target = nil
+
+    for _, v in next, Players:GetPlayers() do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) then
+            
+            if Environment.Settings.TeamCheck and v.Team == LocalPlayer.Team then continue end
+            if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+            
+            local Mag = (LocalPlayer.Character.PrimaryPart.Position - v.Character.PrimaryPart.Position).Magnitude
+            
+            if Mag <= Environment.Settings.MaxCharacterDistance then
+                if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+
+                local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position)
+                local MouseDistance = (Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2(Vector.X, Vector.Y)).Magnitude
+
+                if OnScreen and MouseDistance <= (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000) then
+                    if MouseDistance < ClosestDistance then
+                        ClosestDistance = MouseDistance
+                        Target = v
+                    end
+                end
+            end
+        end
+    end
+    Environment.Locked = Target
+end
+
+--// Trajectory Redirection (Silent Aim - Sempre Ativo)
+
+local RawMetatable = getrawmetatable(game)
+local OldNamecall = RawMetatable.__namecall
+setreadonly(RawMetatable, false)
+
+RawMetatable.__namecall = newcclosure(function(Self, ...)
+    local Method = getnamecallmethod()
+    local Args = {...}
+
+    -- Removido a checagem da variável "Running", agora checa apenas se o script está "Enabled"
+    if not checkcaller() and Environment.Settings and Environment.Settings.Enabled and Environment.Settings.SilentAim and Environment.Locked then
+        if Method == "Raycast" then
+            local Origin = Args[1]
+            local TargetPart = Environment.Locked.Character[Environment.Settings.LockPart]
+            Args[2] = (TargetPart.Position - Origin).Unit * 1000
+            return OldNamecall(Self, unpack(Args))
+            
+        elseif Method == "FindPartOnRayWithIgnoreList" or Method == "FindPartOnRay" or Method == "FindPartOnRayWithWhitelist" then
+            local TargetPart = Environment.Locked.Character[Environment.Settings.LockPart]
+            local Origin = Args[1].Origin
+            Args[1] = Ray.new(Origin, (TargetPart.Position - Origin).Unit * 1000)
+            return OldNamecall(Self, unpack(Args))
+        end
+    end
+    
+    return OldNamecall(Self, ...)
+end)
+
+setreadonly(RawMetatable, true)
+
+--// Typing Check
+
+ServiceConnections.TypingStartedConnection = UserInputService.TextBoxFocused:Connect(function()
+    Typing = true
+end)
+
+ServiceConnections.TypingEndedConnection = UserInputService.TextBoxFocusReleased:Connect(function()
+    Typing = false
+end)
+
+--// Main Loop
+
+local function Load()
+    ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
+        if Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
+            Environment.FOVCircle.Radius = Environment.FOVSettings.Amount
+            Environment.FOVCircle.Thickness = Environment.FOVSettings.Thickness
+            Environment.FOVCircle.Filled = Environment.FOVSettings.Filled
+            Environment.FOVCircle.NumSides = Environment.FOVSettings.Sides
+            Environment.FOVCircle.Color = Environment.FOVSettings.Color
+            Environment.FOVCircle.Transparency = Environment.FOVSettings.Transparency
+            Environment.FOVCircle.Visible = Environment.FOVSettings.Visible
+            Environment.FOVCircle.Position = Vector2(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+        else
+            Environment.FOVCircle.Visible = false
+        end
+
+        -- Sempre rodando se não estiver digitando no chat
+        if not Typing and Environment.Settings.Enabled then
+            GetClosestPlayer()
+            if Environment.Locked then
+                Environment.FOVCircle.Color = Environment.FOVSettings.LockedColor
+            end
+        else
+            CancelLock()
+        end
+    end)
+end
+
+--// Exit & Deactivation Functions
+
+Environment.Functions = {}
+
+function Environment.Functions:Exit()
+    for _, v in next, ServiceConnections do
+        v:Disconnect()
+    end
+    
+    if Environment.FOVCircle then 
+        Environment.FOVCircle.Visible = false
+        if Environment.FOVCircle.Remove then
+            Environment.FOVCircle:Remove()
+        end
+    end
+    
+    Environment.Settings.Enabled = false
+    Environment.Settings.SilentAim = false
+    getgenv().Aimbot = nil
+end
+
+--// Initialization
+
+Load()
