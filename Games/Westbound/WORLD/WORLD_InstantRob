@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local RobEvent = ReplicatedStorage.GeneralEvents.Rob
 
--- Limpeza de segurança para não acumular loops
+-- Limpeza de segurança
 if _G.RobConnection then _G.RobConnection:Disconnect() end
 if _G.CharAddedConn then _G.CharAddedConn:Disconnect() end
 
@@ -13,25 +13,28 @@ _G.AutoRobActive = true
 local playerCooldowns = {} 
 
 -- CONFIGURAÇÕES
-local WORK_TIME = 6      -- Tempo roubando
-local REST_TIME = 1.5    -- Tempo de descanso para desbugar o F
+local WORK_TIME = 8      
+local REST_TIME = 1.2    
 local AURA_DISTANCE = 50 
 local PLAYER_DISTANCE = 12 
 
-local ContextMain, hrp
+-- Tabela de limites de bolsa permitidos
+local BAG_LIMITS = {40, 50, 60, 70, 80, 90, 100}
+
+local ContextMain, hrp, statesFolder
 local isResting = false
 
--- Função para verificar inventário
-local function isInventoryFull()
-    local playerGui = player:FindFirstChild("PlayerGui")
-    if playerGui then
-        local inventoryGui = playerGui:FindFirstChild("MainGui") or playerGui:FindFirstChild("HUD")
-        if inventoryGui then
-            local inventoryBar = inventoryGui:FindFirstChild("InventoryBar", true) or inventoryGui:FindFirstChild("WeightBar", true)
-            if inventoryBar and inventoryBar:IsA("Frame") then
-                local fill = inventoryBar:FindFirstChild("Fill", true)
-                if fill and fill.Size.X.Scale >= 0.98 then 
-                    return true 
+-- Função de Verificação Um por Um
+local function isBagFull()
+    if statesFolder then
+        local bagValue = statesFolder:FindFirstChild("Bag")
+        if bagValue and bagValue:IsA("ValueBase") then
+            local currentAmount = bagValue.Value
+            
+            -- Verifica se o valor atual corresponde a qualquer um dos limites cheios
+            for _, limit in ipairs(BAG_LIMITS) do
+                if currentAmount == limit then
+                    return true
                 end
             end
         end
@@ -42,6 +45,8 @@ end
 local function updateReferences(char)
     if not char then return end
     hrp = char:WaitForChild("HumanoidRootPart", 10)
+    statesFolder = player:WaitForChild("States", 10)
+    
     local contextActions = char:WaitForChild("ContextActions", 10)
     local contextMainModule = contextActions and contextActions:WaitForChild("ContextMain", 10)
     
@@ -57,29 +62,28 @@ local function instantClick()
     end
 end
 
--- Ciclo de Vida (Alternância entre roubo e descanso)
+-- Ciclo de Vida (Descanso do F)
 task.spawn(function()
     while _G.AutoRobActive do
         isResting = false
         task.wait(WORK_TIME)
         isResting = true
         if ContextMain and ContextMain.ResetContextHoldGui then
-            ContextMain:ResetContextHoldGui(false) -- Libera o sistema de interação
+            ContextMain:ResetContextHoldGui(false)
         end
         task.wait(REST_TIME)
     end
 end)
 
 local function runRobCycle()
-    -- Verifica se o script está ativo, se não está descansando e se há referências
     if not _G.AutoRobActive or not hrp or not ContextMain or isResting then return end
     
-    -- Se o inventário estiver cheio, para de enviar pacotes
-    if isInventoryFull() then return end
+    -- Verificação de Bag
+    if isBagFull() then return end
 
     local currentPos = hrp.Position
 
-    -- Roubo de Registradoras (Loop de Frame)
+    -- Registradoras
     if ContextMain.CashRegisters then
         for _, reg in pairs(ContextMain.CashRegisters) do
             if reg.Part and reg.ActiveValue and reg.ActiveValue.Value then
@@ -91,7 +95,7 @@ local function runRobCycle()
         end
     end
 
-    -- Roubo de Cofres (Loop de Frame)
+    -- Cofres
     if ContextMain.Safes then
         for _, safe in pairs(ContextMain.Safes) do
             if safe.Safe and not safe.Active then
@@ -103,7 +107,7 @@ local function runRobCycle()
         end
     end
 
-    -- Roubo de Players (Loop de Frame)
+    -- Players
     for _, plr in pairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             if not player:IsFriendsWith(plr.UserId) then
@@ -131,7 +135,6 @@ _G.CharAddedConn = player.CharacterAdded:Connect(function(newChar)
     updateReferences(newChar)
 end)
 
--- Conectado ao Heartbeat (Roda a cada frame do motor físico)
 _G.RobConnection = RunService.Heartbeat:Connect(runRobCycle)
 
-print("🚀 AUTO-ROUBO ULTRA RÁPIDO ATIVADO")
+print("🚀 AUTO-ROUBO: Verificação Exata (40-100) Ativa")

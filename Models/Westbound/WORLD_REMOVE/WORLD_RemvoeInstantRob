@@ -1,13 +1,4 @@
 _G.AutoRobActive = false
-
-if _G.RobConnection then
-    _G.RobConnection:Disconnect()
-    _G.RobConnection = nil
-end
-
-if _G.CharAddedConn then
-    _G.CharAddedConn:Disconnect()
-    _G.CharAddedConn = nil
-end
-
-print("🛑 AUTO-ROUBO TOTALMENTE DESATIVADO")
+if _G.RobConnection then _G.RobConnection:Disconnect() end
+if _G.CharAddedConn then _G.CharAddedConn:Disconnect() end
+print("🛑 AUTO-ROUBO DESATIVADO")
