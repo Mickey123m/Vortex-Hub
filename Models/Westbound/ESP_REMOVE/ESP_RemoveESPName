@@ -1,9 +1,9 @@
 local Players = game:GetService("Players")
 
--- 1. Desativa a permissão de criação
+-- 1. Desativa as variáveis globais (caso existam)
 _G.NameESP_Enabled = false
 
--- 2. Mata as conexões de PlayerAdded e CharacterAdded
+-- 2. Limpa as conexões registradas
 if _G.NameESP_Connections then
     for _, conn in pairs(_G.NameESP_Connections) do
         if conn then conn:Disconnect() end
@@ -11,9 +11,8 @@ if _G.NameESP_Connections then
     _G.NameESP_Connections = {}
 end
 
--- 3. Remove todos os objetos OnlyNameESP do jogo
-for _, player in pairs(Players:GetPlayers()) do
-    local character = player.Character
+-- 3. Função para remover e impedir que o Billboard volte
+local function cleanup(character)
     if character then
         local nameESP = character:FindFirstChild("OnlyNameESP")
         if nameESP then
@@ -22,4 +21,19 @@ for _, player in pairs(Players:GetPlayers()) do
     end
 end
 
-print("[ESP NOME] TOTALMENTE REMOVIDO E DESATIVADO")
+-- 4. Varredura imediata em todos os jogadores
+for _, player in pairs(Players:GetPlayers()) do
+    cleanup(player.Character)
+    
+    -- Tenta desconectar eventos CharacterAdded que possam estar ativos
+    -- Nota: Isso só funciona se as conexões foram salvas em variáveis.
+    -- Para garantir, vamos forçar a remoção sempre que algo for adicionado
+    player.CharacterAdded:Connect(function(char)
+        if not _G.NameESP_Enabled then
+            task.wait(0.5) -- Espera o outro script criar para poder deletar
+            cleanup(char)
+        end
+    end)
+end
+
+print("[ESP NOME] LIMPO E BLOQUEADO")
