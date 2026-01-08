@@ -12,13 +12,36 @@ if _G.CharAddedConn then _G.CharAddedConn:Disconnect() end
 _G.AutoRobActive = true
 local playerCooldowns = {} 
 
--- CONFIGURAÇÕES DE TEMPO (Para não bugar o F)
-local WORK_TIME = 5     -- Tempo que fica roubando (segundos)
-local REST_TIME = 2     -- Tempo que fica desligado para o "F" desbugar
-local TIME_BETWEEN_ROBS = 15 
+-- CONFIGURAÇÕES
+local WORK_TIME = 6      
+local REST_TIME = 1.5    
+local SCAN_DELAY = 0.1   
+local AURA_DISTANCE = 50 
+local PLAYER_DISTANCE = 12 
 
 local ContextMain, hrp
 local isResting = false
+local lastScan = 0
+
+-- Função para verificar se o inventário está cheio
+local function isInventoryFull()
+    local playerGui = player:FindFirstChild("PlayerGui")
+    if playerGui then
+        -- Tenta localizar a barra de inventário (ajuste o caminho se o nome for diferente no seu jogo)
+        local inventoryGui = playerGui:FindFirstChild("MainGui") or playerGui:FindFirstChild("HUD")
+        if inventoryGui then
+            local inventoryBar = inventoryGui:FindFirstChild("InventoryBar", true) or inventoryGui:FindFirstChild("WeightBar", true)
+            if inventoryBar and inventoryBar:IsA("Frame") then
+                -- Se a barra de preenchimento estiver em 100% (Size.X.Scale >= 1)
+                local fill = inventoryBar:FindFirstChild("Fill", true)
+                if fill and fill.Size.X.Scale >= 0.98 then 
+                    return true 
+                end
+            end
+        end
+    end
+    return false
+end
 
 local function updateReferences(char)
     if not char then return end
@@ -38,37 +61,38 @@ local function instantClick()
     end
 end
 
--- Lógica de Ciclo (Alterna entre trabalhando e descansando)
+-- Ciclo de Vida (Gerencia o descanso do "F")
 task.spawn(function()
     while _G.AutoRobActive do
         isResting = false
-        -- print("Aura de Roubo: Ativa")
         task.wait(WORK_TIME)
-        
         isResting = true
-        -- print("Aura de Roubo: Descansando (Limpando Interações)")
         if ContextMain and ContextMain.ResetContextHoldGui then
-            ContextMain:ResetContextHoldGui(false) -- Libera o F
+            ContextMain:ResetContextHoldGui(false)
         end
         task.wait(REST_TIME)
     end
 end)
 
 local function runRobCycle()
-    if not _G.AutoRobActive or not hrp or not ContextMain or isResting then return end
+    if tick() - lastScan < SCAN_DELAY then return end
+    lastScan = tick()
 
-    -- Distâncias
-    local AURA_DISTANCE = 50
-    local PLAYER_DISTANCE = 10
+    if not _G.AutoRobActive or not hrp or not ContextMain or isResting then return end
+    
+    -- Se o inventário estiver cheio, ele não gasta processamento tentando roubar
+    if isInventoryFull() then return end
 
     local currentPos = hrp.Position
 
     -- Roubo de Registradoras
     if ContextMain.CashRegisters then
         for _, reg in pairs(ContextMain.CashRegisters) do
-            if reg.Part and reg.ActiveValue and reg.ActiveValue.Value and (reg.Part.Position - currentPos).Magnitude <= AURA_DISTANCE then
-                instantClick()
-                RobEvent:FireServer("Register", reg)
+            if reg.Part and reg.ActiveValue and reg.ActiveValue.Value then
+                if (reg.Part.Position - currentPos).Magnitude <= AURA_DISTANCE then
+                    instantClick()
+                    RobEvent:FireServer("Register", reg)
+                end
             end
         end
     end
@@ -76,9 +100,11 @@ local function runRobCycle()
     -- Roubo de Cofres
     if ContextMain.Safes then
         for _, safe in pairs(ContextMain.Safes) do
-            if safe.Safe and not safe.Active and (safe.Safe.Position - currentPos).Magnitude <= AURA_DISTANCE then
-                instantClick()
-                RobEvent:FireServer("Safe", safe)
+            if safe.Safe and not safe.Active then
+                if (safe.Safe.Position - currentPos).Magnitude <= AURA_DISTANCE then
+                    instantClick()
+                    RobEvent:FireServer("Safe", safe)
+                end
             end
         end
     end
@@ -92,7 +118,7 @@ local function runRobCycle()
                     local hum = plr.Character:FindFirstChild("Humanoid")
                     if hum and hum.Health > 0 then
                         local lastRob = playerCooldowns[plr.UserId] or 0
-                        if (tick() - lastRob) >= TIME_BETWEEN_ROBS then
+                        if (tick() - lastRob) >= 15 then
                             instantClick()
                             RobEvent:FireServer("Player", plr)
                             playerCooldowns[plr.UserId] = tick()
@@ -107,12 +133,10 @@ end
 updateReferences(player.Character)
 
 _G.CharAddedConn = player.CharacterAdded:Connect(function(newChar)
-    task.wait(1)
+    task.wait(1.5)
     updateReferences(newChar)
 end)
 
-_G.RobConnection = RunService.Heartbeat:Connect(function()
-    runRobCycle()
-end)
+_G.RobConnection = RunService.Heartbeat:Connect(runRobCycle)
 
-print("✅ AUTO-ROUBO COM CICLO DE DESCANSO ATIVADO")
+print("🚀 AUTO-ROUBO: Inventário Inteligente e Ciclo de Descanso Ativos")
