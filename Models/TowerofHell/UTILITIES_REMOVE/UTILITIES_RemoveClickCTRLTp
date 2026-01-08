@@ -1,0 +1,8 @@
+-- Script para DESATIVAR Teleporte por Clique
+if _G.ClickTPConnection then
+    _G.ClickTPConnection:Disconnect()
+    _G.ClickTPConnection = nil
+    print("Click TP Desativado.")
+else
+    print("O Click TP já estava desativado.")
+end

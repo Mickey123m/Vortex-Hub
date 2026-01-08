@@ -1,0 +1,66 @@
+-- Script Completo de God Mode para Tower of Hell
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Função para desativar os Kill Bricks
+local function DisableKillParts()
+    -- Procura em todo o Workspace por objetos que possam matar
+    for _, object in pairs(game.Workspace:GetDescendants()) do
+        -- No Tower of Hell, os objetos de dano geralmente têm nomes específicos ou scripts de Kill
+        if object:IsA("BasePart") then
+            -- Verifica se a cor ou o nome corresponde aos padrões de killparts do jogo
+            -- A maioria usa TouchInterest para detectar o jogador
+            if object:FindFirstChild("TouchInterest") then
+                -- O método mais seguro é desativar o toque ou remover o script de dano
+                -- sem deletar o objeto para não quebrar o mapa visualmente
+                object.CanTouch = false
+                
+                -- Se houver um script de dano dentro da peça, desabilitamos
+                local killScript = object:FindFirstChild("Kill") or object:FindFirstChild("Damage")
+                if killScript then
+                    killScript.Disabled = true
+                end
+            end
+        end
+    end
+end
+
+-- Executa a limpeza inicial
+DisableKillParts()
+
+-- Mantém o God Mode ativo mesmo quando novas fases (levels) carregam
+game.Workspace.DescendantAdded:Connect(function(descendant)
+    if descendant:IsA("BasePart") and descendant:FindFirstChild("TouchInterest") then
+        task.wait(0.1) -- Pequeno delay para garantir que o objeto carregou
+        descendant.CanTouch = false
+    end
+end)
+
+-- Proteção adicional: Impede que o personagem morra por dano de vida (Health)
+local function ProtectCharacter(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    
+    -- Bloqueia a mudança de estado para 'Dead'
+    humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+    
+    -- Sempre que a vida mudar, ela volta para o máximo
+    humanoid.HealthChanged:Connect(function(health)
+        if health < humanoid.MaxHealth then
+            humanoid.Health = humanoid.MaxHealth
+        end
+    end)
+end
+
+-- Aplica no personagem atual e nos próximos respawns
+if LocalPlayer.Character then
+    ProtectCharacter(LocalPlayer.Character)
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    ProtectCharacter(char)
+    -- Re-escaneia o mapa ao renascer para garantir
+    DisableKillParts()
+end)
+
+print("God Mode Ativado: Kill Parts desativadas e vida infinita aplicada.")

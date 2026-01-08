@@ -1,0 +1,28 @@
+-- Script para ATIVAR Teleporte por Clique
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- Função de Teleporte
+local function TeleportToMouse()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        -- Define a nova posição baseada onde o mouse está apontando
+        -- Adicionamos 3 unidades na altura (Y) para não ficar preso no chão
+        local targetPos = Mouse.Hit.p + Vector3.new(0, 3, 0)
+        character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+    end
+end
+
+-- Gerencia a ativação por clique
+if _G.ClickTPConnection then _G.ClickTPConnection:Disconnect() end
+
+_G.ClickTPConnection = Mouse.Button1Down:Connect(function()
+    -- Verifica se a tecla Control está pressionada para evitar teleportar sem querer
+    if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl) then
+        TeleportToMouse()
+    end
+end)
+
+print("Click TP Ativado! Segure CTRL e CLIQUE para teleportar.")

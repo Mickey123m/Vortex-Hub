@@ -1,0 +1,53 @@
+-- Script de Teleporte em Pé: Workspace.tower.sections.finish.exit.carpet
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function TeleportStandingUp()
+    -- Caminho: Workspace > tower > sections > finish > exit > carpet
+    local tower = game.Workspace:FindFirstChild("tower")
+    
+    if tower then
+        local sections = tower:FindFirstChild("sections")
+        
+        if sections then
+            local finish = sections:FindFirstChild("finish")
+            
+            if finish then
+                local exit = finish:FindFirstChild("exit")
+                
+                if exit then
+                    local carpet = exit:FindFirstChild("carpet")
+                    
+                    if carpet and carpet:IsA("BasePart") then
+                        local character = LocalPlayer.Character
+                        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+                        
+                        if rootPart then
+                            -- Pega a posição do carpet
+                            local targetPos = carpet.Position
+                            
+                            -- Define o CFrame apenas com a posição, resetando a rotação
+                            -- Adicionamos +3 no eixo Y para garantir que os pés fiquem no chão
+                            rootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+                            
+                            print("Sucesso: Teleportado em pé para o carpet!")
+                        end
+                    else
+                        print("Erro: 'carpet' não encontrado.")
+                    end
+                else
+                    print("Erro: 'exit' não encontrado.")
+                end
+            else
+                print("Erro: 'finish' não encontrado.")
+            end
+        else
+            print("Erro: 'sections' não encontrado.")
+        end
+    else
+        print("Erro: 'tower' não encontrado.")
+    end
+end
+
+-- Executa o teleporte
+TeleportStandingUp()

@@ -1,0 +1,34 @@
+-- SCRIPT PARA VOLTAR AO NORMAL (DESATIVAR TUDO)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- 1. Desconecta todos os eventos de vida infinita e loops
+if _G.HealthConnection then
+    _G.HealthConnection:Disconnect()
+    _G.HealthConnection = nil
+end
+
+if _G.DescendantLoop then
+    _G.DescendantLoop:Disconnect()
+    _G.DescendantLoop = nil
+end
+
+if _G.GodModeLoop then
+    _G.GodModeLoop:Disconnect()
+    _G.GodModeLoop = nil
+end
+
+-- 2. Restaura as funções padrão do Humanoid
+if LocalPlayer.Character then
+    local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+    if humanoid then
+        -- Reativa a capacidade de morrer
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, true)
+    end
+    
+    -- 3. Mata o personagem para resetar o sistema do jogo e remover o lag
+    -- Isso é necessário porque os TouchInterests foram alterados/deletados anteriormente
+    LocalPlayer.Character:BreakJoints()
+end
+
+print("Tudo desativado. O jogo voltará ao normal após o respawn.")
