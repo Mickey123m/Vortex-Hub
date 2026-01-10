@@ -1,34 +1,50 @@
--- Script: Attribute Master (Bypass)
+-- Script: Attribute Master (Bypass) - ATIVAR CORRIGIDO
 local localPlayer = game:GetService("Players").LocalPlayer
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 
--- Tabela de travas (Ative o que quiser com true/false ou valores)
+_G.AttributeBypassEnabled = true
+_G.AttributeConnections = _G.AttributeConnections or {}
+
 local flags = {
-    -- Survivor
     ["IS_PRONE"] = false,
 }
 
 local function applyBypass()
+    -- Limpa conexões anteriores para não acumular
+    for _, conn in pairs(_G.AttributeConnections) do conn:Disconnect() end
+    _G.AttributeConnections = {}
+
     for attr, value in pairs(flags) do
         -- Força o valor inicial
         localPlayer:SetAttribute(attr, value)
         character:SetAttribute(attr, value)
         
-        -- Trava o valor para não mudar
-        localPlayer:GetAttributeChangedSignal(attr):Connect(function()
-            localPlayer:SetAttribute(attr, value)
+        -- Trava o valor com verificação de segurança
+        local conn1 = localPlayer:GetAttributeChangedSignal(attr):Connect(function()
+            if _G.AttributeBypassEnabled then
+                localPlayer:SetAttribute(attr, value)
+            end
         end)
-        character:GetAttributeChangedSignal(attr):Connect(function()
-            character:SetAttribute(attr, value)
+        
+        local conn2 = character:GetAttributeChangedSignal(attr):Connect(function()
+            if _G.AttributeBypassEnabled then
+                character:SetAttribute(attr, value)
+            end
         end)
+
+        table.insert(_G.AttributeConnections, conn1)
+        table.insert(_G.AttributeConnections, conn2)
     end
 end
 
 applyBypass()
+
 localPlayer.CharacterAdded:Connect(function(newChar)
     character = newChar
     task.wait(1)
-    applyBypass()
+    if _G.AttributeBypassEnabled then
+        applyBypass()
+    end
 end)
 
-print("Atributos mestre aplicados com sucesso!")
+print("TRXSH HUB: Atributos mestre aplicados (Suporta Desativação).")

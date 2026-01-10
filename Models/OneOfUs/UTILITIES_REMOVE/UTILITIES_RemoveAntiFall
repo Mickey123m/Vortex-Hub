@@ -1,0 +1,30 @@
+-- Script: Attribute Master (Bypass) - OFF
+local localPlayer = game:GetService("Players").LocalPlayer
+local character = localPlayer.Character
+
+-- 1. Desliga a permissão de trava
+_G.AttributeBypassEnabled = false
+
+-- 2. Desconecta todas as funções de monitoramento
+if _G.AttributeConnections then
+    for _, connection in pairs(_G.AttributeConnections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    _G.AttributeConnections = {} -- Limpa a tabela
+end
+
+-- 3. Restaura o valor padrão uma única vez
+local resetFlags = {
+    ["IS_PRONE"] = false,
+}
+
+for attr, value in pairs(resetFlags) do
+    localPlayer:SetAttribute(attr, value)
+    if character then
+        character:SetAttribute(attr, value)
+    end
+end
+
+print("TRXSH HUB: Bypass de Atributos DESATIVADO e processos parados.")
