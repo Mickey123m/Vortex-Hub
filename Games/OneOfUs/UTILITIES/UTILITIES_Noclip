@@ -1,0 +1,67 @@
+-- TRXSH HUB: NOCLIP FLYING + JUMP SYSTEM
+-- Permite atravessar paredes e pular sem cair no void
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local lp = Players.LocalPlayer
+
+_G.NoclipJumpEnabled = true
+_G.InitialHeight = nil
+
+local function ApplyNoclipJump()
+    local char = lp.Character
+    if not char then return end
+    
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    
+    if hrp and hum then
+        -- 1. DEFINE A ALTURA DE SEGURANÇA (O "piso" invisível)
+        if _G.InitialHeight == nil then
+            _G.InitialHeight = hrp.Position.Y - 0.5
+        end
+        
+        -- 2. DESATIVA TODAS AS COLISÕES (Atravessar paredes)
+        -- Usamos um loop em todos os descendentes para garantir que acessórios não batam nas paredes
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+        
+        -- 3. ANTI-VOID E TRAVA DE QUEDA
+        -- Se sua posição cair abaixo da altura inicial, o script te joga de volta
+        if hrp.Position.Y < _G.InitialHeight then
+            hrp.CFrame = CFrame.new(hrp.Position.X, _G.InitialHeight, hrp.Position.Z) * hrp.CFrame.Rotation
+            -- Zera a velocidade vertical para evitar o efeito de "quicar"
+            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+        end
+
+        -- Nota: O pulo funciona porque o script só te puxa se você for para BAIXO da InitialHeight.
+        -- Para CIMA, a física do Roblox continua livre.
+    end
+end
+
+-- Conexão Stepped (essencial para Noclip pois roda antes da física do motor)
+local noclipConnection
+noclipConnection = RunService.Stepped:Connect(function()
+    if not _G.NoclipJumpEnabled then
+        _G.InitialHeight = nil
+        -- Restaura as colisões ao desligar o script
+        local char = lp.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+        noclipConnection:Disconnect()
+        return
+    end
+    
+    pcall(ApplyNoclipJump)
+end)
+
+print("TRXSH HUB: Noclip com Pulo Ativado.")
+print("Altura de segurança travada em: " .. tostring(lp.Character.HumanoidRootPart.Position.Y))
