@@ -1,0 +1,17 @@
+_G.PLAYER_ESP_ENABLED = false
+
+-- Interrompe o loop de atualização
+if _G.PLAYER_ESP_CONNECTION then
+    _G.PLAYER_ESP_CONNECTION:Disconnect()
+    _G.PLAYER_ESP_CONNECTION = nil
+end
+
+-- Remove apenas o ESP verde de todos os jogadores
+for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+    if player.Character then
+        local highlight = player.Character:FindFirstChild("PlayerHighlight")
+        if highlight then
+            highlight:Destroy()
+        end
+    end
+end

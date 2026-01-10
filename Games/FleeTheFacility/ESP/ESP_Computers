@@ -1,0 +1,26 @@
+local Workspace = game:GetService("Workspace")
+_G.COMPUTER_ESP_ENABLED = true
+
+local function applyComputerESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if not _G.COMPUTER_ESP_ENABLED then break end
+        if obj.Name == "ComputerTable" then
+            if not obj:FindFirstChild("ComputerHighlight") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "ComputerHighlight"
+                highlight.FillColor = Color3.fromRGB(0, 255, 255)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = obj
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.COMPUTER_ESP_ENABLED do
+        applyComputerESP()
+        task.wait(3)
+    end
+end)

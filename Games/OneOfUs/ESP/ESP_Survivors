@@ -1,0 +1,53 @@
+-- Script para Ativar ESP Survivor (Verde)
+_G.SurvivorESP_Enabled = true
+
+local playersService = game:GetService("Players")
+local localPlayer = playersService.LocalPlayer
+
+local function createHighlight(model, color, name)
+    if model and not model:FindFirstChild(name) then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = name
+        highlight.FillColor = color
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = model
+        highlight.Parent = model
+    end
+end
+
+local function applySurvivorESP(player)
+    -- Ignora você mesmo
+    if player == localPlayer then return end
+
+    task.spawn(function()
+        while _G.SurvivorESP_Enabled do
+            local character = player.Character
+            if character then
+                local backpack = player:FindFirstChild("Backpack")
+                -- Verifica se o player NÃO é o Killer
+                local isKiller = (backpack and backpack:FindFirstChild("Transform")) or (character and character:FindFirstChild("Transform"))
+                
+                if not isKiller then
+                    -- Se for sobrevivente, coloca ESP Verde
+                    createHighlight(character, Color3.fromRGB(0, 255, 0), "ESP_Highlight_Survivor")
+                else
+                    -- Se virar Killer, remove o ESP Verde (para o ESP Vermelho assumir)
+                    local h = character:FindFirstChild("ESP_Highlight_Survivor")
+                    if h then h:Destroy() end
+                end
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+-- Inicia para todos os jogadores atuais e novos
+for _, p in ipairs(playersService:GetPlayers()) do
+    applySurvivorESP(p)
+end
+
+playersService.PlayerAdded:Connect(applySurvivorESP)
+
+print("ESP Survivor Ativado (Verde)")

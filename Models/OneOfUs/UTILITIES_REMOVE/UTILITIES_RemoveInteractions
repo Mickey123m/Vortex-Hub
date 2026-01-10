@@ -1,0 +1,30 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local function RestoreOriginalSettings()
+    -- 1. DESATIVAR VARIÁVEL GLOBAL
+    _G.AutoTaskAuraEnabled = false
+    
+    -- 2. RESTAURAR TUDO NO MAPA
+    local locations = {
+        Workspace:FindFirstChild("map"),
+        Workspace:FindFirstChild("PhoneBooths"),
+        Workspace:FindFirstChild("StakeSpawns")
+    }
+
+    for _, folder in pairs(locations) do
+        if folder then
+            for _, obj in pairs(folder:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") then
+                    -- Restaura o tempo padrão de segurar o 'E'
+                    obj.HoldDuration = 0.5 
+                end
+            end
+        end
+    end
+end
+
+-- Executa a restauração
+RestoreOriginalSettings()
+
+print("TRXSH HUB: Todas as interações voltaram ao normal.")

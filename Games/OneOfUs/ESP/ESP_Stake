@@ -1,0 +1,35 @@
+-- Script para Ativar ESP Chests (Apenas Highlight)
+_G.ChestsESP_Enabled = true
+
+local workspace = game:GetService("Workspace")
+local map = workspace:WaitForChild("map")
+local chestsFolder = map:WaitForChild("Chests")
+
+local function applyChestESP(chest)
+    -- Aplica apenas o Highlight (Laranja)
+    if not chest:FindFirstChild("ESP_Highlight_Chest") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight_Chest"
+        highlight.FillColor = Color3.fromRGB(255, 127, 0) -- Laranja
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = chest
+        highlight.Parent = chest
+    end
+end
+
+-- Aplica nos que já existem na pasta
+for _, chest in ipairs(chestsFolder:GetChildren()) do
+    applyChestESP(chest)
+end
+
+-- Monitora novos baús que entrarem na pasta
+chestsFolder.ChildAdded:Connect(function(child)
+    if _G.ChestsESP_Enabled then
+        task.wait(0.1)
+        applyChestESP(child)
+    end
+end)
+
+print("ESP Chests Ativado (Laranja - Sem Nome)")

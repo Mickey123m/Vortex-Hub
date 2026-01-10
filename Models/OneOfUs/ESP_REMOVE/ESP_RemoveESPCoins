@@ -1,0 +1,19 @@
+-- Script para Desativar ESP Coins
+_G.CoinsESP_Enabled = false
+
+local workspace = game:GetService("Workspace")
+local folderNames = {"Coins", "CoinSpawns"}
+
+for _, name in ipairs(folderNames) do
+    local folder = workspace:FindFirstChild(name)
+    if folder then
+        for _, coin in ipairs(folder:GetChildren()) do
+            local highlight = coin:FindFirstChild("ESP_Highlight_Coin")
+            if highlight then
+                highlight:Destroy()
+            end
+        end
+    end
+end
+
+print("ESP Coins Desativado")

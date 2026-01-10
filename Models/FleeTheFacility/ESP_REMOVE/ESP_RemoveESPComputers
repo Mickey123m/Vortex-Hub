@@ -1,0 +1,10 @@
+_G.COMPUTER_ESP_ENABLED = false
+
+for _, obj in pairs(game:GetService("Workspace"):GetDescendants()) do
+    if obj.Name == "ComputerTable" then
+        local highlight = obj:FindFirstChild("ComputerHighlight")
+        if highlight then
+            highlight:Destroy()
+        end
+    end
+end

@@ -1,0 +1,51 @@
+-- Script: Auto Sabotage (Caminho: map.ActiveTasks)
+_G.AutoSabotage = true
+
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+
+-- Configurações
+local RAIO_AURA = 20 -- Distância para o "E" ativar sozinho
+local INTERVALO = 0.3
+
+task.spawn(function()
+    while _G.AutoSabotage do
+        local char = localPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        
+        -- Caminho que você forneceu: workspace.map.ActiveTasks
+        local map = workspace:FindFirstChild("map")
+        local activeTasks = map and map:FindFirstChild("ActiveTasks")
+        
+        if root and activeTasks then
+            -- Varre apenas a pasta ActiveTasks
+            for _, generator in ipairs(activeTasks:GetChildren()) do
+                -- Procura a pasta "prox" e o "TaskSabotage" dentro
+                local proxFolder = generator:FindFirstChild("prox")
+                if proxFolder then
+                    local prompt = proxFolder:FindFirstChild("TaskSabotage")
+                    
+                    -- Se achou o ProximityPrompt e ele é um prompt real
+                    if prompt and prompt:IsA("ProximityPrompt") then
+                        -- Pega a parte física para calcular distância
+                        local part = proxFolder:IsA("BasePart") and proxFolder or proxFolder:FindFirstChildWhichIsA("BasePart") or generator:FindFirstChildWhichIsA("BasePart")
+                        
+                        if part then
+                            local dist = (root.Position - part.Position).Magnitude
+                            if dist <= RAIO_AURA then
+                                -- Força a interação com o ProximityPrompt
+                                fireproximityprompt(prompt)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(INTERVALO)
+    end
+end)
+
+print("------------------------------------------")
+print("Aura de Sabotagem (TaskSabotage) ATIVADA!")
+print("Caminho: workspace.map.ActiveTasks")
+print("------------------------------------------")

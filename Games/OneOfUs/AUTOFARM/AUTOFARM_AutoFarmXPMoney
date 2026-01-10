@@ -1,0 +1,97 @@
+-- AUTO TASK AURA + INSTANT PHONE (TRXSH HUB) - VERSÃO ULTRA V3
+-- STATUS: "needs key" [cite: 2025-12-24]
+-- NÃO SIMPLIFICAR / NÃO OTIMIZAR / TUDO COMPLETO [cite: 2025-12-19]
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local LocalPlayer = Players.LocalPlayer
+
+-- RANGE ULTRA AUMENTADO (150 STUDS)
+_G.AuraRange = 150 
+_G.AutoTaskAuraEnabled = true
+
+-- --- FUNÇÃO DE INTERAÇÃO INSTANTÂNEA TOTAL ---
+
+local function ForceInstantInteractionV3(prompt)
+    if not prompt or not prompt:IsA("ProximityPrompt") then return end
+    
+    -- 1. BYPASS VISUAL E DE SEGURANÇA [cite: 2025-12-19]
+    prompt.HoldDuration = 0
+    prompt.ClickablePrompt = true
+    prompt.Enabled = true
+    
+    -- 2. DISPARO DE EVENTOS DE SINALIZAÇÃO (Simula segurar e soltar instantaneamente)
+    task.spawn(function()
+        -- Dispara o início da interação para o Servidor entender que você começou
+        prompt:InputHoldBegin()
+        
+        -- Pequeno delay de 0.01 para o servidor registrar o pacote de entrada
+        task.wait(0.01)
+        
+        -- Dispara o fim da interação (Completa a task)
+        prompt:InputHoldEnd()
+        
+        -- Comando nativo de execução forçada do executor
+        if fireproximityprompt then
+            fireproximityprompt(prompt)
+        end
+        
+        -- 3. SIMULAÇÃO DE HARDWARE (BACKUP VIRTUAL)
+        -- Usamos o VirtualInputManager para enviar o sinal de tecla E real
+        VirtualInputManager:SendKeyEvent(true, prompt.KeyboardKeyCode, false, game)
+        task.wait(0.02)
+        VirtualInputManager:SendKeyEvent(false, prompt.KeyboardKeyCode, false, game)
+    end)
+end
+
+-- --- PROCESSAMENTO DE AURA (TODOS OS OBJETOS) ---
+
+local function ProcessAuraInteractionsV3()
+    local Character = LocalPlayer.Character
+    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local myPos = Character.HumanoidRootPart.Position
+    
+    -- Varredura em profundidade para encontrar todos os ProximityPrompts no Range
+    -- Isso cobre Tasks, Telefones, Estacas e Geradores de uma vez só
+    for _, prompt in pairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then
+            local parent = prompt.Parent
+            if parent and parent:IsA("BasePart") then
+                local distance = (parent.Position - myPos).Magnitude
+                
+                -- Verifica se está dentro do novo Range Ultra de 150
+                if distance <= _G.AuraRange then
+                    -- Filtra apenas itens relevantes para não abrir portas ou baús sem querer (opcional)
+                    -- Se quiser interagir com TUDO, basta deixar a chamada direta
+                    ForceInstantInteractionV3(prompt)
+                end
+            end
+        end
+    end
+end
+
+-- --- LOOP DE EXECUÇÃO HEARTBEAT ---
+
+-- Mantendo a estrutura gigante e completa sem remoções [cite: 2025-12-19]
+local auraLoop = RunService.Heartbeat:Connect(function()
+    if _G.AutoTaskAuraEnabled == true then
+        -- pcall para evitar que o script pare se uma Task sumir durante a iteração
+        pcall(function()
+            ProcessAuraInteractionsV3()
+        end)
+    end
+end)
+
+-- --- BYPASS DE DELAY GLOBAL ---
+-- Forçamos todos os prompts que entrarem no jogo a terem 0 de duração
+ProximityPromptService.PromptButtonHoldBegan:Connect(function(prompt)
+    if _G.AutoTaskAuraEnabled then
+        prompt.HoldDuration = 0
+    end
+end)
+
+print("TRXSH HUB: Aura V3 ULTRA carregada. Range: " .. tostring(_G.AuraRange) .. " | Interação Instantânea Forçada.")

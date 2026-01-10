@@ -1,0 +1,6 @@
+_G.HoleESP_Enabled = false
+for _, v in ipairs(workspace:GetDescendants()) do
+    if v.Name == "ESP_Highlight_Hole" then
+        v:Destroy()
+    end
+end

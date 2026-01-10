@@ -1,0 +1,64 @@
+-- ANTI-TRAP / AUTO-ESCAPE (TRXSH HUB)
+-- NOME EM VERMELHO NO PAINEL: "needs key" [cite: 2025-12-24]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Remotes extraídos do código decompilado [cite: 2025-12-19]
+local v10 = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("Trapped")
+local v11 = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("SoulTrapped")
+local SuccessBearTrap = v10:WaitForChild("Success")
+local SuccessSoulTrap = v11:WaitForChild("Success")
+
+-- Elementos da Interface extraídos do seu código [cite: 2025-12-19]
+local GameplayGui = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("GameplayGui")
+local TrappedMenu = GameplayGui:WaitForChild("TrappedMenu")
+local SectionContainer = TrappedMenu:WaitForChild("GeneratorCircle"):WaitForChild("SectionContainer")
+local PointerContainer = TrappedMenu:WaitForChild("GeneratorCircle"):WaitForChild("PointerContainer")
+
+-- Variável de controle para o seu painel
+_G.AntiTrapEnabled = true
+
+-- --- LÓGICA DE AUTO-ESCAPE ---
+
+local function ExecuteAutoEscape()
+    -- Verifica se o menu de armadilha está visível [cite: 2025-12-19]
+    if TrappedMenu.Visible then
+        local pointerRotation = PointerContainer.Rotation
+        local sectionRotation = SectionContainer.Rotation
+        
+        -- A lógica do jogo original diz: (v54 - v_u_17.Rotation) % 360 <= 70 [cite: 2025-12-19]
+        -- Vamos disparar o sucesso assim que o ponteiro entrar na zona
+        if (pointerRotation - sectionRotation) % 360 <= 70 then
+            
+            -- Detecta qual tipo de armadilha é pela variável global ou estado do char
+            -- No seu código, v_u_39 define o tipo [cite: 2025-12-19]
+            
+            -- Tentativa de escape para BearTrap
+            SuccessBearTrap:FireServer(true)
+            
+            -- Tentativa de escape para SoulTrap
+            SuccessSoulTrap:FireServer(true)
+            
+            -- Pequeno delay para não flodar o servidor [cite: 2025-12-19]
+            task.wait(0.1)
+        end
+    end
+end
+
+-- --- LOOP DE MONITORAMENTO ---
+
+-- Usando RenderStepped para ser mais rápido que o Heartbeat do jogo original [cite: 2025-12-19]
+RunService.RenderStepped:Connect(function()
+    if _G.AntiTrapEnabled == true then
+        -- Tenta executar a lógica de escape instantâneo
+        pcall(function()
+            ExecuteAutoEscape()
+        end)
+    end
+end)
+
+-- LOG DE ATIVAÇÃO
+print("TRXSH HUB: Anti-Trap carregado. Escapando de armadilhas automaticamente.")

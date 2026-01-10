@@ -1,0 +1,66 @@
+-- Configurações
+local NOVA_DISTANCIA = 50 -- Distância visual do botão
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+
+local map = workspace:WaitForChild("map")
+local activeTasks = map:WaitForChild("ActiveTasks")
+
+local function setupInteractions(prompt)
+    if prompt:IsA("ProximityPrompt") then
+        -- Aumenta a distância visual
+        prompt.MaxActivationDistance = NOVA_DISTANCIA
+        
+        local originalPos = nil
+
+        -- Quando você segura a tecla (E, Q, etc)
+        prompt.PromptButtonHoldBegan:Connect(function()
+            local char = localPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local targetPart = prompt.Parent:IsA("BasePart") and prompt.Parent or prompt.Parent.Parent:FindFirstChildWhichIsA("BasePart")
+
+            if hrp and targetPart then
+                -- Salva sua posição real e te move para o objeto (Bypass de distância)
+                originalPos = hrp.CFrame
+                hrp.CFrame = targetPart.CFrame
+            end
+        end)
+
+        -- Quando você solta ou termina a tarefa
+        local function returnPosition()
+            local char = localPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp and originalPos then
+                hrp.CFrame = originalPos
+                originalPos = nil
+            end
+        end
+
+        prompt.PromptButtonHoldEnded:Connect(returnPosition)
+        prompt.Triggered:Connect(returnPosition)
+    end
+end
+
+local function scanTask(taskModel)
+    for _, descendant in ipairs(taskModel:GetDescendants()) do
+        if descendant:IsA("ProximityPrompt") then
+            if descendant.Name == "TaskFix" or (descendant.Parent and descendant.Parent.Name == "prox") then
+                setupInteractions(descendant)
+            end
+        end
+    end
+end
+
+-- 1. Aplica nas tarefas atuais
+for _, t in ipairs(activeTasks:GetChildren()) do
+    scanTask(t)
+end
+
+-- 2. Aplica em novas tarefas que aparecerem
+activeTasks.ChildAdded:Connect(function(newTask)
+    task.wait(0.5)
+    scanTask(newTask)
+end)
+
+print("Bypass de Distância TaskFix Ativado (Agora funcional)")

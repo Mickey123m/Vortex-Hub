@@ -1,0 +1,45 @@
+-- Configurações de Reset
+local DISTANCIA_PADRAO = 10 -- Distância normal do jogo
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+
+local map = workspace:FindFirstChild("map")
+local activeTasks = map and map:FindFirstChild("ActiveTasks")
+
+-- Função para limpar os prompts
+local function resetInteractions(prompt)
+    if prompt:IsA("ProximityPrompt") then
+        -- Retorna a distância visual ao normal
+        prompt.MaxActivationDistance = DISTANCIA_PADRAO
+        
+        -- Nota: Como o script anterior usou conexões anônimas, 
+        -- a melhor forma de parar o teleporte é garantir que os 
+        -- objetos não sejam mais clicáveis de longe.
+    end
+end
+
+local function cleanTask(taskModel)
+    for _, descendant in ipairs(taskModel:GetDescendants()) do
+        if descendant:IsA("ProximityPrompt") then
+            resetInteractions(descendant)
+        end
+    end
+end
+
+-- 1. Aplica o reset nas tarefas atuais
+if activeTasks then
+    for _, t in ipairs(activeTasks:GetChildren()) do
+        cleanTask(t)
+    end
+end
+
+-- 2. Também verifica na pasta 'map' raiz (conforme sua última informação)
+if map then
+    for _, obj in ipairs(map:GetChildren()) do
+        if obj.Name ~= "ActiveTasks" then
+            cleanTask(obj)
+        end
+    end
+end
+
+print("Bypass de Distância Desativado: Distâncias resetadas para " .. DISTANCIA_PADRAO)

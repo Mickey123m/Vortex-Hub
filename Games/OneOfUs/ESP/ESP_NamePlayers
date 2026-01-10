@@ -1,0 +1,68 @@
+-- Script para Ativar ESP Name (Global - Sem LocalPlayer)
+_G.GlobalNameESP_Enabled = true
+
+local playersService = game:GetService("Players")
+local localPlayer = playersService.LocalPlayer
+
+local function createNameTag(character, playerName, color)
+    local tag = character:FindFirstChild("GlobalNameTag")
+    local head = character:WaitForChild("Head", 5)
+    if not head then return end
+
+    if not tag then
+        local bill = Instance.new("BillboardGui")
+        bill.Name = "GlobalNameTag"
+        bill.Size = UDim2.new(0, 100, 0, 25)
+        bill.Adornee = head
+        bill.AlwaysOnTop = true
+        bill.ExtentsOffset = Vector3.new(0, 2, 0)
+        bill.Parent = character
+
+        local label = Instance.new("TextLabel")
+        label.Name = "NameLabel"
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = playerName
+        label.TextColor3 = color
+        label.TextStrokeTransparency = 0.5
+        label.TextScaled = false
+        label.TextSize = 14
+        label.Font = Enum.Font.SourceSansBold
+        label.Parent = bill
+    else
+        -- Atualiza a cor dinamicamente se a tag já existir
+        local label = tag:FindFirstChild("NameLabel")
+        if label then
+            label.TextColor3 = color
+        end
+    end
+end
+
+local function applyGlobalNameESP(player)
+    -- CORREÇÃO: Se o jogador for VOCÊ, o script ignora e não cria o nome
+    if player == localPlayer then return end
+
+    task.spawn(function()
+        while _G.GlobalNameESP_Enabled do
+            local character = player.Character
+            if character then
+                local backpack = player:FindFirstChild("Backpack")
+                -- Verifica se é o Killer (Vermelho) ou Sobrevivente (Verde)
+                local isKiller = (backpack and backpack:FindFirstChild("Transform")) or (character and character:FindFirstChild("Transform"))
+                
+                local color = isKiller and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+                createNameTag(character, player.Name, color)
+            end
+            task.wait(1)
+        end
+    end)
+end
+
+-- Inicia para jogadores atuais e novos (ignorando você)
+for _, p in ipairs(playersService:GetPlayers()) do
+    applyGlobalNameESP(p)
+end
+
+playersService.PlayerAdded:Connect(applyGlobalNameESP)
+
+print("ESP Name Ativado (Killer: Vermelho | Survivor: Verde | Você: Oculto)")

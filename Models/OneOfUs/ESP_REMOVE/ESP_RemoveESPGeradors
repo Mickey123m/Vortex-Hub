@@ -1,0 +1,19 @@
+-- Script para Desativar ESP
+local workspace = game:GetService("Workspace")
+local map = workspace:WaitForChild("map")
+local activeTasks = map:WaitForChild("ActiveTasks")
+
+-- Função para remover o Highlight de um modelo
+local function removeESP(model)
+    local highlight = model:FindFirstChild("ESP_Highlight")
+    if highlight then
+        highlight:Destroy()
+    end
+end
+
+-- Remove de todos os modelos na pasta
+for _, task in ipairs(activeTasks:GetChildren()) do
+    removeESP(task)
+end
+
+print("ESP Desativado")

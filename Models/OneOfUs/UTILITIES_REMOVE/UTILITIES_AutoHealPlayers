@@ -1,0 +1,2 @@
+_G.AutoReviveEnabled = false
+print("Aura de Revive Desativada.")

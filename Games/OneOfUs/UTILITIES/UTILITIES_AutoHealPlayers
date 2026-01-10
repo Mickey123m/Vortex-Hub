@@ -1,0 +1,62 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Configurações
+local REVIVE_RANGE = 50 
+_G.AutoReviveEnabled = true
+
+-- Função de Interação Forçada
+local function ForceHelp(prompt)
+    if not prompt then return end
+    
+    -- Força as propriedades para serem instantâneas
+    if prompt.HoldDuration > 0 then
+        prompt.HoldDuration = 0
+    end
+    prompt.ClickablePrompt = true
+    
+    -- Dispara a interação
+    task.spawn(function()
+        fireproximityprompt(prompt)
+    end)
+end
+
+-- Loop Principal
+local reviveLoop = RunService.Heartbeat:Connect(function()
+    if _G.AutoReviveEnabled ~= true then return end
+
+    local Character = LocalPlayer.Character
+    if not Character or not Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local myPos = Character.HumanoidRootPart.Position
+
+    -- Varre todos os players do servidor
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local targetChar = player.Character
+            
+            -- Tenta encontrar o Humanoid para checar se está vivo (Health > 0)
+            local hum = targetChar:FindFirstChildOfClass("Humanoid")
+            
+            -- Verifica se o player está por perto
+            local root = targetChar:FindFirstChild("HumanoidRootPart") or targetChar.PrimaryPart
+            if root and hum and hum.Health > 0 then
+                local distance = (root.Position - myPos).Magnitude
+                
+                if distance <= REVIVE_RANGE then
+                    -- Busca exaustiva por QUALQUER ProximityPrompt no personagem alvo
+                    for _, item in pairs(targetChar:GetDescendants()) do
+                        if item:IsA("ProximityPrompt") then
+                            -- Verifica se o prompt é de ajuda (geralmente não é o de 'Carregar')
+                            -- Se o jogo usa nomes como 'Revive' ou 'Help', ele filtra aqui
+                            ForceHelp(item)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+print("Aura de Revive V2 Ativada. Buscando ProximityPrompts em players próximos.")

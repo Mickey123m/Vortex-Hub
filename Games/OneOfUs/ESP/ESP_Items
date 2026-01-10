@@ -1,0 +1,66 @@
+-- Script para Ativar ESP + Name (Medkits e Crowbars)
+_G.ItemsFullESP_Enabled = true
+
+local workspace = game:GetService("Workspace")
+local map = workspace:WaitForChild("map")
+local medkitsFolder = map:WaitForChild("Medkits")
+local crowbarsFolder = map:WaitForChild("Crowbars")
+
+-- Função para criar Highlight e Nome juntos
+local function applyFullESP(item, text, color, highlightName)
+    -- 1. Criar Highlight
+    if not item:FindFirstChild(highlightName) then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = highlightName
+        highlight.FillColor = color
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = item
+        highlight.Parent = item
+    end
+
+    -- 2. Criar Nome (Tag)
+    if not item:FindFirstChild("ItemNameTag") then
+        local bill = Instance.new("BillboardGui")
+        bill.Name = "ItemNameTag"
+        bill.Size = UDim2.new(0, 80, 0, 20)
+        bill.AlwaysOnTop = true
+        bill.ExtentsOffset = Vector3.new(0, 1.5, 0)
+        bill.Parent = item
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.Text = text
+        label.TextColor3 = color
+        label.TextStrokeTransparency = 0.5
+        label.TextSize = 12
+        label.Font = Enum.Font.SourceSansBold
+        label.Parent = bill
+    end
+end
+
+-- Configuração dos Medkits (Azul)
+for _, med in ipairs(medkitsFolder:GetChildren()) do
+    applyFullESP(med, "Medkit", Color3.fromRGB(0, 0, 255), "ESP_Highlight_Medkit")
+end
+medkitsFolder.ChildAdded:Connect(function(child)
+    if _G.ItemsFullESP_Enabled then
+        task.wait(0.1)
+        applyFullESP(child, "Medkit", Color3.fromRGB(0, 0, 255), "ESP_Highlight_Medkit")
+    end
+end)
+
+-- Configuração das Crowbars (Cinza)
+for _, crow in ipairs(crowbarsFolder:GetChildren()) do
+    applyFullESP(crow, "Crowbar", Color3.fromRGB(128, 128, 128), "ESP_Highlight_Crowbar")
+end
+crowbarsFolder.ChildAdded:Connect(function(child)
+    if _G.ItemsFullESP_Enabled then
+        task.wait(0.1)
+        applyFullESP(child, "Crowbar", Color3.fromRGB(128, 128, 128), "ESP_Highlight_Crowbar")
+    end
+end)
+
+print("ESP Full Ativado: Medkits e Crowbars")

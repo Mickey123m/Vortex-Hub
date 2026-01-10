@@ -1,0 +1,57 @@
+-- Script para Ativar ESP Coins
+_G.CoinsESP_Enabled = true
+
+local workspace = game:GetService("Workspace")
+
+-- Tabelas para as pastas que podem conter moedas
+local folderNames = {"Coins", "CoinSpawns"}
+
+local function applyCoinESP(coin)
+    -- Verifica se já existe o ESP para não duplicar
+    if not coin:FindFirstChild("ESP_Highlight_Coin") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight_Coin"
+        highlight.FillColor = Color3.fromRGB(255, 215, 0) -- Cor Dourada
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Borda Branca
+        highlight.FillTransparency = 0.4
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = coin
+        highlight.Parent = coin
+    end
+end
+
+-- Função para configurar cada pasta
+local function setupFolder(name)
+    local folder = workspace:FindFirstChild(name)
+    
+    -- Se a pasta já existir, aplica nas moedas atuais
+    if folder then
+        for _, coin in ipairs(folder:GetChildren()) do
+            applyCoinESP(coin)
+        end
+        
+        -- Monitora novas moedas
+        folder.ChildAdded:Connect(function(child)
+            if _G.CoinsESP_Enabled then
+                task.wait(0.1)
+                applyCoinESP(child)
+            end
+        end)
+    end
+end
+
+-- Tenta configurar as duas pastas
+for _, name in ipairs(folderNames) do
+    setupFolder(name)
+end
+
+-- Caso as pastas apareçam depois (mudança de mapa)
+workspace.ChildAdded:Connect(function(child)
+    for _, name in ipairs(folderNames) do
+        if child.Name == name then
+            setupFolder(name)
+        end
+    end
+end)
+
+print("ESP Coins Ativado (Dourado) - Monitorando Coins e CoinSpawns")

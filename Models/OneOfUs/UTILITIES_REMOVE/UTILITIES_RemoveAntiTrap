@@ -1,0 +1,45 @@
+-- DISABLE ANTI-TRAP / RESTORE MANUAL ESCAPE (TRXSH HUB)
+-- STATUS: "needs key" (RED DISPLAY) [cite: 2025-12-24]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- --- FUNÇÃO DE DESATIVAÇÃO COMPLETA ---
+
+local function DisableAntiTrapLogic()
+    -- 1. DESLIGAR VARIÁVEL GLOBAL [cite: 2025-12-19]
+    _G.AntiTrapEnabled = false
+
+    -- 2. LIMPEZA DE CONEXÕES (Caso existam variáveis de conexão no escopo global)
+    -- O código original usa BindAction e Heartbeat [cite: 2025-12-19]
+    -- Se você estiver usando o loop RenderStepped do script anterior, 
+    -- a variável _G já impede a execução da lógica.
+
+    -- 3. LOG DE CONFIRMAÇÃO NO CONSOLE DO HUB
+    warn("TRXSH HUB: Anti-Trap DESATIVADO. Minijogos agora são manuais.")
+end
+
+-- --- EXECUÇÃO DA LIMPEZA ---
+
+-- Mantendo a estrutura completa sem remoções [cite: 2025-12-19]
+task.spawn(function()
+    pcall(function()
+        DisableAntiTrapLogic()
+
+        -- Garante que o menu de armadilha não fique travado visualmente
+        local gameplayGui = LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("GameplayGui")
+        if gameplayGui then
+            local trappedMenu = gameplayGui:FindFirstChild("TrappedMenu")
+            if trappedMenu and trappedMenu.Visible == true then
+                -- Não fechamos o menu à força para não bugar o estado do servidor,
+                -- mas paramos a automação imediatamente. [cite: 2025-12-19]
+                print("TRXSH HUB: Automação parada, complete o minijogo manualmente.")
+            end
+        end
+    end)
+end)
+
+-- Identificador para o sistema de logs do Painel
+_G.AntiTrapStatus = "Disabled"

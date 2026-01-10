@@ -1,0 +1,35 @@
+-- Script para Ativar ESP Vents
+_G.VentsESP_Enabled = true
+
+local workspace = game:GetService("Workspace")
+local map = workspace:WaitForChild("map")
+local ventsFolder = map:WaitForChild("Vents")
+
+local function applyVentESP(vent)
+    -- Verifica se já possui o ESP para não duplicar
+    if not vent:FindFirstChild("ESP_Highlight_Vent") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight_Vent"
+        highlight.FillColor = Color3.fromRGB(255, 255, 255) -- Cor Branca
+        highlight.OutlineColor = Color3.fromRGB(200, 200, 200) -- Borda levemente cinza para contraste
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = vent
+        highlight.Parent = vent
+    end
+end
+
+-- Aplica nos filhos atuais da pasta Vents
+for _, vent in ipairs(ventsFolder:GetChildren()) do
+    applyVentESP(vent)
+end
+
+-- Monitora se novas Vents forem adicionadas
+ventsFolder.ChildAdded:Connect(function(child)
+    if _G.VentsESP_Enabled then
+        task.wait(0.1)
+        applyVentESP(child)
+    end
+end)
+
+print("ESP Vents Ativado (Branco)")

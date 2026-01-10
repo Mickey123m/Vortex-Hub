@@ -1,0 +1,15 @@
+_G.BEAST_ESP_ENABLED = false
+
+if _G.BEAST_CONNECTION then
+    _G.BEAST_CONNECTION:Disconnect()
+    _G.BEAST_CONNECTION = nil
+end
+
+for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+    if player.Character then
+        local highlight = player.Character:FindFirstChild("BeastHighlight")
+        if highlight then
+            highlight:Destroy()
+        end
+    end
+end

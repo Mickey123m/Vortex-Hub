@@ -62,6 +62,7 @@ local States = {
     
     -- Westbound Aimbot States
     Westbound_AIMBOT_AimbotE = false,
+    Westbound_AIMBOT_SilentAim = false,
     
     -- Westbound Utilities States
     Westbound_UTILITIES_AntiLasso = false,
@@ -249,6 +250,12 @@ function CleanupSystem:CleanupAll()
         if Westbound.AIMBOT_AimbotE_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveAimbotE")
             Westbound.AIMBOT_AimbotE_Active = false
+        end
+        
+        -- Desativar Silent Aim
+        if Westbound.AIMBOT_SilentAim_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveSIlentAim")
+            Westbound.AIMBOT_SilentAim_Active = false
         end
         
         -- Desativar Utilities
@@ -489,6 +496,7 @@ local Westbound = {
     
     -- Aimbot States
     AIMBOT_AimbotE_Active = false,
+    AIMBOT_SilentAim_Active = false,
     
     -- Utilities States
     UTILITIES_AntiLasso_Active = false,
@@ -618,6 +626,10 @@ function Westbound:ToggleAimbot(aimbotType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/AIMBOT/AIMBOT_AimbotE"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveAimbotE"
         stateName = "Westbound_AIMBOT_AimbotE"
+    elseif aimbotType == "SilentAim" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/AIMBOT/AIMBOT_SilentAim"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveSIlentAim"
+        stateName = "Westbound_AIMBOT_SilentAim"
     else
         warn("[Vortex Hub] Westbound: Tipo de Aimbot inválido: " .. tostring(aimbotType))
         return
@@ -665,9 +677,13 @@ function Westbound:ToggleAimbot(aimbotType, state)
     end
 end
 
--- Função específica para Aimbot
+-- Funções específicas para cada Aimbot
 function Westbound:ToggleAimbotE(state)
     self:ToggleAimbot("AimbotE", state)
+end
+
+function Westbound:ToggleSilentAim(state)
+    self:ToggleAimbot("SilentAim", state)
 end
 
 -- Função para ativar/desativar UTILITIES
@@ -1316,7 +1332,6 @@ function MurderMystery2:ExecuteTeleportLobby()
     end)
 end
 
--- Função para ativar/desativar UTILITIES do MM2
 function MurderMystery2:ToggleUtility(utilityType, state)
     local activateUrl = ""
     local removeUrl = ""
@@ -1330,9 +1345,69 @@ function MurderMystery2:ToggleUtility(utilityType, state)
     elseif utilityType == "AutoKillAll" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/UTILITIES/UTILITIES_AutoKillAll"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/UTILITIES/UTILITIES_RemoveAutoKillAll"
-        stateName = "MM2_AutoKillAll" -- Você precisa definir stateName aqui também
-        MurderMystery2.AutoKillAll_Active = false
+        stateName = "MM2_AutoKillAll"
+    elseif utilityType == "AutoKillSheriff" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/UTILITIES/UTILITIES_AutoKillSheriff"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/UTILITIES/UTILITIES_RemoveAutoKillSheriff" -- CORREÇÃO: removido parêntese extra
+        stateName = "MM2_AutoKillSheriff"
+    else
+        warn("[Vortex Hub] Murder Mystery 2: Tipo de Utility inválido: " .. tostring(utilityType))
+        return
     end
+    
+    -- Atualizar estado
+    States[stateName] = state
+    
+    if state then
+        -- Ativar Utility
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self[utilityType .. "_Active"] = true
+                print("[Vortex Hub] Murder Mystery 2: Utility " .. utilityType .. " ativado!")
+                
+                -- Registrar limpeza
+                CleanupSystem:RegisterScript("MM2_Utility_" .. utilityType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self[utilityType .. "_Active"] = false
+                warn("[Vortex Hub] Murder Mystery 2: Erro ao ativar Utility " .. utilityType)
+            end
+        end)
+    else
+        -- Desativar Utility
+        if self[utilityType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self[utilityType .. "_Active"] = false
+                    print("[Vortex Hub] Murder Mystery 2: Utility " .. utilityType .. " desativado!")
+                else
+                    self[utilityType .. "_Active"] = false
+                    print("[Vortex Hub] Murder Mystery 2: Utility " .. utilityType .. " desativado (fallback)")
+                end
+            end)
+        end
+    end
+end
+
+-- Funções específicas para cada Utility
+function MurderMystery2:ToggleAutoGun(state)
+    self:ToggleUtility("AutoGun", state)
+end
+
+function MurderMystery2:ToggleAutoKillAll(state)
+    self:ToggleUtility("AutoKillAll", state)
+end
+
+function MurderMystery2:ToggleAutoKillSheriff(state)
+    self:ToggleUtility("AutoKillSheriff", state)
 end
 
 -- [[ PRISON LIFE LOADSTRING SYSTEMS ]]
@@ -2343,6 +2418,210 @@ ScreenGui.DisplayOrder = 999999999
 local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
 ScreenGui.Parent = success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
 
+-- [[ TOAST NOTIFICATION SYSTEM - ADICIONADO AQUI ]]
+local ToastSystem = {
+    ActiveToasts = {},
+    PositionOffset = 0
+}
+
+function ToastSystem:CreateToast(title, message, duration)
+    duration = duration or 5
+    
+    local ToastGui = Instance.new("ScreenGui")
+    ToastGui.Name = "ToastNotification"
+    ToastGui.ResetOnSpawn = false
+    ToastGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ToastGui.DisplayOrder = 999999999
+    ToastGui.Parent = ScreenGui.Parent
+    
+    local ToastFrame = Instance.new("Frame")
+    ToastFrame.Name = "Toast"
+    ToastFrame.Size = UDim2.new(0, 320, 0, 80)
+    ToastFrame.Position = UDim2.new(1, -340, 1, -90 - self.PositionOffset)
+    ToastFrame.BackgroundColor3 = Color3.fromHex("1C1C22")
+    ToastFrame.BorderSizePixel = 0
+    ToastFrame.ZIndex = 100
+    ToastFrame.Parent = ToastGui
+    
+    local ToastCorner = Instance.new("UICorner")
+    ToastCorner.CornerRadius = UDim.new(0, 8)
+    ToastCorner.Parent = ToastFrame
+    
+    local ToastStroke = Instance.new("UIStroke")
+    ToastStroke.Thickness = 1
+    ToastStroke.Color = Color3.fromHex("25252D")
+    ToastStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    ToastStroke.LineJoinMode = Enum.LineJoinMode.Round
+    ToastStroke.Parent = ToastFrame
+    
+    -- Ícone
+    local IconFrame = Instance.new("Frame")
+    IconFrame.Size = UDim2.new(0, 40, 0, 40)
+    IconFrame.Position = UDim2.new(0, 15, 0.5, -20)
+    IconFrame.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    IconFrame.BorderSizePixel = 0
+    IconFrame.Parent = ToastFrame
+    
+    local IconCorner = Instance.new("UICorner")
+    IconCorner.CornerRadius = UDim.new(0, 6)
+    IconCorner.Parent = IconFrame
+    
+    local IconLabel = Instance.new("TextLabel")
+    IconLabel.Size = UDim2.new(1, 0, 1, 0)
+    IconLabel.Text = "V"
+    IconLabel.Font = Enum.Font.GothamBold
+    IconLabel.TextSize = 18
+    IconLabel.TextColor3 = Color3.new(1, 1, 1)
+    IconLabel.BackgroundTransparency = 1
+    IconLabel.Parent = IconFrame
+    
+    -- Conteúdo
+    local ContentFrame = Instance.new("Frame")
+    ContentFrame.Size = UDim2.new(1, -75, 1, -20)
+    ContentFrame.Position = UDim2.new(0, 65, 0, 10)
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.Parent = ToastFrame
+    
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Text = title
+    TitleLabel.Size = UDim2.new(1, 0, 0, 20)
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 14
+    TitleLabel.TextColor3 = Color3.new(1, 1, 1)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = ContentFrame
+    
+    local MessageLabel = Instance.new("TextLabel")
+    MessageLabel.Text = message
+    MessageLabel.Size = UDim2.new(1, 0, 1, -25)
+    MessageLabel.Position = UDim2.new(0, 0, 0, 25)
+    MessageLabel.Font = Enum.Font.Gotham
+    MessageLabel.TextSize = 11
+    MessageLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    MessageLabel.BackgroundTransparency = 1
+    MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
+    MessageLabel.TextWrapped = true
+    MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
+    MessageLabel.Parent = ContentFrame
+    
+    -- Progress Bar
+    local ProgressBar = Instance.new("Frame")
+    ProgressBar.Size = UDim2.new(1, -30, 0, 2)
+    ProgressBar.Position = UDim2.new(0, 15, 1, -15)
+    ProgressBar.BackgroundColor3 = Color3.fromHex("25252D")
+    ProgressBar.BorderSizePixel = 0
+    ProgressBar.Parent = ToastFrame
+    
+    local ProgressBarCorner = Instance.new("UICorner")
+    ProgressBarCorner.CornerRadius = UDim.new(1, 0)
+    ProgressBarCorner.Parent = ProgressBar
+    
+    local ProgressFill = Instance.new("Frame")
+    ProgressFill.Size = UDim2.new(1, 0, 1, 0)
+    ProgressFill.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    ProgressFill.BorderSizePixel = 0
+    ProgressFill.Parent = ProgressBar
+    
+    local ProgressFillCorner = Instance.new("UICorner")
+    ProgressFillCorner.CornerRadius = UDim.new(1, 0)
+    ProgressFillCorner.Parent = ProgressFill
+    
+    -- Animação de entrada
+    ToastFrame.Position = UDim2.new(1, 350, 1, -90 - self.PositionOffset)
+    TweenService:Create(ToastFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -340, 1, -90 - self.PositionOffset)
+    }):Play()
+    
+    self.PositionOffset = self.PositionOffset + 90
+    table.insert(self.ActiveToasts, {Gui = ToastGui, Offset = self.PositionOffset - 90})
+    
+    -- Timer
+    local startTime = tick()
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        local elapsed = tick() - startTime
+        local progress = elapsed / duration
+        
+        if progress >= 1 then
+            connection:Disconnect()
+            TweenService:Create(ToastFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+                Position = UDim2.new(1, 350, 1, -90 - (self.PositionOffset - 90)),
+                BackgroundTransparency = 1
+            }):Play()
+            
+            task.wait(0.5)
+            ToastGui:Destroy()
+            
+            for i, toast in ipairs(self.ActiveToasts) do
+                if toast.Gui == ToastGui then
+                    table.remove(self.ActiveToasts, i)
+                    break
+                end
+            end
+            
+            self.PositionOffset = 0
+            for i, toast in ipairs(self.ActiveToasts) do
+                local toastFrame = toast.Gui:FindFirstChild("Toast")
+                if toastFrame then
+                    TweenService:Create(toastFrame, TweenInfo.new(0.3), {
+                        Position = UDim2.new(1, -340, 1, -90 - (i-1)*90)
+                    }):Play()
+                    self.PositionOffset = i * 90
+                end
+            end
+        else
+            ProgressFill.Size = UDim2.new(1 - progress, 0, 1, 0)
+        end
+    end)
+    
+    -- Fechar ao clicar
+    ToastFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            connection:Disconnect()
+            TweenService:Create(ToastFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+                Position = UDim2.new(1, 350, 1, -90 - (self.PositionOffset - 90)),
+                BackgroundTransparency = 1
+            }):Play()
+            
+            task.wait(0.3)
+            ToastGui:Destroy()
+            
+            for i, toast in ipairs(self.ActiveToasts) do
+                if toast.Gui == ToastGui then
+                    table.remove(self.ActiveToasts, i)
+                    break
+                end
+            end
+            
+            self.PositionOffset = 0
+            for i, toast in ipairs(self.ActiveToasts) do
+                local toastFrame = toast.Gui:FindFirstChild("Toast")
+                if toastFrame then
+                    TweenService:Create(toastFrame, TweenInfo.new(0.3), {
+                        Position = UDim2.new(1, -340, 1, -90 - (i-1)*90)
+                    }):Play()
+                    self.PositionOffset = i * 90
+                end
+            end
+        end
+    end)
+    
+    return ToastGui
+end
+
+-- [[ EXIBIR TOAST DE INICIALIZAÇÃO ]]
+task.spawn(function()
+    task.wait(1)
+    ToastSystem:CreateToast(
+        "VORTEX HUB LOADED",
+        "Press INSERT to open/close the hub interface.\nVersion: v2.6.1",
+        8
+    )
+    print("[Vortex Hub] Toast notification displayed!")
+end)
+
+-- [[ CONTINUAÇÃO DA INTERFACE PRINCIPAL ]]
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 650, 0, 450)
@@ -2398,7 +2677,7 @@ Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
 local VersionLabelTop = Instance.new("TextLabel")
-VersionLabelTop.Text = "v2.6.0"
+VersionLabelTop.Text = "v2.6.1"
 VersionLabelTop.Size = UDim2.new(0, 50, 1, 0)
 VersionLabelTop.Position = UDim2.new(0, 105, 0, 0)
 VersionLabelTop.TextColor3 = Color3.fromRGB(120, 120, 120)
@@ -3036,6 +3315,10 @@ CreateToggle(Westbound_AimbotGrid, "Aimbot E", "Aimbot automático para mirar no
     Westbound:ToggleAimbotE(v)
 end)
 
+CreateToggle(Westbound_AimbotGrid, "Silent Aim", "Silent Aim automático (alvo silencioso)", "AIMBOT", function(v)
+    Westbound:ToggleSilentAim(v)
+end)
+
 -- UTILITIES
 CreateSection(WB_Data.Page, "Utilities")
 local Westbound_UtilitiesGrid = WB_Data.CreateGrid(WB_Data.Page)
@@ -3379,7 +3662,7 @@ FooterLayout.Padding = UDim.new(0, 2)
 FooterLayout.Parent = FooterGroup
 
 local VersionLabelBottom = Instance.new("TextLabel")
-VersionLabelBottom.Text = "v2.6.0"
+VersionLabelBottom.Text = "v2.6.1"
 VersionLabelBottom.Size = UDim2.new(1, 0, 0, 14)
 VersionLabelBottom.TextColor3 = Color3.fromRGB(80, 85, 85)
 VersionLabelBottom.Font = Enum.Font.Gotham
@@ -3436,10 +3719,11 @@ UserInputService.InputBegan:Connect(function(input, processed)
     end
 end)
 
-print("[Vortex Hub] Script loaded successfully! v2.6.0")
+print("[Vortex Hub] Script loaded successfully! v2.6.1")
 print("[Vortex Hub] WESTBOUND COMPLETAMENTE ADICIONADO COM:")
 print("[Vortex Hub] 1. ESP: Players, Animals, Distance+Name, Name, Health, NameAnimals")
-print("[Vortex Hub] 2. AIMBOT: Aimbot E (ON/OFF)")
+print("[Vortex Hub] 2. AIMBOT: Aimbot E, Silent Aim (ON/OFF)")
 print("[Vortex Hub] 3. UTILITIES: Anti Lasso, Fast Fire, Fast Reload, No Recoil")
 print("[Vortex Hub] 4. WORLD: Disable Fog, Disable Jump Limite, ESP Items House, Instant Rob, No Fall Damage")
+print("[Vortex Hub] SILENT AIM adicionado na seção AIMBOT do Westbound!")
 print("[Vortex Hub] Use INSERT para abrir/fechar a interface!")

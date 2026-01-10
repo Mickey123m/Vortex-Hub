@@ -1,0 +1,62 @@
+-- Script para Ativar ESP HoleInWall e BrokenWindow
+_G.HoleESP_Enabled = true
+
+local workspace = game:GetService("Workspace")
+local map = workspace:WaitForChild("map")
+local misc = map:WaitForChild("Misc")
+
+-- Pastas específicas conforme sua descrição
+local holeFolder = misc:WaitForChild("HoleInWall")
+local assetsFolder = misc:WaitForChild("Assets")
+
+local function applyHoleESP(obj)
+    if not obj:FindFirstChild("ESP_Highlight_Hole") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight_Hole"
+        highlight.FillColor = Color3.fromRGB(0, 255, 0) -- Verde
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = obj
+        highlight.Parent = obj
+    end
+end
+
+-- 1. Aplicar nos filhos de Misc.HoleInWall
+local function checkHoles()
+    for _, child in ipairs(holeFolder:GetChildren()) do
+        applyHoleESP(child)
+    end
+end
+
+-- 2. Aplicar nos modelos BrokenWindow dentro de Misc.Assets
+local function checkWindows()
+    for _, obj in ipairs(assetsFolder:GetChildren()) do
+        if string.find(obj.Name:lower(), "brokenwindow") or string.find(obj.Name:lower(), "windowinhole") then
+            applyHoleESP(obj)
+        end
+    end
+end
+
+-- Executa as verificações iniciais
+checkHoles()
+checkWindows()
+
+-- Monitoramento para novos itens
+holeFolder.ChildAdded:Connect(function(child)
+    if _G.HoleESP_Enabled then
+        task.wait(0.1)
+        applyHoleESP(child)
+    end
+end)
+
+assetsFolder.ChildAdded:Connect(function(child)
+    if _G.HoleESP_Enabled then
+        if string.find(child.Name:lower(), "brokenwindow") or string.find(child.Name:lower(), "windowinhole") then
+            task.wait(0.1)
+            applyHoleESP(child)
+        end
+    end
+end)
+
+print("ESP Ativado nos locais corretos (Misc.HoleInWall e Misc.Assets)")

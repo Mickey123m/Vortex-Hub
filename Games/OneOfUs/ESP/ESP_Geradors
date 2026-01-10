@@ -1,0 +1,28 @@
+-- Script para Ativar ESP
+local workspace = game:GetService("Workspace")
+local map = workspace:WaitForChild("map")
+local activeTasks = map:WaitForChild("ActiveTasks")
+
+-- Função para aplicar o ESP (Highlight) em um modelo
+local function applyESP(model)
+    if model:IsA("Model") then
+        -- Verifica se já existe o Highlight para não duplicar
+        if not model:FindFirstChild("ESP_Highlight") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "ESP_Highlight"
+            highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Cor do preenchimento
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Cor da borda
+            highlight.FillTransparency = 0.5 -- Transparência do preenchimento
+            highlight.OutlineTransparency = 0 -- Transparência da borda
+            highlight.Adornee = model
+            highlight.Parent = model
+        end
+    end
+end
+
+-- Aplica nos modelos existentes na pasta
+for _, task in ipairs(activeTasks:GetChildren()) do
+    applyESP(task)
+end
+
+print("ESP Ativado (Apenas Visual)")

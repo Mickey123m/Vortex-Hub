@@ -1,0 +1,24 @@
+-- Script para Desativar ESP
+_G.ESP_Enabled = false -- ISSO PARA O LOOP DO SCRIPT DE ATIVAR
+
+local workspace = game:GetService("Workspace")
+local playersService = game:GetService("Players")
+local map = workspace:FindFirstChild("map")
+
+-- 1. Remove do Killer
+for _, player in ipairs(playersService:GetPlayers()) do
+    if player.Character then
+        local h = player.Character:FindFirstChild("ESP_Highlight_Killer")
+        if h then h:Destroy() end
+    end
+end
+
+-- 2. Remove dos Chests
+if map and map:FindFirstChild("Chests") then
+    for _, chest in ipairs(map.Chests:GetChildren()) do
+        local h = chest:FindFirstChild("ESP_Highlight_Chest")
+        if h then h:Destroy() end
+    end
+end
+
+print("ESP Desativado e Loops Encerrados")

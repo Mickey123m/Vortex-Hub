@@ -1,0 +1,15 @@
+-- Script para Desativar ESP Survivor
+_G.SurvivorESP_Enabled = false
+
+local playersService = game:GetService("Players")
+
+for _, player in ipairs(playersService:GetPlayers()) do
+    if player.Character then
+        local h = player.Character:FindFirstChild("ESP_Highlight_Survivor")
+        if h then
+            h:Destroy()
+        end
+    end
+end
+
+print("ESP Survivor Desativado")

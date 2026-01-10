@@ -1,0 +1,68 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Configurações
+_G.AutoTaskAuraEnabled = true
+local ACTIVATION_RANGE = 50 
+
+-- --- FUNÇÃO DE INTERAÇÃO FORÇADA (INSTANTÂNEA) ---
+local function ForceInstantInteraction(prompt)
+    if not prompt then return end
+    
+    -- Força a propriedade para ser instantânea
+    if prompt.HoldDuration ~= 0 then
+        prompt.HoldDuration = 0
+    end
+    prompt.ClickablePrompt = true
+    
+    -- Dispara a interação nativamente
+    task.spawn(function()
+        fireproximityprompt(prompt)
+    end)
+end
+
+-- --- PROCESSAMENTO DE TODAS AS ÁREAS ---
+local function ProcessAllInteractions()
+    local Character = LocalPlayer.Character
+    local hrp = Character and Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    local myPos = hrp.Position
+    
+    -- Lista de lugares para escanear conforme você indicou
+    local locations = {
+        Workspace:FindFirstChild("map"),
+        Workspace.map:FindFirstChild("ActiveTasks"),
+        Workspace:FindFirstChild("PhoneBooths"),
+        Workspace:FindFirstChild("StakeSpawns")
+    }
+
+    for _, folder in pairs(locations) do
+        if folder then
+            for _, obj in pairs(folder:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") then
+                    -- Pega a parte física do prompt para calcular distância
+                    local parentPart = obj.Parent:IsA("BasePart") and obj.Parent or obj.Parent.Parent:FindFirstChildWhichIsA("BasePart")
+                    
+                    if parentPart then
+                        local distance = (parentPart.Position - myPos).Magnitude
+                        if distance <= ACTIVATION_RANGE then
+                            ForceInstantInteraction(obj)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- --- LOOP DE EXECUÇÃO ---
+local mainLoop = RunService.Heartbeat:Connect(function()
+    if _G.AutoTaskAuraEnabled == true then
+        ProcessAllInteractions()
+    end
+end)
+
+print("TRXSH HUB: Aura TOTAL Insta-Interaction Ativada em todas as pastas.")

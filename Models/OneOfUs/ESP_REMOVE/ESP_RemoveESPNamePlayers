@@ -1,0 +1,15 @@
+-- Script para Desativar ESP Name
+_G.GlobalNameESP_Enabled = false
+
+local playersService = game:GetService("Players")
+
+for _, player in ipairs(playersService:GetPlayers()) do
+    if player.Character then
+        local tag = player.Character:FindFirstChild("GlobalNameTag")
+        if tag then
+            tag:Destroy()
+        end
+    end
+end
+
+print("ESP Name Desativado")

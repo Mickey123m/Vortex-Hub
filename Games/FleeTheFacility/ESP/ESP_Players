@@ -1,0 +1,35 @@
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+_G.PLAYER_ESP_ENABLED = true
+
+local function applyPlayerESP()
+    if not _G.PLAYER_ESP_ENABLED then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local char = player.Character
+            local highlight = char:FindFirstChild("PlayerHighlight")
+            
+            -- Cria o destaque se ele não existir
+            if not highlight then
+                highlight = Instance.new("Highlight")
+                highlight.Name = "PlayerHighlight"
+                highlight.Parent = char
+            end
+            
+            -- Força a cor verde e propriedades
+            highlight.FillColor = Color3.fromRGB(0, 255, 0) -- Verde
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.5
+            highlight.OutlineTransparency = 0
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlight.Enabled = true
+        end
+    end
+end
+
+-- Conexão constante para evitar que o jogo remova
+if _G.PLAYER_ESP_CONNECTION then _G.PLAYER_ESP_CONNECTION:Disconnect() end
+_G.PLAYER_ESP_CONNECTION = RunService.RenderStepped:Connect(applyPlayerESP)

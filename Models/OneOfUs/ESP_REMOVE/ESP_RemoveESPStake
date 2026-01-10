@@ -1,0 +1,22 @@
+-- Script para Desativar ESP Chests
+_G.ChestsESP_Enabled = false
+
+local workspace = game:GetService("Workspace")
+local map = workspace:FindFirstChild("map")
+
+if map then
+    local chestsFolder = map:FindFirstChild("Chests")
+    if chestsFolder then
+        for _, chest in ipairs(chestsFolder:GetChildren()) do
+            -- Remove apenas o Highlight específico dos baús
+            local h = chest:FindFirstChild("ESP_Highlight_Chest")
+            if h then h:Destroy() end
+            
+            -- Garante a remoção de qualquer tag de nome antiga, caso ainda exista
+            local tag = chest:FindFirstChild("ChestNameTag")
+            if tag then tag:Destroy() end
+        end
+    end
+end
+
+print("ESP Chests Desativado")

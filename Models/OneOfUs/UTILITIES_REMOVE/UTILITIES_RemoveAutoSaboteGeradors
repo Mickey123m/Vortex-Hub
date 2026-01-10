@@ -1,0 +1,26 @@
+-- Script: Desativar APENAS Auto Sabotage
+_G.AutoSabotage = false
+
+-- Opcional: Forçar a interrupção de interações caso o personagem esteja segurando o "E"
+local localPlayer = game:GetService("Players").LocalPlayer
+local char = localPlayer.Character
+local map = workspace:FindFirstChild("map")
+local activeTasks = map and map:FindFirstChild("ActiveTasks")
+
+if activeTasks then
+    for _, generator in ipairs(activeTasks:GetChildren()) do
+        local proxFolder = generator:FindFirstChild("prox")
+        if proxFolder then
+            local prompt = proxFolder:FindFirstChild("TaskSabotage")
+            if prompt and prompt:IsA("ProximityPrompt") then
+                -- Garante que o estado de "segurar" seja resetado
+                prompt:InputHoldEnd()
+            end
+        end
+    end
+end
+
+print("------------------------------------------")
+print("AUTO SABOTAGE: DESATIVADO")
+print("O loop foi encerrado e interações paradas.")
+print("------------------------------------------")

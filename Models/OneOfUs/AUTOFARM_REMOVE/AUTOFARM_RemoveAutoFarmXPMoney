@@ -1,0 +1,45 @@
+-- DISABLE AUTO TASK AURA + RESTORE DEFAULTS (TRXSH HUB V3)
+-- LocalScript
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local LocalPlayer = Players.LocalPlayer
+
+-- --- FUNÇÃO DE RESTAURAÇÃO TOTAL ---
+
+local function RestoreOriginalSettingsV3()
+    -- 1. DESATIVAR VARIÁVEL GLOBAL
+    _G.AutoTaskAuraEnabled = false
+    
+    -- 2. RESETAR RANGE (OPCIONAL)
+    _G.AuraRange = 0
+    
+    -- 3. PERCORRER TODO O WORKSPACE PARA RESETAR DURATIONS
+    -- O padrão do jogo geralmente é entre 0.5 e 2.0 dependendo da task. 
+    -- Vamos definir um padrão seguro de 0.5.
+    print("TRXSH HUB: Restaurando configurações de prompts no mapa...")
+    
+    for _, prompt in pairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then
+            -- Restaura propriedades originais
+            prompt.HoldDuration = 0.5
+            -- Se for o prompt de ajuda/revive, costuma ser maior, mas 0.5 libera o uso manual
+        end
+    end
+    
+    -- 4. DESCONECTAR O LOOP (Caso você queira parar totalmente o processamento)
+    -- Nota: Scripts que usam conexões anônimas em variáveis globais 
+    -- dependem da flag _G para parar o processamento interno.
+end
+
+-- --- EXECUÇÃO DA DESATIVAÇÃO ---
+
+-- pcall para garantir que a restauração ocorra mesmo se houver erro de permissão em algum objeto
+pcall(function()
+    RestoreOriginalSettingsV3()
+end)
+
+-- Aviso visual
+print("TRXSH HUB: Aura ULTRA V3 DESATIVADA. Configurações originais restauradas com sucesso.")
