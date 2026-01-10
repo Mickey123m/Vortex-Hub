@@ -1,0 +1,43 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+-- --- FUNÇÃO DE RESTAURAÇÃO TOTAL ---
+local function RestoreGeneratorSettings()
+    -- 1. Desativa a variável de controle global
+    _G.AutoGeneratorAuraEnabled = false
+    
+    -- 2. Localiza e restaura os prompts específicos
+    local map = Workspace:FindFirstChild("map")
+    if map then
+        local activeTasks = map:FindFirstChild("ActiveTasks")
+        if activeTasks then
+            -- Varre os modelos filhos de ActiveTasks conforme a estrutura passada
+            for _, model in pairs(activeTasks:GetChildren()) do
+                local prox = model:FindFirstChild("prox")
+                if prox then
+                    local taskFix = prox:FindFirstChild("TaskFix")
+                    
+                    -- Verifica se o TaskFix existe e é um ProximityPrompt
+                    if taskFix and taskFix:IsA("ProximityPrompt") then
+                        -- Restaura o HoldDuration original (0.5 é o padrão, ajuste se for outro)
+                        taskFix.HoldDuration = 0.5 
+                        -- Opcional: Desativa o ClickablePrompt se quiser resetar totalmente
+                        taskFix.ClickablePrompt = false
+                    end
+                end
+            end
+        end
+    end
+
+    -- 3. Tenta desconectar o loop do RunService se ele existir no ambiente
+    -- Nota: Isso assume que a variável 'generatorLoop' está acessível ou 
+    -- que o controle pela variável global _G já é suficiente para parar a execução.
+    if generatorLoop then
+        generatorLoop:Disconnect()
+    end
+end
+
+-- Executa a restauração
+RestoreGeneratorSettings()
+
+print("TRXSH HUB: Aura de Geradores (TaskFix) DESATIVADA e prompts restaurados.")

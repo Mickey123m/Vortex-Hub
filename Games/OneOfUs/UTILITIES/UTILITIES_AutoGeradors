@@ -1,0 +1,93 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Configurações
+_G.AutoGeneratorAuraEnabled = true
+local ACTIVATION_RANGE = 50 
+
+-- --- FUNÇÃO DE INTERAÇÃO FORÇADA ---
+local function ForceInstantInteraction(prompt)
+    if not prompt then return end
+    
+    -- Torna a interação instantânea
+    if prompt.HoldDuration ~= 0 then
+        prompt.HoldDuration = 0
+    end
+    prompt.ClickablePrompt = true
+    
+    -- Dispara a interação
+    task.spawn(function()
+        fireproximityprompt(prompt)
+    end)
+end
+
+-- --- PROCESSAMENTO ESPECÍFICO DOS GERADORES (ActiveTasks) ---
+local function ProcessGeneratorInteractions()
+    local Character = LocalPlayer.Character
+    local hrp = Character and Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    local myPos = hrp.Position
+    
+    -- Caminho exato fornecido: Workspace -> map -> ActiveTasks
+    local map = Workspace:FindFirstChild("map")
+    if map then
+        local activeTasks = map:FindFirstChild("ActiveTasks")
+        if activeTasks then
+            -- Varre os modelos filhos de ActiveTasks
+            for _, model in pairs(activeTasks:GetChildren()) do
+                -- Procura por: model -> prox -> TaskFix
+                local prox = model:FindFirstChild("prox")
+                if prox then
+                    local taskFix = prox:FindFirstChild("TaskFix")
+                    
+                    -- Verifica se TaskFix é um ProximityPrompt
+                    if taskFix and taskFix:IsA("ProximityPrompt") then
+                        -- Usa a parte "prox" ou o próprio modelo para calcular distância
+                        local distance = (prox.Position - myPos).Magnitude
+                        
+                        if distance <= ACTIVATION_RANGE then
+                            ForceInstantInteraction(taskFix)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- --- LOOP DE EXECUÇÃO ---
+local generatorLoop = RunService.Heartbeat:Connect(function()
+    if _G.AutoGeneratorAuraEnabled == true then
+        ProcessGeneratorInteractions()
+    end
+end)
+
+print("TRXSH HUB: Aura de TaskFix (Geradores) Ativada.")
+
+-- --- FUNÇÃO PARA RESTAURAR ---
+local function RestoreGeneratorSettings()
+    _G.AutoGeneratorAuraEnabled = false
+    
+    local map = Workspace:FindFirstChild("map")
+    if map then
+        local activeTasks = map:FindFirstChild("ActiveTasks")
+        if activeTasks then
+            for _, model in pairs(activeTasks:GetChildren()) do
+                local prox = model:FindFirstChild("prox")
+                if prox then
+                    local taskFix = prox:FindFirstChild("TaskFix")
+                    if taskFix and taskFix:IsA("ProximityPrompt") then
+                        taskFix.HoldDuration = 0.5 -- Retorna ao padrão
+                    end
+                end
+            end
+        end
+    end
+    
+    if generatorLoop then
+        generatorLoop:Disconnect()
+    end
+end
