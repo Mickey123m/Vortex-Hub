@@ -1,0 +1,20 @@
+_G.PLAYER_ESP_ENABLED = false -- Interrompe o loop de atualização
+
+-- Função para remover apenas as Tags de nome dos jogadores
+local function removePlayerNames()
+    local Players = game:GetService("Players")
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                local tag = head:FindFirstChild("PlayerNameTag")
+                if tag then
+                    tag:Destroy()
+                end
+            end
+        end
+    end
+end
+
+-- Executa a limpeza imediatamente
+removePlayerNames()

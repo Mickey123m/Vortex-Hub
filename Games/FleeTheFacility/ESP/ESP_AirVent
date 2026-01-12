@@ -1,0 +1,48 @@
+local Workspace = game:GetService("Workspace")
+_G.AIRVENT_ESP_ENABLED = true
+
+local function applyAirVentESP()
+    if not _G.AIRVENT_ESP_ENABLED then return end
+    
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        -- Verifica se o nome do modelo ou da parte é AirVent
+        if obj.Name == "AirVent" then
+            -- Garante que o Highlight seja aplicado no modelo ou na parte principal
+            if not obj:FindFirstChild("AirVentHighlight") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "AirVentHighlight"
+                
+                -- Cor diferenciada (Laranja) para distinguir dos computadores
+                highlight.FillColor = Color3.fromRGB(255, 150, 0) 
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                
+                highlight.Parent = obj
+            end
+        end
+    end
+end
+
+-- Função para remover o ESP
+local function clearAirVentESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "AirVentHighlight" then
+            obj:Destroy()
+        end
+    end
+end
+
+-- Loop de atualização
+task.spawn(function()
+    while true do
+        if _G.AIRVENT_ESP_ENABLED then
+            applyAirVentESP()
+        else
+            clearAirVentESP()
+            break
+        end
+        task.wait(5) -- Intervalo maior para dutos, pois eles não mudam de estado
+    end
+end)

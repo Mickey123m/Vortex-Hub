@@ -1,0 +1,71 @@
+local Workspace = game:GetService("Workspace")
+_G.EXITDOOR_ESP_ENABLED = true
+
+local function applyExitDoorESP()
+    if not _G.EXITDOOR_ESP_ENABLED then return end
+    
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "ExitDoor" then
+            -- 1. Lógica do Highlight (Contorno)
+            if not obj:FindFirstChild("ExitDoorHighlight") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "ExitDoorHighlight"
+                highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.6
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = obj
+            end
+
+            -- 2. Lógica do Nome "Exit" (Tamanho Fixo e Bonito)
+            if not obj:FindFirstChild("ExitNameTag") then
+                local bill = Instance.new("BillboardGui")
+                bill.Name = "ExitNameTag"
+                bill.AlwaysOnTop = true
+                
+                -- Tamanho fixo em pixels (Offset), não escala com a distância
+                bill.Size = UDim2.new(0, 50, 0, 20) 
+                bill.StudsOffset = Vector3.new(0, 6, 0) -- Altura acima da porta
+                
+                local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                bill.Adornee = target
+
+                local label = Instance.new("TextLabel")
+                label.Parent = bill
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.Text = "Exit"
+                label.TextColor3 = Color3.fromRGB(0, 255, 0)
+                label.Font = Enum.Font.GothamBold -- Fonte mais moderna
+                label.TextSize = 14 -- Tamanho pequeno e fixo
+                label.TextStrokeTransparency = 0.5 -- Sombra suave para legibilidade
+                label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                
+                bill.Parent = obj
+            end
+        end
+    end
+end
+
+-- Função para limpar o ESP
+local function clearExitDoorESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "ExitDoorHighlight" or obj.Name == "ExitNameTag" then
+            obj:Destroy()
+        end
+    end
+end
+
+-- Loop de atualização
+task.spawn(function()
+    while true do
+        if _G.EXITDOOR_ESP_ENABLED then
+            applyExitDoorESP()
+        else
+            clearExitDoorESP()
+            break
+        end
+        task.wait(3)
+    end
+end)

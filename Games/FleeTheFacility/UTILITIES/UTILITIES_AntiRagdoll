@@ -1,0 +1,30 @@
+local Players = game:GetService("Players")
+_G.ANTI_RAGDOLL_ENABLED = true
+
+task.spawn(function()
+    local player = Players.LocalPlayer
+    local stats = require(player:WaitForChild("TempPlayerStatsModule"))
+    
+    while _G.ANTI_RAGDOLL_ENABLED do
+        local char = player.Character
+        if char then
+            local humanoid = char:FindFirstChild("Humanoid")
+            if humanoid then
+                -- 1. Força o estado de levantado se o jogo tentar te derrubar
+                if humanoid:GetState() == Enum.HumanoidStateType.Physics or humanoid.PlatformStand == true then
+                    humanoid.PlatformStand = false
+                    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+                end
+                
+                -- 2. Reseta os valores no módulo interno do jogo (baseado no seu decompiler)
+                if stats.GetValue("Ragdoll") == true then
+                    stats.SetValue("Ragdoll", false)
+                end
+                if stats.GetValue("Captured") == true then
+                    stats.SetValue("Captured", false)
+                end
+            end
+        end
+        task.wait(0.1) -- Verificação rápida para resposta imediata
+    end
+end)

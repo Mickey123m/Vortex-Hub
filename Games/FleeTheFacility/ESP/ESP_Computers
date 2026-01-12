@@ -2,25 +2,63 @@ local Workspace = game:GetService("Workspace")
 _G.COMPUTER_ESP_ENABLED = true
 
 local function applyComputerESP()
+    if not _G.COMPUTER_ESP_ENABLED then return end
+    
     for _, obj in pairs(Workspace:GetDescendants()) do
-        if not _G.COMPUTER_ESP_ENABLED then break end
         if obj.Name == "ComputerTable" then
-            if not obj:FindFirstChild("ComputerHighlight") then
-                local highlight = Instance.new("Highlight")
-                highlight.Name = "ComputerHighlight"
-                highlight.FillColor = Color3.fromRGB(0, 255, 255)
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.FillTransparency = 0.5
-                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                highlight.Parent = obj
+            local isCompleted = false
+            
+            -- Verificação baseada apenas na Screen (Dark green significa completo)
+            local screen = obj:FindFirstChild("Screen", true)
+            if screen and screen:IsA("BasePart") then
+                if screen.BrickColor == BrickColor.new("Dark green") then
+                    isCompleted = true
+                end
+            end
+
+            -- Lógica do Highlight
+            local existingHighlight = obj:FindFirstChild("ComputerHighlight")
+            
+            if not isCompleted then
+                -- Se o computador estiver incompleto, garante que o Highlight exista
+                if not existingHighlight then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "ComputerHighlight"
+                    highlight.FillColor = Color3.fromRGB(128, 0, 128) -- Roxo/Ciano para incompletos
+                    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    highlight.FillTransparency = 0.5
+                    highlight.OutlineTransparency = 0
+                    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    highlight.Parent = obj
+                end
+            else
+                -- Se o computador estiver completo (Dark green), remove o Highlight
+                if existingHighlight then
+                    existingHighlight:Destroy()
+                end
             end
         end
     end
 end
 
+-- Função para limpar todos os efeitos visualmente
+local function clearAllESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "ComputerHighlight" then
+            obj:Destroy()
+        end
+    end
+end
+
+-- Loop de execução contínua
 task.spawn(function()
-    while _G.COMPUTER_ESP_ENABLED do
-        applyComputerESP()
-        task.wait(3)
+    while true do
+        if _G.COMPUTER_ESP_ENABLED then
+            applyComputerESP()
+        else
+            clearAllESP()
+            break
+        end
+        task.wait(1) -- Intervalo de 1 segundo para precisão sem lag
     end
 end)

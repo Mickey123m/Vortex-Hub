@@ -1,0 +1,11 @@
+_G.INFINITE_JUMP_ENABLED = true
+local UserInputService = game:GetService("UserInputService")
+
+_G.JumpConnection = UserInputService.JumpRequest:Connect(function()
+    if _G.INFINITE_JUMP_ENABLED then
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(0, 36, 0)
+        end
+    end
+end)

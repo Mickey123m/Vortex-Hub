@@ -1,0 +1,68 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+_G.PLAYER_ESP_ENABLED = true
+
+local function applyPlayerESP()
+    if not _G.PLAYER_ESP_ENABLED then return end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        -- Não coloca ESP no próprio personagem
+        if player ~= Players.LocalPlayer and player.Character then
+            local char = player.Character
+            local head = char:FindFirstChild("Head")
+            
+            if head then
+                -- Lógica do Nome (BillboardGui)
+                if not head:FindFirstChild("PlayerNameTag") then
+                    local bill = Instance.new("BillboardGui")
+                    bill.Name = "PlayerNameTag"
+                    bill.AlwaysOnTop = true
+                    
+                    -- Tamanho fixo em pixels para ficar bonito e não gigante
+                    bill.Size = UDim2.new(0, 80, 0, 20) 
+                    bill.StudsOffset = Vector3.new(0, 3, 0) -- Altura acima da cabeça
+                    
+                    local label = Instance.new("TextLabel")
+                    label.Parent = bill
+                    label.Size = UDim2.new(1, 0, 1, 0)
+                    label.BackgroundTransparency = 1
+                    label.Text = player.Name
+                    label.TextColor3 = Color3.fromRGB(255, 255, 255) -- Branco
+                    label.Font = Enum.Font.GothamBold
+                    label.TextSize = 12 -- Tamanho pequeno e fixo
+                    label.TextStrokeTransparency = 0.5 -- Sombra para ler em mapas claros
+                    label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                    
+                    bill.Adornee = head
+                    bill.Parent = head
+                end
+            end
+        end
+    end
+end
+
+-- Função para limpar o ESP dos players
+local function clearPlayerESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                local tag = head:FindFirstChild("PlayerNameTag")
+                if tag then tag:Destroy() end
+            end
+        end
+    end
+end
+
+-- Loop de atualização
+task.spawn(function()
+    while true do
+        if _G.PLAYER_ESP_ENABLED then
+            applyPlayerESP()
+        else
+            clearPlayerESP()
+            break
+        end
+        task.wait(1) -- Atualiza rápido para seguir o movimento dos players
+    end
+end)

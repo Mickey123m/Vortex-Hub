@@ -1,0 +1,14 @@
+_G.FAST_CRAWL_ENABLED = true
+task.spawn(function()
+    local player = game.Players.LocalPlayer
+    local stats = require(player:WaitForChild("TempPlayerStatsModule"))
+    
+    while _G.FAST_CRAWL_ENABLED do
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            if stats.GetValue("IsCrawling") then
+                player.Character.Humanoid.WalkSpeed = 16 -- Velocidade original de corrida
+            end
+        end
+        task.wait(0.1)
+    end
+end)

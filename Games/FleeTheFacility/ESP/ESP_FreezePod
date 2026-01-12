@@ -1,0 +1,70 @@
+local Workspace = game:GetService("Workspace")
+_G.FREEZEPOD_ESP_ENABLED = true
+
+local function applyFreezePodESP()
+    if not _G.FREEZEPOD_ESP_ENABLED then return end
+    
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        -- Verifica se o nome do modelo ou da parte é FreezePod
+        if obj.Name == "FreezePod" then
+            -- 1. Lógica do Highlight (Contorno Ciana)
+            if not obj:FindFirstChild("PodHighlight") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "PodHighlight"
+                highlight.FillColor = Color3.fromRGB(0, 255, 255) -- Ciano
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Branco
+                highlight.FillTransparency = 0.6
+                highlight.OutlineTransparency = 0
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.Parent = obj
+            end
+
+            -- 2. Lógica do Nome "Pod" (Tamanho Fixo e Minimalista)
+            if not obj:FindFirstChild("PodNameTag") then
+                local bill = Instance.new("BillboardGui")
+                bill.Name = "PodNameTag"
+                bill.AlwaysOnTop = true
+                bill.Size = UDim2.new(0, 40, 0, 20) -- Tamanho pequeno
+                bill.StudsOffset = Vector3.new(0, 7, 0) -- Altura acima da cápsula
+                
+                local target = obj:IsA("BasePart") and obj or obj:FindFirstChildWhichIsA("BasePart", true)
+                bill.Adornee = target
+
+                local label = Instance.new("TextLabel")
+                label.Parent = bill
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.Text = "Pod"
+                label.TextColor3 = Color3.fromRGB(0, 255, 255) -- Texto Ciano
+                label.Font = Enum.Font.GothamBold
+                label.TextSize = 12 -- Tamanho fixo e discreto
+                label.TextStrokeTransparency = 0.5
+                label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+                
+                bill.Parent = obj
+            end
+        end
+    end
+end
+
+-- Função para remover o ESP dos Pods
+local function clearFreezePodESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "PodHighlight" or obj.Name == "PodNameTag" then
+            obj:Destroy()
+        end
+    end
+end
+
+-- Loop de atualização
+task.spawn(function()
+    while true do
+        if _G.FREEZEPOD_ESP_ENABLED then
+            applyFreezePodESP()
+        else
+            clearFreezePodESP()
+            break
+        end
+        task.wait(4) -- Varredura a cada 4 segundos
+    end
+end)

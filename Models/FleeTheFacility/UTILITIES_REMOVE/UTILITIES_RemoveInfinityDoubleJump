@@ -1,0 +1,2 @@
+_G.INFINITE_JUMP_ENABLED = false
+if _G.JumpConnection then _G.JumpConnection:Disconnect() end
