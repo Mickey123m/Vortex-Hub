@@ -1,4 +1,3 @@
--- [[ SISTEMA DE FORÇAR ATUALIZAÇÃO DO GITHUB COM CACHE BUSTER ]]
 local function GetLatestGitHubScript(url)
     local timestamp = math.floor(tick() * 1000)
     local random = math.random(10000, 99999)
@@ -21,7 +20,6 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 
--- [[ STATE VARIABLES ]]
 local States = {
     ESP_Players = false,
     ESP_Bandidos = false,
@@ -35,7 +33,6 @@ local States = {
     Anti_AFK = false,
     Brainrot_Farm = false,
     
-    -- FNAF States
     FNAF_ESP_Animatronics = false,
     FNAF_ESP_Fuses = false,
     FNAF_ESP_Batteries = false,
@@ -47,7 +44,6 @@ local States = {
     FNAF_ESP_Flashlight = false,
     FNAF_ESP_All = false,
     
-    -- FNAF Utilities States
     FNAF_ClockGame = false,
     FNAF_ClockPuppet = false,
     FNAF_FullBrightness = false,
@@ -60,24 +56,20 @@ local States = {
     Westbound_ESP_Health = false,
     Westbound_ESP_NameAnimals = false,
     
-    -- Westbound Aimbot States
     Westbound_AIMBOT_AimbotE = false,
     Westbound_AIMBOT_SilentAim = false,
     
-    -- Westbound Utilities States
     Westbound_UTILITIES_AntiLasso = false,
     Westbound_UTILITIES_FastFire = false,
     Westbound_UTILITIES_FastReload = false,
     Westbound_UTILITIES_NoRecoil = false,
     
-    -- Westbound World States
     Westbound_WORLD_DisableFog = false,
     Westbound_WORLD_DisableJumpLimite = false,
     Westbound_WORLD_EspItemsHouse = false,
     Westbound_WORLD_InstantRob = false,
     Westbound_WORLD_NoFallDamage = false,
     
-    -- Murder Mystery 2 States
     MM2_ESP_All = false,
     MM2_ESP_GunDrop = false,
     MM2_ESP_Murder = false,
@@ -86,7 +78,6 @@ local States = {
     MM2_AutoKillAll = false,
     MM2_AutoKillSheriff = false,
     
-    -- Murderers VS Sheriffs DUELS States
     MVS_ESP_Hitbox = false,
     MVS_ESP_Name = false,
     MVS_ESP_Players = false,
@@ -95,12 +86,44 @@ local States = {
     MVS_UTILITIES_FastFire = false,
     MVS_UTILITIES_IncreaseHitbox = false,
     
-    -- Tower of Hell States
     TOH_ClickCTRL = false,
-    TOH_GodMode = false
+    TOH_GodMode = false,
+    
+    OOU_AUTOFARM_AutoFarmXPMoney = false,
+    
+    OOU_ESP_Coins = false,
+    OOU_ESP_Geradors = false,
+    OOU_ESP_Items = false,
+    OOU_ESP_Killer = false,
+    OOU_ESP_NamePlayers = false,
+    OOU_ESP_Stake = false,
+    OOU_ESP_Survivors = false,
+    OOU_ESP_Vents = false,
+    OOU_ESP_Windows = false,
+    
+    OOU_UTILITIES_AntiFall = false,
+    OOU_UTILITIES_AntiTrap = false,
+    OOU_UTILITIES_AutoGeradors = false,
+    OOU_UTILITIES_AutoHealPlayers = false,
+    OOU_UTILITIES_AutoInteractions = false,
+    OOU_UTILITIES_AutoSaboteGeradors = false,
+    OOU_UTILITIES_DistanceGeradors = false,
+    OOU_UTILITIES_Noclip = false,
+    OOU_UTILITIES_FullBrightness = false,
+    
+    FTFT_ESP_AirVent = false,
+    FTFT_ESP_Beast = false,
+    FTFT_ESP_Computers = false,
+    FTFT_ESP_Exit = false,
+    FTFT_ESP_FreezePad = false,
+    FTFT_ESP_Name = false,
+    FTFT_ESP_Players = false,
+    
+    FTFT_UTILITIES_AntiRagdoll = false,
+    FTFT_UTILITIES_FastCrawl = false,
+    FTFT_UTILITIES_InfinityDoubleJump = false
 }
 
--- [[ SISTEMA DE LIMPEZA TOTAL - CORRIGIDO ]]
 local CleanupSystem = {
     Running = false,
     Connections = {},
@@ -119,9 +142,6 @@ function CleanupSystem:ExecuteLoadstringForCleanup(url)
     
     if success then
         return true
-    else
-        warn("[Vortex Hub] Erro ao executar loadstring de limpeza: " .. url, result)
-        return false
     end
 end
 
@@ -129,61 +149,47 @@ function CleanupSystem:CleanupAll()
     if self.Running then return end
     self.Running = true
     
-    print("[Vortex Hub] Iniciando limpeza total...")
-    
-    -- Desativar todos os estados
     for stateName, _ in pairs(States) do
         States[stateName] = false
     end
     
-    -- Desativar ESPs do Prison Life
     if PrisonLife then
-        -- ESP Players
         if PrisonLife.ESP_Players_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPlayers")
             PrisonLife.ESP_Players_Active = false
         end
         
-        -- ESP Bandits
         if PrisonLife.ESP_Bandits_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPBandits")
             PrisonLife.ESP_Bandits_Active = false
         end
         
-        -- ESP Polices
         if PrisonLife.ESP_Polices_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPolices")
             PrisonLife.ESP_Polices_Active = false
         end
         
-        -- ESP Prisoners
         if PrisonLife.ESP_Prisoners_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPrisoners")
             PrisonLife.ESP_Prisoners_Active = false
         end
         
-        -- Bypass Doors
         if PrisonLife.BypassDoors_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveBypassDoors")
             PrisonLife.BypassDoors_Active = false
         end
         
-        -- Auto KeyCard
         if PrisonLife.AutoKeyCard_Active then
-            print("[Vortex Hub] Executando loadstring para desativar Auto KeyCard...")
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveAutoKeyCard")
             PrisonLife.AutoKeyCard_Active = false
         end
         
-        -- Auto M9
         if PrisonLife.AutoM9_Active then
-            print("[Vortex Hub] Executando loadstring para desativar Auto M9...")
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemvoeAutoM9")
             PrisonLife.AutoM9_Active = false
         end
     end
     
-    -- Desativar Blind Shot ESP
     if BlindShot then
         if BlindShot.ESP_Players_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/BLINDSHOT/ESP_REMOVE/ESP_RemoveESPPlayers")
@@ -196,16 +202,13 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Desativar Auto Trophy
     States.Auto_Trophy = false
     
-    -- Desativar Anti-AFK global
     if States.Anti_AFK then
         self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/GeneralGames/UTILITIES_REMOVE/UTILITIES/PLAYER_RemoveAntiAFK")
         States.Anti_AFK = false
     end
     
-    -- Desativar Brainrot Farm
     if Brainrot then
         if Brainrot.AutoFarm_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FindTheBrainrot/AUTOFARM_REMOVE/AUTOFARM_RemoveBrainrotTeleport")
@@ -213,9 +216,7 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Desativar Westbound
     if Westbound then
-        -- Desativar ESPs
         if Westbound.ESP_Players_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPPlayers")
             Westbound.ESP_Players_Active = false
@@ -246,19 +247,16 @@ function CleanupSystem:CleanupAll()
             Westbound.ESP_NameAnimals_Active = false
         end
         
-        -- Desativar Aimbot
         if Westbound.AIMBOT_AimbotE_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveAimbotE")
             Westbound.AIMBOT_AimbotE_Active = false
         end
         
-        -- Desativar Silent Aim
         if Westbound.AIMBOT_SilentAim_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveSIlentAim")
             Westbound.AIMBOT_SilentAim_Active = false
         end
         
-        -- Desativar Utilities
         if Westbound.UTILITIES_AntiLasso_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/UTILITIES_REMOVE/UTILITIES_RemoveAntiLasso")
             Westbound.UTILITIES_AntiLasso_Active = false
@@ -279,7 +277,6 @@ function CleanupSystem:CleanupAll()
             Westbound.UTILITIES_NoRecoil_Active = false
         end
         
-        -- Desativar World
         if Westbound.WORLD_DisableFog_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/WORLD_REMOVE/World_RemoveDisableFog")
             Westbound.WORLD_DisableFog_Active = false
@@ -306,9 +303,7 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Desativar FNAF usando loadstrings de remoção
     if FNAF then
-        -- Desativar ESPs
         if FNAF.ESP_All_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAll")
             FNAF.ESP_All_Active = false
@@ -350,7 +345,6 @@ function CleanupSystem:CleanupAll()
             FNAF.ESP_Screwdriver_Active = false
         end
         
-        -- Desativar Utilities
         if FNAF.ClockGame_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveClockGame")
             FNAF.ClockGame_Active = false
@@ -369,9 +363,7 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Desativar Murder Mystery 2
     if MurderMystery2 then
-        -- Desativar ESPs
         if MurderMystery2.ESP_All_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/ESP_REMOVE/ESP_RemoveESPAll")
             MurderMystery2.ESP_All_Active = false
@@ -389,7 +381,6 @@ function CleanupSystem:CleanupAll()
             MurderMystery2.ESP_Sheriff_Active = false
         end
         
-        -- Desativar Utilities
         if MurderMystery2.AutoGun_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/UTILITIES/UTILITIES_RemoveAutoGun")
             MurderMystery2.AutoGun_Active = false
@@ -404,9 +395,7 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Desativar Murderers VS Sheriffs DUELS
     if MurderersVSSheriffsDUELS then
-        -- Desativar ESPs
         if MurderersVSSheriffsDUELS.ESP_Hitbox_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/ESP_REMOVE/ESP_RemoveESPHitbox")
             MurderersVSSheriffsDUELS.ESP_Hitbox_Active = false
@@ -420,13 +409,11 @@ function CleanupSystem:CleanupAll()
             MurderersVSSheriffsDUELS.ESP_Players_Active = false
         end
         
-        -- Desativar Aimbot
         if MurderersVSSheriffsDUELS.AIMBOT_AimCTRL_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/AIMBOT_REMOVE/AIMBOT_AimCTRL")
             MurderersVSSheriffsDUELS.AIMBOT_AimCTRL_Active = false
         end
         
-        -- Desativar Utilities
         if MurderersVSSheriffsDUELS.UTILITIES_AutoKillPlayers_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/UTILITIES_REMOVE/UTILITIES_RemoveAutoKillPlayers")
             MurderersVSSheriffsDUELS.UTILITIES_AutoKillPlayers_Active = false
@@ -441,27 +428,147 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Desativar Tower of Hell
     if TowerOfHell then
-        -- Desativar Click CTRL
         if TowerOfHell.ClickCTRL_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/TowerofHell/UTILITIES_REMOVE/UTILITIES_RemoveClickCTRLTp")
             TowerOfHell.ClickCTRL_Active = false
         end
         
-        -- Desativar God Mode
         if TowerOfHell.GodMode_Active then
             self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/TowerofHell/UTILITIES_REMOVE/UTILITIES_RemoveGodMode")
             TowerOfHell.GodMode_Active = false
         end
     end
     
-    -- Executar limpezas registradas
+    if OneOfUs then
+        if OneOfUs.AutoFarmXPMoney_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/AUTOFARM_REMOVE/AUTOFARM_RemoveAutoFarmXPMoney")
+            OneOfUs.AutoFarmXPMoney_Active = false
+        end
+        
+        if OneOfUs.ESP_Coins_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPCoins")
+            OneOfUs.ESP_Coins_Active = false
+        end
+        if OneOfUs.ESP_Geradors_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPGeradors")
+            OneOfUs.ESP_Geradors_Active = false
+        end
+        if OneOfUs.ESP_Items_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPItems")
+            OneOfUs.ESP_Items_Active = false
+        end
+        if OneOfUs.ESP_Killer_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPKiller")
+            OneOfUs.ESP_Killer_Active = false
+        end
+        if OneOfUs.ESP_NamePlayers_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPNamePlayers")
+            OneOfUs.ESP_NamePlayers_Active = false
+        end
+        if OneOfUs.ESP_Stake_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPStake")
+            OneOfUs.ESP_Stake_Active = false
+        end
+        if OneOfUs.ESP_Survivors_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPSurvivors")
+            OneOfUs.ESP_Survivors_Active = false
+        end
+        if OneOfUs.ESP_Vents_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPVents")
+            OneOfUs.ESP_Vents_Active = false
+        end
+        if OneOfUs.ESP_Windows_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPWindows")
+            OneOfUs.ESP_Windows_Active = false
+        end
+        
+        if OneOfUs.UTILITIES_AntiFall_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAntiFall")
+            OneOfUs.UTILITIES_AntiFall_Active = false
+        end
+        if OneOfUs.UTILITIES_AntiTrap_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAntiTrap")
+            OneOfUs.UTILITIES_AntiTrap_Active = false
+        end
+        if OneOfUs.UTILITIES_AutoGeradors_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAutoGeradors")
+            OneOfUs.UTILITIES_AutoGeradors_Active = false
+        end
+        if OneOfUs.UTILITIES_AutoHealPlayers_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAutoHealPlayers")
+            OneOfUs.UTILITIES_AutoHealPlayers_Active = false
+        end
+        if OneOfUs.UTILITIES_AutoInteractions_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveInteractions")
+            OneOfUs.UTILITIES_AutoInteractions_Active = false
+        end
+        if OneOfUs.UTILITIES_AutoSaboteGeradors_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAutoSaboteGeradors")
+            OneOfUs.UTILITIES_AutoSaboteGeradors_Active = false
+        end
+        if OneOfUs.UTILITIES_DistanceGeradors_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveDistanceGeradors")
+            OneOfUs.UTILITIES_DistanceGeradors_Active = false
+        end
+        if OneOfUs.UTILITIES_Noclip_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveNoclip")
+            OneOfUs.UTILITIES_Noclip_Active = false
+        end
+        if OneOfUs.UTILITIES_FullBrightness_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveFullBrightness")
+            OneOfUs.UTILITIES_FullBrightness_Active = false
+        end
+    end
+
+    if FleeTheFacility then
+        if FleeTheFacility.ESP_AirVent_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPAirVent")
+            FleeTheFacility.ESP_AirVent_Active = false
+        end
+        if FleeTheFacility.ESP_Beast_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPBeast")
+            FleeTheFacility.ESP_Beast_Active = false
+        end
+        if FleeTheFacility.ESP_Computers_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPComputers")
+            FleeTheFacility.ESP_Computers_Active = false
+        end
+        if FleeTheFacility.ESP_Exit_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPExit")
+            FleeTheFacility.ESP_Exit_Active = false
+        end
+        if FleeTheFacility.ESP_FreezePad_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPFreezePod")
+            FleeTheFacility.ESP_FreezePad_Active = false
+        end
+        if FleeTheFacility.ESP_Name_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPName")
+            FleeTheFacility.ESP_Name_Active = false
+        end
+        if FleeTheFacility.ESP_Players_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPPlayers")
+            FleeTheFacility.ESP_Players_Active = false
+        end
+        
+        if FleeTheFacility.UTILITIES_AntiRagdoll_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/UTILITIES_REMOVE/UTILITIES_RemoveAntiRagdoll")
+            FleeTheFacility.UTILITIES_AntiRagdoll_Active = false
+        end
+        if FleeTheFacility.UTILITIES_FastCrawl_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/UTILITIES_REMOVE/UTILITIES_RemoveFastCrawl")
+            FleeTheFacility.UTILITIES_FastCrawl_Active = false
+        end
+        if FleeTheFacility.UTILITIES_InfinityDoubleJump_Active then
+            self:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/UTILITIES_REMOVE/UTILITIES_RemoveInfinityDoubleJump")
+            FleeTheFacility.UTILITIES_InfinityDoubleJump_Active = false
+        end
+    end
+    
     for name, cleanupFunc in pairs(self.ScriptsToClean) do
         pcall(cleanupFunc)
     end
     
-    -- Limpeza manual de ESPs visuais
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("Highlight") then
             pcall(function() obj:Destroy() end)
@@ -472,7 +579,6 @@ function CleanupSystem:CleanupAll()
         end
     end
     
-    -- Limpar conexões
     for _, conn in ipairs(self.Connections) do
         if conn and typeof(conn) == "RBXScriptConnection" then
             pcall(function() conn:Disconnect() end)
@@ -480,13 +586,487 @@ function CleanupSystem:CleanupAll()
     end
     self.Connections = {}
     
-    print("[Vortex Hub] Limpeza total concluída!")
     self.Running = false
 end
 
--- [[ WESTBOUND SYSTEMS - COMPLETAMENTE ATUALIZADO ]]
+local FleeTheFacility = {
+    ESP_AirVent_Active = false,
+    ESP_Beast_Active = false,
+    ESP_Computers_Active = false,
+    ESP_Exit_Active = false,
+    ESP_FreezePad_Active = false,
+    ESP_Name_Active = false,
+    ESP_Players_Active = false,
+    
+    UTILITIES_AntiRagdoll_Active = false,
+    UTILITIES_FastCrawl_Active = false,
+    UTILITIES_InfinityDoubleJump_Active = false
+}
+
+function FleeTheFacility:ToggleESP(espType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    if espType == "AirVent" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_AirVent"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPAirVent"
+        stateName = "FTFT_ESP_AirVent"
+    elseif espType == "Beast" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_Beast"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPBeast"
+        stateName = "FTFT_ESP_Beast"
+    elseif espType == "Computers" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_Computers"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPComputers"
+        stateName = "FTFT_ESP_Computers"
+    elseif espType == "Exit" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_Exit"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPExit"
+        stateName = "FTFT_ESP_Exit"
+    elseif espType == "FreezePad" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_FreezePod"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPFreezePod"
+        stateName = "FTFT_ESP_FreezePad"
+    elseif espType == "Name" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_Name"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPName"
+        stateName = "FTFT_ESP_Name"
+    elseif espType == "Players" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/ESP/ESP_Players"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/ESP_REMOVE/ESP_RemoveESPPlayers"
+        stateName = "FTFT_ESP_Players"
+    end
+    
+    States[stateName] = state
+    
+    if state then
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self["ESP_" .. espType .. "_Active"] = true
+                
+                CleanupSystem:RegisterScript("FTFT_ESP_" .. espType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self["ESP_" .. espType .. "_Active"] = false
+            end
+        end)
+    else
+        if self["ESP_" .. espType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self["ESP_" .. espType .. "_Active"] = false
+                else
+                    self["ESP_" .. espType .. "_Active"] = false
+                end
+            end)
+        end
+    end
+end
+
+function FleeTheFacility:ToggleESP_AirVent(state)
+    self:ToggleESP("AirVent", state)
+end
+
+function FleeTheFacility:ToggleESP_Beast(state)
+    self:ToggleESP("Beast", state)
+end
+
+function FleeTheFacility:ToggleESP_Computers(state)
+    self:ToggleESP("Computers", state)
+end
+
+function FleeTheFacility:ToggleESP_Exit(state)
+    self:ToggleESP("Exit", state)
+end
+
+function FleeTheFacility:ToggleESP_FreezePad(state)
+    self:ToggleESP("FreezePad", state)
+end
+
+function FleeTheFacility:ToggleESP_Name(state)
+    self:ToggleESP("Name", state)
+end
+
+function FleeTheFacility:ToggleESP_Players(state)
+    self:ToggleESP("Players", state)
+end
+
+function FleeTheFacility:ToggleUtility(utilityType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    if utilityType == "AntiRagdoll" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/UTILITIES/UTILITIES_AntiRagdoll"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/UTILITIES_REMOVE/UTILITIES_RemoveAntiRagdoll"
+        stateName = "FTFT_UTILITIES_AntiRagdoll"
+    elseif utilityType == "FastCrawl" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/UTILITIES/UTILITIES_FastCrawl"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/UTILITIES_REMOVE/UTILITIES_RemoveFastCrawl"
+        stateName = "FTFT_UTILITIES_FastCrawl"
+    elseif utilityType == "InfinityDoubleJump" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FleeTheFacility/UTILITIES/UTILITIES_InfinityDoubleJump"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FleeTheFacility/UTILITIES_REMOVE/UTILITIES_RemoveInfinityDoubleJump"
+        stateName = "FTFT_UTILITIES_InfinityDoubleJump"
+    end
+    
+    States[stateName] = state
+    
+    if state then
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self["UTILITIES_" .. utilityType .. "_Active"] = true
+                
+                CleanupSystem:RegisterScript("FTFT_UTILITY_" .. utilityType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self["UTILITIES_" .. utilityType .. "_Active"] = false
+            end
+        end)
+    else
+        if self["UTILITIES_" .. utilityType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self["UTILITIES_" .. utilityType .. "_Active"] = false
+                else
+                    self["UTILITIES_" .. utilityType .. "_Active"] = false
+                end
+            end)
+        end
+    end
+end
+
+function FleeTheFacility:ToggleAntiRagdoll(state)
+    self:ToggleUtility("AntiRagdoll", state)
+end
+
+function FleeTheFacility:ToggleFastCrawl(state)
+    self:ToggleUtility("FastCrawl", state)
+end
+
+function FleeTheFacility:ToggleInfinityDoubleJump(state)
+    self:ToggleUtility("InfinityDoubleJump", state)
+end
+
+local OneOfUs = {
+    AutoFarmXPMoney_Active = false,
+    
+    ESP_Coins_Active = false,
+    ESP_Geradors_Active = false,
+    ESP_Items_Active = false,
+    ESP_Killer_Active = false,
+    ESP_NamePlayers_Active = false,
+    ESP_Stake_Active = false,
+    ESP_Survivors_Active = false,
+    ESP_Vents_Active = false,
+    ESP_Windows_Active = false,
+    
+    UTILITIES_AntiFall_Active = false,
+    UTILITIES_AntiTrap_Active = false,
+    UTILITIES_AutoGeradors_Active = false,
+    UTILITIES_AutoHealPlayers_Active = false,
+    UTILITIES_AutoInteractions_Active = false,
+    UTILITIES_AutoSaboteGeradors_Active = false,
+    UTILITIES_DistanceGeradors_Active = false,
+    UTILITIES_Noclip_Active = false,
+    UTILITIES_FullBrightness_Active = false
+}
+
+function OneOfUs:ToggleAutoFarm(autoFarmType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    if autoFarmType == "AutoFarmXPMoney" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/AUTOFARM/AUTOFARM_AutoFarmXPMoney"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/AUTOFARM_REMOVE/AUTOFARM_RemoveAutoFarmXPMoney"
+        stateName = "OOU_AUTOFARM_AutoFarmXPMoney"
+    end
+    
+    States[stateName] = state
+    
+    if state then
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self[autoFarmType .. "_Active"] = true
+                
+                CleanupSystem:RegisterScript("OOU_AutoFarm_" .. autoFarmType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self[autoFarmType .. "_Active"] = false
+            end
+        end)
+    else
+        if self[autoFarmType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self[autoFarmType .. "_Active"] = false
+                else
+                    self[autoFarmType .. "_Active"] = false
+                end
+            end)
+        end
+    end
+end
+
+function OneOfUs:ToggleAutoFarmXPMoney(state)
+    self:ToggleAutoFarm("AutoFarmXPMoney", state)
+end
+
+function OneOfUs:ToggleESP(espType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    if espType == "Coins" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Coins"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPCoins"
+        stateName = "OOU_ESP_Coins"
+    elseif espType == "Geradors" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Geradors"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPGeradors"
+        stateName = "OOU_ESP_Geradors"
+    elseif espType == "Items" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Items"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPItems"
+        stateName = "OOU_ESP_Items"
+    elseif espType == "Killer" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Killer"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPKiller"
+        stateName = "OOU_ESP_Killer"
+    elseif espType == "NamePlayers" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_NamePlayers"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPNamePlayers"
+        stateName = "OOU_ESP_NamePlayers"
+    elseif espType == "Stake" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Stake"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPStake"
+        stateName = "OOU_ESP_Stake"
+    elseif espType == "Survivors" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Survivors"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPSurvivors"
+        stateName = "OOU_ESP_Survivors"
+    elseif espType == "Vents" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Vents"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPVents"
+        stateName = "OOU_ESP_Vents"
+    elseif espType == "Windows" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/ESP/ESP_Windows"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/ESP_REMOVE/ESP_RemoveESPWindows"
+        stateName = "OOU_ESP_Windows"
+    else
+        return
+    end
+    
+    States[stateName] = state
+    
+    if state then
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self["ESP_" .. espType .. "_Active"] = true
+                
+                CleanupSystem:RegisterScript("OOU_ESP_" .. espType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self["ESP_" .. espType .. "_Active"] = false
+            end
+        end)
+    else
+        if self["ESP_" .. espType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self["ESP_" .. espType .. "_Active"] = false
+                else
+                    self["ESP_" .. espType .. "_Active"] = false
+                end
+            end)
+        end
+    end
+end
+
+function OneOfUs:ToggleESP_Coins(state)
+    self:ToggleESP("Coins", state)
+end
+
+function OneOfUs:ToggleESP_Geradors(state)
+    self:ToggleESP("Geradors", state)
+end
+
+function OneOfUs:ToggleESP_Items(state)
+    self:ToggleESP("Items", state)
+end
+
+function OneOfUs:ToggleESP_Killer(state)
+    self:ToggleESP("Killer", state)
+end
+
+function OneOfUs:ToggleESP_NamePlayers(state)
+    self:ToggleESP("NamePlayers", state)
+end
+
+function OneOfUs:ToggleESP_Stake(state)
+    self:ToggleESP("Stake", state)
+end
+
+function OneOfUs:ToggleESP_Survivors(state)
+    self:ToggleESP("Survivors", state)
+end
+
+function OneOfUs:ToggleESP_Vents(state)
+    self:ToggleESP("Vents", state)
+end
+
+function OneOfUs:ToggleESP_Windows(state)
+    self:ToggleESP("Windows", state)
+end
+
+function OneOfUs:ToggleUtility(utilityType, state)
+    local activateUrl = ""
+    local removeUrl = ""
+    local stateName = ""
+    
+    if utilityType == "AntiFall" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_AntiFall"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAntiFall"
+        stateName = "OOU_UTILITIES_AntiFall"
+    elseif utilityType == "AntiTrap" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_AntiTrap"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAntiTrap"
+        stateName = "OOU_UTILITIES_AntiTrap"
+    elseif utilityType == "AutoGeradors" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_AutoGeradors"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAutoGeradors"
+        stateName = "OOU_UTILITIES_AutoGeradors"
+    elseif utilityType == "AutoHealPlayers" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_AutoHealPlayers"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAutoHealPlayers"
+        stateName = "OOU_UTILITIES_AutoHealPlayers"
+    elseif utilityType == "AutoInteractions" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_AutoInteractions"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveInteractions"
+        stateName = "OOU_UTILITIES_AutoInteractions"
+    elseif utilityType == "AutoSaboteGeradors" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_AutoSaboteGeradors"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveAutoSaboteGeradors"
+        stateName = "OOU_UTILITIES_AutoSaboteGeradors"
+    elseif utilityType == "DistanceGeradors" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_DistanceGeradors"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveDistanceGeradors"
+        stateName = "OOU_UTILITIES_DistanceGeradors"
+    elseif utilityType == "Noclip" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/OneOfUs/UTILITIES/UTILITIES_Noclip"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/OneOfUs/UTILITIES_REMOVE/UTILITIES_RemoveNoclip"
+        stateName = "OOU_UTILITIES_Noclip"
+    elseif utilityType == "FullBrightness" then
+        activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_FullBrightness"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveFullBrightness"
+        stateName = "OOU_UTILITIES_FullBrightness"
+    end
+    
+    States[stateName] = state
+    
+    if state then
+        task.spawn(function()
+            local success = pcall(function()
+                local fullUrl = GetLatestGitHubScript(activateUrl)
+                return loadstring(game:HttpGet(fullUrl, true))()
+            end)
+            
+            if success then
+                self["UTILITIES_" .. utilityType .. "_Active"] = true
+                
+                CleanupSystem:RegisterScript("OOU_Utility_" .. utilityType, function()
+                    CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                end)
+            else
+                self["UTILITIES_" .. utilityType .. "_Active"] = false
+            end
+        end)
+    else
+        if self["UTILITIES_" .. utilityType .. "_Active"] then
+            task.spawn(function()
+                local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
+                
+                if success then
+                    self["UTILITIES_" .. utilityType .. "_Active"] = false
+                else
+                    self["UTILITIES_" .. utilityType .. "_Active"] = false
+                end
+            end)
+        end
+    end
+end
+
+function OneOfUs:ToggleAntiFall(state)
+    self:ToggleUtility("AntiFall", state)
+end
+
+function OneOfUs:ToggleAntiTrap(state)
+    self:ToggleUtility("AntiTrap", state)
+end
+
+function OneOfUs:ToggleAutoGeradors(state)
+    self:ToggleUtility("AutoGeradors", state)
+end
+
+function OneOfUs:ToggleAutoHealPlayers(state)
+    self:ToggleUtility("AutoHealPlayers", state)
+end
+
+function OneOfUs:ToggleAutoInteractions(state)
+    self:ToggleUtility("AutoInteractions", state)
+end
+
+function OneOfUs:ToggleAutoSaboteGeradors(state)
+    self:ToggleUtility("AutoSaboteGeradors", state)
+end
+
+function OneOfUs:ToggleDistanceGeradors(state)
+    self:ToggleUtility("DistanceGeradors", state)
+end
+
+function OneOfUs:ToggleNoclip(state)
+    self:ToggleUtility("Noclip", state)
+end
+
+function OneOfUs:ToggleFullBrightness(state)
+    self:ToggleUtility("FullBrightness", state)
+end
+
 local Westbound = {
-    -- ESP States
     ESP_Players_Active = false,
     ESP_Animals_Active = false,
     ESP_DistanceName_Active = false,
@@ -494,17 +1074,14 @@ local Westbound = {
     ESP_Health_Active = false,
     ESP_NameAnimals_Active = false,
     
-    -- Aimbot States
     AIMBOT_AimbotE_Active = false,
     AIMBOT_SilentAim_Active = false,
     
-    -- Utilities States
     UTILITIES_AntiLasso_Active = false,
     UTILITIES_FastFire_Active = false,
     UTILITIES_FastReload_Active = false,
     UTILITIES_NoRecoil_Active = false,
     
-    -- World States
     WORLD_DisableFog_Active = false,
     WORLD_DisableJumpLimite_Active = false,
     WORLD_EspItemsHouse_Active = false,
@@ -512,13 +1089,11 @@ local Westbound = {
     WORLD_NoFallDamage_Active = false
 }
 
--- Função genérica para ativar/desativar ESPs do Westbound
 function Westbound:ToggleESP(espType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if espType == "Players" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_Players"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPPlayers"
@@ -543,16 +1118,11 @@ function Westbound:ToggleESP(espType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/ESP/ESP_NameAnimals"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/ESP_REMOVE/ESP_RemoveESPNameAnimals"
         stateName = "Westbound_ESP_NameAnimals"
-    else
-        warn("[Vortex Hub] Westbound: Tipo de ESP inválido: " .. tostring(espType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar ESP
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -561,36 +1131,29 @@ function Westbound:ToggleESP(espType, state)
             
             if success then
                 self["ESP_" .. espType .. "_Active"] = true
-                print("[Vortex Hub] Westbound: ESP " .. espType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("Westbound_ESP_" .. espType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["ESP_" .. espType .. "_Active"] = false
-                warn("[Vortex Hub] Westbound: Erro ao ativar ESP " .. espType)
             end
         end)
     else
-        -- Desativar ESP
         if self["ESP_" .. espType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["ESP_" .. espType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: ESP " .. espType .. " desativado!")
                 else
                     self["ESP_" .. espType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: ESP " .. espType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada tipo de ESP
 function Westbound:ToggleESP_Players(state)
     self:ToggleESP("Players", state)
 end
@@ -615,13 +1178,11 @@ function Westbound:ToggleESP_NameAnimals(state)
     self:ToggleESP("NameAnimals", state)
 end
 
--- Função para ativar/desativar AIMBOT
 function Westbound:ToggleAimbot(aimbotType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if aimbotType == "AimbotE" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/AIMBOT/AIMBOT_AimbotE"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveAimbotE"
@@ -630,16 +1191,11 @@ function Westbound:ToggleAimbot(aimbotType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/AIMBOT/AIMBOT_SilentAim"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/AIMBOT_REMOVE/AIMBOT_RemoveSIlentAim"
         stateName = "Westbound_AIMBOT_SilentAim"
-    else
-        warn("[Vortex Hub] Westbound: Tipo de Aimbot inválido: " .. tostring(aimbotType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar Aimbot
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -648,36 +1204,29 @@ function Westbound:ToggleAimbot(aimbotType, state)
             
             if success then
                 self["AIMBOT_" .. aimbotType .. "_Active"] = true
-                print("[Vortex Hub] Westbound: Aimbot " .. aimbotType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("Westbound_AIMBOT_" .. aimbotType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["AIMBOT_" .. aimbotType .. "_Active"] = false
-                warn("[Vortex Hub] Westbound: Erro ao ativar Aimbot " .. aimbotType)
             end
         end)
     else
-        -- Desativar Aimbot
         if self["AIMBOT_" .. aimbotType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["AIMBOT_" .. aimbotType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: Aimbot " .. aimbotType .. " desativado!")
                 else
                     self["AIMBOT_" .. aimbotType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: Aimbot " .. aimbotType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada Aimbot
 function Westbound:ToggleAimbotE(state)
     self:ToggleAimbot("AimbotE", state)
 end
@@ -686,13 +1235,11 @@ function Westbound:ToggleSilentAim(state)
     self:ToggleAimbot("SilentAim", state)
 end
 
--- Função para ativar/desativar UTILITIES
 function Westbound:ToggleUtility(utilityType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if utilityType == "AntiLasso" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/UTILITIES/UTILITIES_AntiLasso"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/UTILITIES_REMOVE/UTILITIES_RemoveAntiLasso"
@@ -703,22 +1250,17 @@ function Westbound:ToggleUtility(utilityType, state)
         stateName = "Westbound_UTILITIES_FastFire"
     elseif utilityType == "FastReload" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/UTILITIES/UTILITIES_FastReload"
-        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/UTILITIES_REMOVE/UTILITIES_RemoveFastReload"
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/UTILITIES_REMOVE/UTILITIES_RemoveFastReload"  -- 移除了多余的括号
         stateName = "Westbound_UTILITIES_FastReload"
     elseif utilityType == "NoRecoil" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/UTILITIES/UTILITIES_NoRecoil"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/UTILITIES_REMOVE/UTILITIES_NoRecoil"
         stateName = "Westbound_UTILITIES_NoRecoil"
-    else
-        warn("[Vortex Hub] Westbound: Tipo de Utility inválido: " .. tostring(utilityType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar Utility
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -727,36 +1269,29 @@ function Westbound:ToggleUtility(utilityType, state)
             
             if success then
                 self["UTILITIES_" .. utilityType .. "_Active"] = true
-                print("[Vortex Hub] Westbound: Utility " .. utilityType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("Westbound_UTILITY_" .. utilityType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["UTILITIES_" .. utilityType .. "_Active"] = false
-                warn("[Vortex Hub] Westbound: Erro ao ativar Utility " .. utilityType)
             end
         end)
     else
-        -- Desativar Utility
         if self["UTILITIES_" .. utilityType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["UTILITIES_" .. utilityType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: Utility " .. utilityType .. " desativado!")
                 else
                     self["UTILITIES_" .. utilityType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: Utility " .. utilityType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada Utility
 function Westbound:ToggleAntiLasso(state)
     self:ToggleUtility("AntiLasso", state)
 end
@@ -773,13 +1308,11 @@ function Westbound:ToggleNoRecoil(state)
     self:ToggleUtility("NoRecoil", state)
 end
 
--- Função para ativar/desativar WORLD
 function Westbound:ToggleWorld(worldType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if worldType == "DisableFog" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/WORLD/WORLD_DisableFog"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/WORLD_REMOVE/World_RemoveDisableFog"
@@ -800,16 +1333,11 @@ function Westbound:ToggleWorld(worldType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Westbound/WORLD/WORLD_NoFallDamage"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/Westbound/WORLD_REMOVE/WORLD_RemoveNoFallDamage"
         stateName = "Westbound_WORLD_NoFallDamage"
-    else
-        warn("[Vortex Hub] Westbound: Tipo de World inválido: " .. tostring(worldType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar World
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -818,36 +1346,29 @@ function Westbound:ToggleWorld(worldType, state)
             
             if success then
                 self["WORLD_" .. worldType .. "_Active"] = true
-                print("[Vortex Hub] Westbound: World " .. worldType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("Westbound_WORLD_" .. worldType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["WORLD_" .. worldType .. "_Active"] = false
-                warn("[Vortex Hub] Westbound: Erro ao ativar World " .. worldType)
             end
         end)
     else
-        -- Desativar World
         if self["WORLD_" .. worldType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["WORLD_" .. worldType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: World " .. worldType .. " desativado!")
                 else
                     self["WORLD_" .. worldType .. "_Active"] = false
-                    print("[Vortex Hub] Westbound: World " .. worldType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada World
 function Westbound:ToggleDisableFog(state)
     self:ToggleWorld("DisableFog", state)
 end
@@ -868,33 +1389,22 @@ function Westbound:ToggleNoFallDamage(state)
     self:ToggleWorld("NoFallDamage", state)
 end
 
--- [[ TOWER OF HELL SYSTEMS ]]
 local TowerOfHell = {
-    -- States
     ClickCTRL_Active = false,
     GodMode_Active = false,
     
-    -- Loaded Scripts
     LoadedScripts = {}
 }
 
--- Função para executar Teleport To Win (botão EXECUTE)
 function TowerOfHell:ExecuteTeleportToWin()
     task.spawn(function()
         local success = pcall(function()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/TowerofHell/TELEPORTS/TELEPORTS_TeleportToWin")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Tower of Hell: Teleport To Win executado com sucesso!")
-        else
-            warn("[Vortex Hub] Tower of Hell: Erro ao executar Teleport To Win")
-        end
     end)
 end
 
--- Função para ativar/desativar Click CTRL TP
 function TowerOfHell:ToggleClickCTRL(state)
     States.TOH_ClickCTRL = state
     
@@ -908,14 +1418,12 @@ function TowerOfHell:ToggleClickCTRL(state)
                 
                 if success then
                     self.ClickCTRL_Active = true
-                    print("[Vortex Hub] Tower of Hell: Click CTRL TP ativado!")
                     
                     CleanupSystem:RegisterScript("TOH_ClickCTRL", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/TowerofHell/UTILITIES_REMOVE/UTILITIES_RemoveClickCTRLTp")
                     end)
                 else
                     self.ClickCTRL_Active = false
-                    warn("[Vortex Hub] Tower of Hell: Erro ao ativar Click CTRL TP")
                 end
             end)
         end
@@ -926,17 +1434,14 @@ function TowerOfHell:ToggleClickCTRL(state)
                 
                 if success then
                     self.ClickCTRL_Active = false
-                    print("[Vortex Hub] Tower of Hell: Click CTRL TP desativado!")
                 else
                     self.ClickCTRL_Active = false
-                    print("[Vortex Hub] Tower of Hell: Click CTRL TP desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Função para ativar/desativar God Mode
 function TowerOfHell:ToggleGodMode(state)
     States.TOH_GodMode = state
     
@@ -950,14 +1455,12 @@ function TowerOfHell:ToggleGodMode(state)
                 
                 if success then
                     self.GodMode_Active = true
-                    print("[Vortex Hub] Tower of Hell: God Mode ativado!")
                     
                     CleanupSystem:RegisterScript("TOH_GodMode", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/TowerofHell/UTILITIES_REMOVE/UTILITIES_RemoveGodMode")
                     end)
                 else
                     self.GodMode_Active = false
-                    warn("[Vortex Hub] Tower of Hell: Erro ao ativar God Mode")
                 end
             end)
         end
@@ -968,39 +1471,31 @@ function TowerOfHell:ToggleGodMode(state)
                 
                 if success then
                     self.GodMode_Active = false
-                    print("[Vortex Hub] Tower of Hell: God Mode desativado!")
                 else
                     self.GodMode_Active = false
-                    print("[Vortex Hub] Tower of Hell: God Mode desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- [[ MURDERERS VS SHERIFFS DUELS SYSTEMS ]]
 local MurderersVSSheriffsDUELS = {
-    -- ESP States
     ESP_Hitbox_Active = false,
     ESP_Name_Active = false,
     ESP_Players_Active = false,
     
-    -- Aimbot States
     AIMBOT_AimCTRL_Active = false,
     
-    -- Utilities States
     UTILITIES_AutoKillPlayers_Active = false,
     UTILITIES_FastFire_Active = false,
     UTILITIES_IncreaseHitbox_Active = false,
 }
 
--- Função genérica para ativar/desativar ESPs do MVS DUELS
 function MurderersVSSheriffsDUELS:ToggleESP(espType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if espType == "Hitbox" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderersVSSheriffsDUELS/ESP/ESP_Hitbox"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/ESP_REMOVE/ESP_RemoveESPHitbox"
@@ -1014,15 +1509,12 @@ function MurderersVSSheriffsDUELS:ToggleESP(espType, state)
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/ESP_REMOVE/ESP_RemoveESPPlayers"
         stateName = "MVS_ESP_Players"
     else
-        warn("[Vortex Hub] MVS DUELS: Tipo de ESP inválido: " .. tostring(espType))
         return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar ESP
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -1031,36 +1523,29 @@ function MurderersVSSheriffsDUELS:ToggleESP(espType, state)
             
             if success then
                 self["ESP_" .. espType .. "_Active"] = true
-                print("[Vortex Hub] MVS DUELS: ESP " .. espType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("MVS_ESP_" .. espType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["ESP_" .. espType .. "_Active"] = false
-                warn("[Vortex Hub] MVS DUELS: Erro ao ativar ESP " .. espType)
             end
         end)
     else
-        -- Desativar ESP
         if self["ESP_" .. espType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["ESP_" .. espType .. "_Active"] = false
-                    print("[Vortex Hub] MVS DUELS: ESP " .. espType .. " desativado!")
                 else
                     self["ESP_" .. espType .. "_Active"] = false
-                    print("[Vortex Hub] MVS DUELS: ESP " .. espType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada tipo de ESP
 function MurderersVSSheriffsDUELS:ApplyESP_Hitbox(state)
     self:ToggleESP("Hitbox", state)
 end
@@ -1073,27 +1558,20 @@ function MurderersVSSheriffsDUELS:ApplyESP_Players(state)
     self:ToggleESP("Players", state)
 end
 
--- Função para ativar/desativar AIMBOT
 function MurderersVSSheriffsDUELS:ToggleAimbot(aimbotType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if aimbotType == "AimCTRL" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderersVSSheriffsDUELS/AIMBOT/AIMBOT_AimCTRL"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/AIMBOT_REMOVE/AIMBOT_AimCTRL"
         stateName = "MVS_AIMBOT_AimCTRL"
-    else
-        warn("[Vortex Hub] MVS DUELS: Tipo de Aimbot inválido: " .. tostring(aimbotType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar Aimbot
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -1102,47 +1580,38 @@ function MurderersVSSheriffsDUELS:ToggleAimbot(aimbotType, state)
             
             if success then
                 self["AIMBOT_" .. aimbotType .. "_Active"] = true
-                print("[Vortex Hub] MVS DUELS: Aimbot " .. aimbotType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("MVS_AIMBOT_" .. aimbotType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["AIMBOT_" .. aimbotType .. "_Active"] = false
-                warn("[Vortex Hub] MVS DUELS: Erro ao ativar Aimbot " .. aimbotType)
             end
         end)
     else
-        -- Desativar Aimbot
         if self["AIMBOT_" .. aimbotType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["AIMBOT_" .. aimbotType .. "_Active"] = false
-                    print("[Vortex Hub] MVS DUELS: Aimbot " .. aimbotType .. " desativado!")
                 else
                     self["AIMBOT_" .. aimbotType .. "_Active"] = false
-                    print("[Vortex Hub] MVS DUELS: Aimbot " .. aimbotType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Função específica para Aimbot
 function MurderersVSSheriffsDUELS:ToggleAimCTRL(state)
     self:ToggleAimbot("AimCTRL", state)
 end
 
--- Função para ativar/desativar UTILITIES
 function MurderersVSSheriffsDUELS:ToggleUtility(utilityType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if utilityType == "AutoKillPlayers" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderersVSSheriffsDUELS/UTILITIES/UTILITIES_AutoKillPlayers"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/UTILITIES_REMOVE/UTILITIES_RemoveAutoKillPlayers"
@@ -1155,16 +1624,11 @@ function MurderersVSSheriffsDUELS:ToggleUtility(utilityType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderersVSSheriffsDUELS/UTILITIES/UTILITIES_IncreaseHitbox"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MurderersVSSheriffsDUELS/UTILITIES_REMOVE/UTLITIES_RemoveIncreaseHitbox"
         stateName = "MVS_UTILITIES_IncreaseHitbox"
-    else
-        warn("[Vortex Hub] MVS DUELS: Tipo de Utility inválido: " .. tostring(utilityType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar Utility
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -1173,36 +1637,29 @@ function MurderersVSSheriffsDUELS:ToggleUtility(utilityType, state)
             
             if success then
                 self["UTILITIES_" .. utilityType .. "_Active"] = true
-                print("[Vortex Hub] MVS DUELS: Utility " .. utilityType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("MVS_Utility_" .. utilityType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["UTILITIES_" .. utilityType .. "_Active"] = false
-                warn("[Vortex Hub] MVS DUELS: Erro ao ativar Utility " .. utilityType)
             end
         end)
     else
-        -- Desativar Utility
         if self["UTILITIES_" .. utilityType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["UTILITIES_" .. utilityType .. "_Active"] = false
-                    print("[Vortex Hub] MVS DUELS: Utility " .. utilityType .. " desativado!")
                 else
                     self["UTILITIES_" .. utilityType .. "_Active"] = false
-                    print("[Vortex Hub] MVS DUELS: Utility " .. utilityType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada Utility
 function MurderersVSSheriffsDUELS:ToggleAutoKillPlayers(state)
     self:ToggleUtility("AutoKillPlayers", state)
 end
@@ -1215,27 +1672,22 @@ function MurderersVSSheriffsDUELS:ToggleIncreaseHitbox(state)
     self:ToggleUtility("IncreaseHitbox", state)
 end
 
--- [[ MURDER MYSTERY 2 SYSTEMS ]]
 local MurderMystery2 = {
-    -- ESP States
     ESP_All_Active = false,
     ESP_GunDrop_Active = false,
     ESP_Murder_Active = false,
     ESP_Sheriff_Active = false,
     
-    -- Utilities States
     AutoGun_Active = false,
     AutoKillAll_Active = false,
     AutoKillSheriff_Active = false
 }
 
--- Função genérica para ativar/desativar ESPs do MM2
 function MurderMystery2:ToggleESP(espType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if espType == "All" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/ESP/ESP_All"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/ESP_REMOVE/ESP_RemoveESPAll"
@@ -1252,16 +1704,11 @@ function MurderMystery2:ToggleESP(espType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/ESP/ESP_Sheriff"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/ESP_REMOVE/ESP_RemoveESPSheriff"
         stateName = "MM2_ESP_Sheriff"
-    else
-        warn("[Vortex Hub] Murder Mystery 2: Tipo de ESP inválido: " .. tostring(espType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar ESP
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -1270,36 +1717,29 @@ function MurderMystery2:ToggleESP(espType, state)
             
             if success then
                 self["ESP_" .. espType .. "_Active"] = true
-                print("[Vortex Hub] Murder Mystery 2: ESP " .. espType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("MM2_ESP_" .. espType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self["ESP_" .. espType .. "_Active"] = false
-                warn("[Vortex Hub] Murder Mystery 2: Erro ao ativar ESP " .. espType)
             end
         end)
     else
-        -- Desativar ESP
         if self["ESP_" .. espType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self["ESP_" .. espType .. "_Active"] = false
-                    print("[Vortex Hub] Murder Mystery 2: ESP " .. espType .. " desativado!")
                 else
                     self["ESP_" .. espType .. "_Active"] = false
-                    print("[Vortex Hub] Murder Mystery 2: ESP " .. espType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada tipo de ESP
 function MurderMystery2:ApplyESP_All(state)
     self:ToggleESP("All", state)
 end
@@ -1316,19 +1756,12 @@ function MurderMystery2:ApplyESP_Sheriff(state)
     self:ToggleESP("Sheriff", state)
 end
 
--- Função para executar Teleport Lobby (botão executar)
 function MurderMystery2:ExecuteTeleportLobby()
     task.spawn(function()
         local success = pcall(function()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/TELEPORTS/TELEPORTS_TeleportLobby")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Murder Mystery 2: Teleport Lobby executado com sucesso!")
-        else
-            warn("[Vortex Hub] Murder Mystery 2: Erro ao executar Teleport Lobby")
-        end
     end)
 end
 
@@ -1337,7 +1770,6 @@ function MurderMystery2:ToggleUtility(utilityType, state)
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if utilityType == "AutoGun" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/UTILITIES/UTILITIES_AutoGun"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/UTILITIES/UTILITIES_RemoveAutoGun"
@@ -1348,18 +1780,13 @@ function MurderMystery2:ToggleUtility(utilityType, state)
         stateName = "MM2_AutoKillAll"
     elseif utilityType == "AutoKillSheriff" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/MurderMystery2/UTILITIES/UTILITIES_AutoKillSheriff"
-        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/UTILITIES/UTILITIES_RemoveAutoKillSheriff" -- CORREÇÃO: removido parêntese extra
+        removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/MuderMystery2/UTILITIES/UTILITIES_RemoveAutoKillSheriff"
         stateName = "MM2_AutoKillSheriff"
-    else
-        warn("[Vortex Hub] Murder Mystery 2: Tipo de Utility inválido: " .. tostring(utilityType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar Utility
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -1368,36 +1795,29 @@ function MurderMystery2:ToggleUtility(utilityType, state)
             
             if success then
                 self[utilityType .. "_Active"] = true
-                print("[Vortex Hub] Murder Mystery 2: Utility " .. utilityType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("MM2_Utility_" .. utilityType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self[utilityType .. "_Active"] = false
-                warn("[Vortex Hub] Murder Mystery 2: Erro ao ativar Utility " .. utilityType)
             end
         end)
     else
-        -- Desativar Utility
         if self[utilityType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self[utilityType .. "_Active"] = false
-                    print("[Vortex Hub] Murder Mystery 2: Utility " .. utilityType .. " desativado!")
                 else
                     self[utilityType .. "_Active"] = false
-                    print("[Vortex Hub] Murder Mystery 2: Utility " .. utilityType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada Utility
 function MurderMystery2:ToggleAutoGun(state)
     self:ToggleUtility("AutoGun", state)
 end
@@ -1410,7 +1830,6 @@ function MurderMystery2:ToggleAutoKillSheriff(state)
     self:ToggleUtility("AutoKillSheriff", state)
 end
 
--- [[ PRISON LIFE LOADSTRING SYSTEMS ]]
 local PrisonLife = {
     ESP_Players_Active = false,
     ESP_Bandits_Active = false,
@@ -1436,10 +1855,8 @@ function PrisonLife:ExecuteLoadstring(url, scriptName)
     
     if success then
         self.LoadedScripts[scriptName] = result
-        print("[Vortex Hub] Prison Life: " .. scriptName .. " carregado com sucesso!")
         return true
     else
-        warn("[Vortex Hub] Prison Life: Erro ao carregar " .. scriptName .. " -", result)
         self.LoadedScripts[scriptName] = nil
         return false
     end
@@ -1465,13 +1882,9 @@ function PrisonLife:ToggleESP_Players(state)
                 )
                 
                 if self.ESP_Players_Active then
-                    print("[Vortex Hub] Prison Life: ESP Players ATIVADO!")
-                    
                     CleanupSystem:RegisterScript("ESP_Players", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPlayers")
                     end)
-                else
-                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Players")
                 end
             end)
         end
@@ -1483,7 +1896,6 @@ function PrisonLife:ToggleESP_Players(state)
                 if success then
                     self.ESP_Players_Active = false
                     self.LoadedScripts["ESP_Players"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Players DESATIVADO!")
                 else
                     for _, player in pairs(Players:GetPlayers()) do
                         if player ~= LocalPlayer then
@@ -1501,7 +1913,6 @@ function PrisonLife:ToggleESP_Players(state)
                     end
                     self.ESP_Players_Active = false
                     self.LoadedScripts["ESP_Players"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Players desativado (limpeza manual)")
                 end
             end)
         end
@@ -1528,13 +1939,9 @@ function PrisonLife:ToggleESP_Bandits(state)
                 )
                 
                 if self.ESP_Bandits_Active then
-                    print("[Vortex Hub] Prison Life: ESP Bandits ATIVADO!")
-                    
                     CleanupSystem:RegisterScript("ESP_Bandits", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPBandits")
                     end)
-                else
-                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Bandits")
                 end
             end)
         end
@@ -1546,7 +1953,6 @@ function PrisonLife:ToggleESP_Bandits(state)
                 if success then
                     self.ESP_Bandits_Active = false
                     self.LoadedScripts["ESP_Bandits"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Bandits DESATIVADO!")
                 else
                     for _, player in pairs(Players:GetPlayers()) do
                         local char = player.Character
@@ -1562,7 +1968,6 @@ function PrisonLife:ToggleESP_Bandits(state)
                     end
                     self.ESP_Bandits_Active = false
                     self.LoadedScripts["ESP_Bandits"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Bandits desativado (limpeza manual)")
                 end
             end)
         end
@@ -1589,13 +1994,9 @@ function PrisonLife:ToggleESP_Polices(state)
                 )
                 
                 if self.ESP_Polices_Active then
-                    print("[Vortex Hub] Prison Life: ESP Polices ATIVADO!")
-                    
                     CleanupSystem:RegisterScript("ESP_Polices", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPolices")
                     end)
-                else
-                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Polices")
                 end
             end)
         end
@@ -1607,7 +2008,6 @@ function PrisonLife:ToggleESP_Polices(state)
                 if success then
                     self.ESP_Polices_Active = false
                     self.LoadedScripts["ESP_Polices"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Polices DESATIVADO!")
                 else
                     for _, player in pairs(Players:GetPlayers()) do
                         local char = player.Character
@@ -1623,7 +2023,6 @@ function PrisonLife:ToggleESP_Polices(state)
                     end
                     self.ESP_Polices_Active = false
                     self.LoadedScripts["ESP_Polices"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Polices desativado (limpeza manual)")
                 end
             end)
         end
@@ -1650,13 +2049,9 @@ function PrisonLife:ToggleESP_Prisoners(state)
                 )
                 
                 if self.ESP_Prisoners_Active then
-                    print("[Vortex Hub] Prison Life: ESP Prisoners ATIVADO!")
-                    
                     CleanupSystem:RegisterScript("ESP_Prisoners", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/ESP_REMOVE/ESP_RemoveESPPrisoners")
                     end)
-                else
-                    print("[Vortex Hub] Prison Life: Falha ao ativar ESP Prisoners")
                 end
             end)
         end
@@ -1668,7 +2063,6 @@ function PrisonLife:ToggleESP_Prisoners(state)
                 if success then
                     self.ESP_Prisoners_Active = false
                     self.LoadedScripts["ESP_Prisoners"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Prisoners DESATIVADO!")
                 else
                     for _, player in pairs(Players:GetPlayers()) do
                         local char = player.Character
@@ -1684,7 +2078,6 @@ function PrisonLife:ToggleESP_Prisoners(state)
                     end
                     self.ESP_Prisoners_Active = false
                     self.LoadedScripts["ESP_Prisoners"] = nil
-                    print("[Vortex Hub] Prison Life: ESP Prisoners desativado (limpeza manual)")
                 end
             end)
         end
@@ -1704,7 +2097,6 @@ function PrisonLife:ToggleBypassDoors(state)
                 
                 if success then
                     self.BypassDoors_Active = true
-                    print("[Vortex Hub] Prison Life: Bypass Doors ativado!")
                     
                     CleanupSystem:RegisterScript("BypassDoors", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveBypassDoors")
@@ -1719,10 +2111,8 @@ function PrisonLife:ToggleBypassDoors(state)
                 
                 if success then
                     self.BypassDoors_Active = false
-                    print("[Vortex Hub] Prison Life: Bypass Doors desativado!")
                 else
                     self.BypassDoors_Active = false
-                    print("[Vortex Hub] Prison Life: Bypass Doors desativado (fallback)")
                 end
             end)
         end
@@ -1742,7 +2132,6 @@ function PrisonLife:ToggleAutoKeyCard(state)
                 
                 if success then
                     self.AutoKeyCard_Active = true
-                    print("[Vortex Hub] Prison Life: Auto KeyCard ativado!")
                     
                     CleanupSystem:RegisterScript("AutoKeyCard", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemoveAutoKeyCard")
@@ -1757,10 +2146,8 @@ function PrisonLife:ToggleAutoKeyCard(state)
                 
                 if success then
                     self.AutoKeyCard_Active = false
-                    print("[Vortex Hub] Prison Life: Auto KeyCard desativado via loadstring!")
                 else
                     self.AutoKeyCard_Active = false
-                    print("[Vortex Hub] Prison Life: Auto KeyCard desativado (fallback)")
                 end
             end)
         end
@@ -1780,7 +2167,6 @@ function PrisonLife:ToggleAutoM9(state)
                 
                 if success then
                     self.AutoM9_Active = true
-                    print("[Vortex Hub] Prison Life: Auto M9 ativado!")
                     
                     CleanupSystem:RegisterScript("AutoM9", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/PrisonLife/UTILITIES_REMOVE/UTILITIES_RemvoeAutoM9")
@@ -1795,10 +2181,8 @@ function PrisonLife:ToggleAutoM9(state)
                 
                 if success then
                     self.AutoM9_Active = false
-                    print("[Vortex Hub] Prison Life: Auto M9 desativado via loadstring!")
                 else
                     self.AutoM9_Active = false
-                    print("[Vortex Hub] Prison Life: Auto M9 desativado (fallback)")
                 end
             end)
         end
@@ -1811,10 +2195,6 @@ function PrisonLife:GetAK47()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetAK")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Get AK-47 executado!")
-        end
     end)
 end
 
@@ -1824,10 +2204,6 @@ function PrisonLife:GetMP5()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetMp5")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Get MP5 executado!")
-        end
     end)
 end
 
@@ -1837,10 +2213,6 @@ function PrisonLife:GetShotgun()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/PRISONITEMS/PRISON_GetShotgun")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Get Shotgun executado!")
-        end
     end)
 end
 
@@ -1850,10 +2222,6 @@ function PrisonLife:TeleportCriminalSpawn()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_CriminalSpawn")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Teleport Criminal Spawn executado!")
-        end
     end)
 end
 
@@ -1863,10 +2231,6 @@ function PrisonLife:TeleportInsidePrison()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_InsidePrison")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Teleport Inside Prison executado!")
-        end
     end)
 end
 
@@ -1876,10 +2240,6 @@ function PrisonLife:TeleportOutPrison()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_OutPrison")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Teleport Out Prison executado!")
-        end
     end)
 end
 
@@ -1889,10 +2249,6 @@ function PrisonLife:TeleportYardCenter()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_YardCenter")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Teleport Yard Center executado!")
-        end
     end)
 end
 
@@ -1902,14 +2258,9 @@ function PrisonLife:TeleportPoliceCenter()
             local url = GetLatestGitHubScript("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/PrisonLife/TELEPORTS/TELEPORT_PoliceCenter")
             loadstring(game:HttpGet(url, true))()
         end)
-        
-        if success then
-            print("[Vortex Hub] Prison Life: Teleport Police Center executado!")
-        end
     end)
 end
 
--- [[ BLIND SHOT SYSTEMS (ATUALIZADO PARA LOADSTRINGS) ]]
 local BlindShot = {
     ESP_Players_Active = false,
     AutoFarm_Active = false
@@ -1928,14 +2279,12 @@ function BlindShot:ToggleESP_Players(state)
                 
                 if success then
                     self.ESP_Players_Active = true
-                    print("[Vortex Hub] Blind Shot: ESP Players ativado!")
                     
                     CleanupSystem:RegisterScript("BlindShotESPPlayers", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/BLINDSHOT/ESP_REMOVE/ESP_RemoveESPPlayers")
                     end)
                 else
                     self.ESP_Players_Active = false
-                    warn("[Vortex Hub] Blind Shot: Erro ao ativar ESP Players")
                 end
             end)
         end
@@ -1946,10 +2295,8 @@ function BlindShot:ToggleESP_Players(state)
                 
                 if success then
                     self.ESP_Players_Active = false
-                    print("[Vortex Hub] Blind Shot: ESP Players desativado!")
                 else
                     self.ESP_Players_Active = false
-                    print("[Vortex Hub] Blind Shot: ESP Players desativado (fallback)")
                 end
             end)
         end
@@ -1969,14 +2316,12 @@ function BlindShot:ToggleAutoFarm(state)
                 
                 if success then
                     self.AutoFarm_Active = true
-                    print("[Vortex Hub] Blind Shot: Auto Farm ativado!")
                     
                     CleanupSystem:RegisterScript("BlindShotAutoFarm", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/BLINDSHOT/TELEPORTS_REMOVE/TELEPORT_RemoveAutoFarm")
                     end)
                 else
                     self.AutoFarm_Active = false
-                    warn("[Vortex Hub] Blind Shot: Erro ao ativar Auto Farm")
                 end
             end)
         end
@@ -1987,17 +2332,14 @@ function BlindShot:ToggleAutoFarm(state)
                 
                 if success then
                     self.AutoFarm_Active = false
-                    print("[Vortex Hub] Blind Shot: Auto Farm desativado!")
                 else
                     self.AutoFarm_Active = false
-                    print("[Vortex Hub] Blind Shot: Auto Farm desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- [[ FIND THE BRAINROT SYSTEMS (ATUALIZADO PARA LOADSTRINGS) ]]
 local Brainrot = {
     AutoFarm_Active = false
 }
@@ -2015,14 +2357,12 @@ function Brainrot:ToggleAutoFarm(state)
                 
                 if success then
                     self.AutoFarm_Active = true
-                    print("[Vortex Hub] Find the Brainrot: Auto Farm ativado!")
                     
                     CleanupSystem:RegisterScript("BrainrotAutoFarm", function()
                         CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FindTheBrainrot/AUTOFARM_REMOVE/AUTOFARM_RemoveBrainrotTeleport")
                     end)
                 else
                     self.AutoFarm_Active = false
-                    warn("[Vortex Hub] Find the Brainrot: Erro ao ativar Auto Farm")
                 end
             end)
         end
@@ -2033,17 +2373,14 @@ function Brainrot:ToggleAutoFarm(state)
                 
                 if success then
                     self.AutoFarm_Active = false
-                    print("[Vortex Hub] Find the Brainrot: Auto Farm desativado!")
                 else
                     self.AutoFarm_Active = false
-                    print("[Vortex Hub] Find the Brainrot: Auto Farm desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- [[ ANTI-AFK GLOBAL (ATUALIZADO PARA LOADSTRINGS) ]]
 function ToggleAntiAFK(state)
     States.Anti_AFK = state
     
@@ -2055,31 +2392,19 @@ function ToggleAntiAFK(state)
             end)
             
             if success then
-                print("[Vortex Hub] Anti-AFK Global ativado!")
-                
                 CleanupSystem:RegisterScript("AntiAFKGlobal", function()
                     CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/GeneralGames/UTILITIES_REMOVE/UTILITIES/PLAYER_RemoveAntiAFK")
                 end)
-            else
-                warn("[Vortex Hub] Erro ao ativar Anti-AFK Global")
             end
         end)
     else
         task.spawn(function()
             local success = CleanupSystem:ExecuteLoadstringForCleanup("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/GeneralGames/UTILITIES_REMOVE/UTILITIES/PLAYER_RemoveAntiAFK")
-            
-            if success then
-                print("[Vortex Hub] Anti-AFK Global desativado!")
-            else
-                print("[Vortex Hub] Anti-AFK Global desativado (fallback)")
-            end
         end)
     end
 end
 
--- [[ FNAF: ETERNAL NIGHTS SYSTEMS - COMPLETAMENTE ATUALIZADO ]]
 local FNAF = {
-    -- ESP States
     ESP_Animatronics_Active = false,
     ESP_Fuses_Active = false,
     ESP_Batteries_Active = false,
@@ -2091,7 +2416,6 @@ local FNAF = {
     ESP_Flashlight_Active = false,
     ESP_All_Active = false,
     
-    -- Utilities States
     ClockGame_Active = false,
     ClockPuppet_Active = false,
     FullBrightness_Active = false,
@@ -2100,13 +2424,11 @@ local FNAF = {
     LoadedScripts = {}
 }
 
--- Função genérica para ativar/desativar ESPs do FNAF
 function FNAF:ToggleESP(espType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if espType == "All" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_All"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPAll"
@@ -2147,16 +2469,11 @@ function FNAF:ToggleESP(espType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/ESP/ESP_Screwdriver"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/ESP_REMOVE/ESP_RemoveESPScrewdriver"
         stateName = "FNAF_ESP_Screwdriver"
-    else
-        warn("[Vortex Hub] FNAF: Tipo de ESP inválido: " .. tostring(espType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar ESP
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -2165,36 +2482,29 @@ function FNAF:ToggleESP(espType, state)
             
             if success then
                 self[espType .. "_Active"] = true
-                print("[Vortex Hub] FNAF: ESP " .. espType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("FNAF_ESP_" .. espType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self[espType .. "_Active"] = false
-                warn("[Vortex Hub] FNAF: Erro ao ativar ESP " .. espType)
             end
         end)
     else
-        -- Desativar ESP
         if self[espType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self[espType .. "_Active"] = false
-                    print("[Vortex Hub] FNAF: ESP " .. espType .. " desativado!")
                 else
                     self[espType .. "_Active"] = false
-                    print("[Vortex Hub] FNAF: ESP " .. espType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada tipo de ESP
 function FNAF:ApplyESP_All(state)
     self:ToggleESP("All", state)
 end
@@ -2235,7 +2545,6 @@ function FNAF:ApplyESP_Screwdriver(state)
     self:ToggleESP("Screwdriver", state)
 end
 
--- Função para executar PULL ITEMS (botões executar)
 function FNAF:ExecutePullItem(itemType)
     local url = ""
     
@@ -2251,9 +2560,6 @@ function FNAF:ExecutePullItem(itemType)
         url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Pliers"
     elseif itemType == "Screwdriver" then
         url = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/PULLITEMS/PULL_Screwdriver"
-    else
-        warn("[Vortex Hub] FNAF: Tipo de Pull Item inválido: " .. tostring(itemType))
-        return
     end
     
     task.spawn(function()
@@ -2263,20 +2569,15 @@ function FNAF:ExecutePullItem(itemType)
         end)
         
         if success then
-            print("[Vortex Hub] FNAF: Pull " .. itemType .. " executado com sucesso!")
-        else
-            warn("[Vortex Hub] FNAF: Erro ao executar Pull " .. itemType)
         end
     end)
 end
 
--- Função para ativar/desativar UTILITIES
 function FNAF:ToggleUtility(utilityType, state)
     local activateUrl = ""
     local removeUrl = ""
     local stateName = ""
     
-    -- Mapear tipo para URLs
     if utilityType == "ClockGame" then
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_ClockGame"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveClockGame"
@@ -2293,16 +2594,11 @@ function FNAF:ToggleUtility(utilityType, state)
         activateUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/FNAFEternalNights/UTILITIES/PLAYER_Speed"
         removeUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FNAFEternalNights/UTILITIES_REMOVE/UTILITIES_RemoveSpeed"
         stateName = "FNAF_Speed"
-    else
-        warn("[Vortex Hub] FNAF: Tipo de Utility inválido: " .. tostring(utilityType))
-        return
     end
     
-    -- Atualizar estado
     States[stateName] = state
     
     if state then
-        -- Ativar Utility
         task.spawn(function()
             local success = pcall(function()
                 local fullUrl = GetLatestGitHubScript(activateUrl)
@@ -2311,36 +2607,29 @@ function FNAF:ToggleUtility(utilityType, state)
             
             if success then
                 self[utilityType .. "_Active"] = true
-                print("[Vortex Hub] FNAF: Utility " .. utilityType .. " ativado!")
                 
-                -- Registrar limpeza
                 CleanupSystem:RegisterScript("FNAF_Utility_" .. utilityType, function()
                     CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 end)
             else
                 self[utilityType .. "_Active"] = false
-                warn("[Vortex Hub] FNAF: Erro ao ativar Utility " .. utilityType)
             end
         end)
     else
-        -- Desativar Utility
         if self[utilityType .. "_Active"] then
             task.spawn(function()
                 local success = CleanupSystem:ExecuteLoadstringForCleanup(removeUrl)
                 
                 if success then
                     self[utilityType .. "_Active"] = false
-                    print("[Vortex Hub] FNAF: Utility " .. utilityType .. " desativado!")
                 else
                     self[utilityType .. "_Active"] = false
-                    print("[Vortex Hub] FNAF: Utility " .. utilityType .. " desativado (fallback)")
                 end
             end)
         end
     end
 end
 
--- Funções específicas para cada Utility
 function FNAF:ToggleClockGame(state)
     self:ToggleUtility("ClockGame", state)
 end
@@ -2357,7 +2646,6 @@ function FNAF:ToggleSpeed(state)
     self:ToggleUtility("Speed", state)
 end
 
--- Teleports
 function FNAF:TeleportSecurityRoom()
     pcall(function()
         local target = workspace:WaitForChild("Game"):WaitForChild("Sistema"):WaitForChild("DoorSecurity"):WaitForChild("PackDoor"):WaitForChild("Door"):WaitForChild("Grade")
@@ -2408,7 +2696,6 @@ function FNAF:TeleportFuseRoom()
     end)
 end
 
--- [[ INTERFACE ]]
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "VortexHub_Final"
 ScreenGui.ResetOnSpawn = false
@@ -2418,7 +2705,6 @@ ScreenGui.DisplayOrder = 999999999
 local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
 ScreenGui.Parent = success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
 
--- [[ TOAST NOTIFICATION SYSTEM - ADICIONADO AQUI ]]
 local ToastSystem = {
     ActiveToasts = {},
     PositionOffset = 0
@@ -2454,7 +2740,6 @@ function ToastSystem:CreateToast(title, message, duration)
     ToastStroke.LineJoinMode = Enum.LineJoinMode.Round
     ToastStroke.Parent = ToastFrame
     
-    -- Ícone
     local IconFrame = Instance.new("Frame")
     IconFrame.Size = UDim2.new(0, 40, 0, 40)
     IconFrame.Position = UDim2.new(0, 15, 0.5, -20)
@@ -2475,7 +2760,6 @@ function ToastSystem:CreateToast(title, message, duration)
     IconLabel.BackgroundTransparency = 1
     IconLabel.Parent = IconFrame
     
-    -- Conteúdo
     local ContentFrame = Instance.new("Frame")
     ContentFrame.Size = UDim2.new(1, -75, 1, -20)
     ContentFrame.Position = UDim2.new(0, 65, 0, 10)
@@ -2505,7 +2789,6 @@ function ToastSystem:CreateToast(title, message, duration)
     MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
     MessageLabel.Parent = ContentFrame
     
-    -- Progress Bar
     local ProgressBar = Instance.new("Frame")
     ProgressBar.Size = UDim2.new(1, -30, 0, 2)
     ProgressBar.Position = UDim2.new(0, 15, 1, -15)
@@ -2527,7 +2810,6 @@ function ToastSystem:CreateToast(title, message, duration)
     ProgressFillCorner.CornerRadius = UDim.new(1, 0)
     ProgressFillCorner.Parent = ProgressFill
     
-    -- Animação de entrada
     ToastFrame.Position = UDim2.new(1, 350, 1, -90 - self.PositionOffset)
     TweenService:Create(ToastFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
         Position = UDim2.new(1, -340, 1, -90 - self.PositionOffset)
@@ -2536,7 +2818,6 @@ function ToastSystem:CreateToast(title, message, duration)
     self.PositionOffset = self.PositionOffset + 90
     table.insert(self.ActiveToasts, {Gui = ToastGui, Offset = self.PositionOffset - 90})
     
-    -- Timer
     local startTime = tick()
     local connection
     connection = RunService.Heartbeat:Connect(function()
@@ -2575,7 +2856,6 @@ function ToastSystem:CreateToast(title, message, duration)
         end
     end)
     
-    -- Fechar ao clicar
     ToastFrame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             connection:Disconnect()
@@ -2610,18 +2890,15 @@ function ToastSystem:CreateToast(title, message, duration)
     return ToastGui
 end
 
--- [[ EXIBIR TOAST DE INICIALIZAÇÃO ]]
 task.spawn(function()
     task.wait(1)
     ToastSystem:CreateToast(
         "VORTEX HUB LOADED",
-        "Press INSERT to open/close the hub interface.\nVersion: v2.6.1",
+        "Press INSERT to open/close the hub interface.\nVersion: v2.7.0",
         8
     )
-    print("[Vortex Hub] Toast notification displayed!")
 end)
 
--- [[ CONTINUAÇÃO DA INTERFACE PRINCIPAL ]]
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 650, 0, 450)
@@ -2677,7 +2954,7 @@ Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TopBar
 
 local VersionLabelTop = Instance.new("TextLabel")
-VersionLabelTop.Text = "v2.6.1"
+VersionLabelTop.Text = "v2.7.0"
 VersionLabelTop.Size = UDim2.new(0, 50, 1, 0)
 VersionLabelTop.Position = UDim2.new(0, 105, 0, 0)
 VersionLabelTop.TextColor3 = Color3.fromRGB(120, 120, 120)
@@ -2742,10 +3019,8 @@ end
 ApplyHover(CloseBtn, Color3.fromRGB(200, 45, 45))
 
 CloseBtn.MouseButton1Click:Connect(function()
-    print("[Vortex Hub] Fechando hub e limpando tudo...")
     CleanupSystem:CleanupAll()
     ScreenGui:Destroy()
-    print("[Vortex Hub] Interface fechada")
 end)
 
 local SideBar = Instance.new("Frame")
@@ -3060,7 +3335,6 @@ end
 local SelectedGame = nil
 local GameButtons = {}
 
--- Função modificada para usar nomes diferentes no menu vs página
 local function ShowPage(menuName, pageName)
     WelcomePage.Visible = false
     
@@ -3085,13 +3359,12 @@ local function ShowPage(menuName, pageName)
     for pageDataName, pageData in pairs(GamePages) do
         pageData.Page.Visible = (pageDataName == pageName)
         
-        -- Atualizar título da página se necessário
         if pageDataName == pageName then
             local pageHeader = pageData.Page:FindFirstChild("PageHeader")
             if pageHeader then
                 local pageTitleLabel = pageHeader:FindFirstChild("PageTitleLabel")
                 if pageTitleLabel then
-                    pageTitleLabel.Text = pageName -- Nome completo na página
+                    pageTitleLabel.Text = pageName
                 end
             end
         end
@@ -3136,7 +3409,6 @@ local function CreateMenuBtn(text, parent)
     GameButtons[text] = btn
     
     btn.MouseButton1Click:Connect(function() 
-        -- Para o M VS S DUELS, usar nome completo na página
         if text == "M VS S DUELS" then
             ShowPage(text, "Murderers VS Sheriffs DUELS")
         else
@@ -3163,7 +3435,6 @@ local function CreateMenuBtn(text, parent)
     return btn
 end
 
--- [[ PRISON LIFE CONFIGURATION ]]
 local PL_Data = CreatePage("Prison Life")
 
 CreateSection(PL_Data.Page, "Visuals")
@@ -3238,7 +3509,6 @@ CreateButton(ItemsGrid, "Get Shotgun", "Pega a escopeta - Volta auto.", "Items",
     PrisonLife:GetShotgun()
 end)
 
--- [[ BLIND SHOT CONFIGURATION ]]
 local BS_Data = CreatePage("Blind Shot")
 
 CreateSection(BS_Data.Page, "Visuals")
@@ -3259,7 +3529,6 @@ CreateToggle(AutoFarmGrid, "Anti-AFK System", "Evita que você seja kickado por 
     ToggleAntiAFK(v)
 end)
 
--- [[ FIND THE BRAINROT CONFIGURATION ]]
 local BR_Data = CreatePage("Find the Brainrot")
 
 CreateSection(BR_Data.Page, "Auto Farm")
@@ -3276,10 +3545,8 @@ CreateToggle(BrainrotUtilGrid, "Anti-AFK System", "Evita que você seja kickado 
     ToggleAntiAFK(v)
 end)
 
--- [[ WESTBOUND CONFIGURATION - ATUALIZADO COM NOVAS CATEGORIAS ]]
 local WB_Data = CreatePage("Westbound")
 
--- VISUALS (ESP)
 CreateSection(WB_Data.Page, "ESP")
 local Westbound_ESPGrid = WB_Data.CreateGrid(WB_Data.Page)
 
@@ -3307,7 +3574,6 @@ CreateToggle(Westbound_ESPGrid, "ESP Name Animals", "Mostra nomes dos animais", 
     Westbound:ToggleESP_NameAnimals(v)
 end)
 
--- AIMBOT
 CreateSection(WB_Data.Page, "Aimbot")
 local Westbound_AimbotGrid = WB_Data.CreateGrid(WB_Data.Page)
 
@@ -3319,7 +3585,6 @@ CreateToggle(Westbound_AimbotGrid, "Silent Aim", "Silent Aim automático (alvo s
     Westbound:ToggleSilentAim(v)
 end)
 
--- UTILITIES
 CreateSection(WB_Data.Page, "Utilities")
 local Westbound_UtilitiesGrid = WB_Data.CreateGrid(WB_Data.Page)
 
@@ -3339,7 +3604,6 @@ CreateToggle(Westbound_UtilitiesGrid, "No Recoil", "Remove o recuo das armas", "
     Westbound:ToggleNoRecoil(v)
 end)
 
--- WORLD
 CreateSection(WB_Data.Page, "World")
 local Westbound_WorldGrid = WB_Data.CreateGrid(WB_Data.Page)
 
@@ -3363,10 +3627,8 @@ CreateToggle(Westbound_WorldGrid, "No Fall Damage", "Remove dano de queda", "WOR
     Westbound:ToggleNoFallDamage(v)
 end)
 
--- [[ FNAF: ETERNAL NIGHTS CONFIGURATION - NOVAS CATEGORIAS ]]
 local FNAF_Data = CreatePage("FNAF: Eternal Nights")
 
--- VISUALS acima de TELEPORTS (como solicitado)
 CreateSection(FNAF_Data.Page, "Visuals")
 local FNAF_ESPGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
 
@@ -3410,7 +3672,6 @@ CreateToggle(FNAF_ESPGrid, "ESP ALL", "Ativa todos os ESPs de uma vez", "VISUAL"
     FNAF:ApplyESP_All(v)
 end)
 
--- TELEPORTS (agora abaixo de VISUALS)
 CreateSection(FNAF_Data.Page, "Teleports")
 local FNAF_TeleportGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
 
@@ -3430,7 +3691,6 @@ CreateButton(FNAF_TeleportGrid, "TP Fuse Room", "Teleport para sala dos fusívei
     FNAF:TeleportFuseRoom()
 end)
 
--- NOVA CATEGORIA: PULL ITEMS (botões executar)
 CreateSection(FNAF_Data.Page, "Pull Items")
 local FNAF_PullItemsGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
 
@@ -3458,7 +3718,6 @@ CreateButton(FNAF_PullItemsGrid, "Pull Screwdriver", "Puxa todas as chaves de fe
     FNAF:ExecutePullItem("Screwdriver")
 end)
 
--- NOVA CATEGORIA: UTILITIES (ON/OFF)
 CreateSection(FNAF_Data.Page, "Utilities")
 local FNAF_UtilitiesGrid = FNAF_Data.CreateGrid(FNAF_Data.Page)
 
@@ -3478,10 +3737,8 @@ CreateToggle(FNAF_UtilitiesGrid, "Speed Hack", "Aumenta sua velocidade de movime
     FNAF:ToggleSpeed(v)
 end)
 
--- [[ MURDER MYSTERY 2 CONFIGURATION ]]
 local MM2_Data = CreatePage("Murder Mystery 2")
 
--- VISUALS
 CreateSection(MM2_Data.Page, "Visuals")
 local MM2_ESPGrid = MM2_Data.CreateGrid(MM2_Data.Page)
 
@@ -3501,7 +3758,6 @@ CreateToggle(MM2_ESPGrid, "ESP Sheriff", "Mostra quem é o xerife", "VISUAL", fu
     MurderMystery2:ApplyESP_Sheriff(v)
 end)
 
--- TELEPORTS
 CreateSection(MM2_Data.Page, "Teleports")
 local MM2_TeleportGrid = MM2_Data.CreateGrid(MM2_Data.Page)
 
@@ -3509,7 +3765,6 @@ CreateButton(MM2_TeleportGrid, "TP Lobby", "Teletransporta para o lobby", "TP", 
     MurderMystery2:ExecuteTeleportLobby()
 end)
 
--- UTILITIES
 CreateSection(MM2_Data.Page, "Utilities")
 local MM2_UtilitiesGrid = MM2_Data.CreateGrid(MM2_Data.Page)
 
@@ -3525,10 +3780,8 @@ CreateToggle(MM2_UtilitiesGrid, "Auto Kill Sheriff", "Quando for Murder, mata o 
     MurderMystery2:ToggleAutoKillSheriff(v)
 end)
 
--- [[ MURDERERS VS SHERIFFS DUELS CONFIGURATION ]]
-local MVS_Data = CreatePage("Murderers VS Sheriffs DUELS") -- Nome completo na página
+local MVS_Data = CreatePage("Murderers VS Sheriffs DUELS")
 
--- VISUALS
 CreateSection(MVS_Data.Page, "Visuals")
 local MVS_ESPGrid = MVS_Data.CreateGrid(MVS_Data.Page)
 
@@ -3544,7 +3797,6 @@ CreateToggle(MVS_ESPGrid, "ESP Players", "Mostra todos os jogadores", "VISUAL", 
     MurderersVSSheriffsDUELS:ApplyESP_Players(v)
 end)
 
--- AIMBOT
 CreateSection(MVS_Data.Page, "Aimbot")
 local MVS_AimbotGrid = MVS_Data.CreateGrid(MVS_Data.Page)
 
@@ -3552,7 +3804,6 @@ CreateToggle(MVS_AimbotGrid, "AimCTRL", "Aimbot automático para mirar nos jogad
     MurderersVSSheriffsDUELS:ToggleAimCTRL(v)
 end)
 
--- UTILITIES
 CreateSection(MVS_Data.Page, "Utilities")
 local MVS_UtilitiesGrid = MVS_Data.CreateGrid(MVS_Data.Page)
 
@@ -3568,10 +3819,8 @@ CreateToggle(MVS_UtilitiesGrid, "Increase Hitbox", "Aumenta o tamanho da hitbox 
     MurderersVSSheriffsDUELS:ToggleIncreaseHitbox(v)
 end)
 
--- [[ TOWER OF HELL CONFIGURATION ]]
 local TOH_Data = CreatePage("Tower of Hell")
 
--- TELEPORTS
 CreateSection(TOH_Data.Page, "Teleports")
 local TOH_TeleportGrid = TOH_Data.CreateGrid(TOH_Data.Page)
 
@@ -3579,7 +3828,6 @@ CreateButton(TOH_TeleportGrid, "Teleport To Win", "Teleporta diretamente para a 
     TowerOfHell:ExecuteTeleportToWin()
 end)
 
--- UTILITIES
 CreateSection(TOH_Data.Page, "Utilities")
 local TOH_UtilitiesGrid = TOH_Data.CreateGrid(TOH_Data.Page)
 
@@ -3591,15 +3839,151 @@ CreateToggle(TOH_UtilitiesGrid, "God Mode", "Ativa God Mode (invulnerabilidade)"
     TowerOfHell:ToggleGodMode(v)
 end)
 
--- Cria os botões do menu COM NOMES CURTOS na lateral
+local OOU_Data = CreatePage("One of Us")
+
+CreateSection(OOU_Data.Page, "AutoFarm")
+local OOU_AutoFarmGrid = OOU_Data.CreateGrid(OOU_Data.Page)
+
+CreateToggle(OOU_AutoFarmGrid, "Auto Farm XP/Money", "Automatically farms XP and money as killer", "AUTOFARM", function(v)
+    OneOfUs:ToggleAutoFarmXPMoney(v)
+end)
+
+CreateSection(OOU_Data.Page, "ESP")
+local OOU_ESPGrid = OOU_Data.CreateGrid(OOU_Data.Page)
+
+CreateToggle(OOU_ESPGrid, "ESP Coins", "Shows all coins on the map", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Coins(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Generators", "Shows all generators locations", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Geradors(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Items", "Shows all items on the map", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Items(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Killer", "Shows the killer's location", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Killer(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Name Players", "Shows player names with ESP", "VISUAL", function(v)
+    OneOfUs:ToggleESP_NamePlayers(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Stake", "Shows stake locations", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Stake(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Survivors", "Shows all survivors locations", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Survivors(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Vents", "Shows all vents on the map", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Vents(v)
+end)
+
+CreateToggle(OOU_ESPGrid, "ESP Windows", "Shows all windows locations", "VISUAL", function(v)
+    OneOfUs:ToggleESP_Windows(v)
+end)
+
+CreateSection(OOU_Data.Page, "Utilities")
+local OOU_UtilitiesGrid = OOU_Data.CreateGrid(OOU_Data.Page)
+
+CreateToggle(OOU_UtilitiesGrid, "Anti Fall", "Prevents fall damage and allows movement while mending", "UTILITY", function(v)
+    OneOfUs:ToggleAntiFall(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Anti Trap", "Prevents getting trapped", "UTILITY", function(v)
+    OneOfUs:ToggleAntiTrap(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Auto Generators", "Automatically completes generators", "UTILITY", function(v)
+    OneOfUs:ToggleAutoGeradors(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Auto Heal Players", "Automatically heals other players", "UTILITY", function(v)
+    OneOfUs:ToggleAutoHealPlayers(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Auto Interactions", "Makes all interactions instant", "UTILITY", function(v)
+    OneOfUs:ToggleAutoInteractions(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Auto Sabotage Generators", "Automatically sabotages generators as killer", "UTILITY", function(v)
+    OneOfUs:ToggleAutoSaboteGeradors(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Distance Generators", "Allows completing generators from distance", "UTILITY", function(v)
+    OneOfUs:ToggleDistanceGeradors(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Noclip", "Enables noclip movement", "UTILITY", function(v)
+    OneOfUs:ToggleNoclip(v)
+end)
+
+CreateToggle(OOU_UtilitiesGrid, "Full Brightness", "Maximum brightness (full lighting)", "UTILITY", function(v)
+    OneOfUs:ToggleFullBrightness(v)
+end)
+
+local FTFT_Data = CreatePage("Flee the Facility")
+
+CreateSection(FTFT_Data.Page, "ESP")
+local FTFT_ESPGrid = FTFT_Data.CreateGrid(FTFT_Data.Page)
+
+CreateToggle(FTFT_ESPGrid, "ESP Air Vent", "Shows all air vents on the map", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_AirVent(v)
+end)
+
+CreateToggle(FTFT_ESPGrid, "ESP Beast", "Shows the beast location", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_Beast(v)
+end)
+
+CreateToggle(FTFT_ESPGrid, "ESP Computers", "Shows all computers locations", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_Computers(v)
+end)
+
+CreateToggle(FTFT_ESPGrid, "ESP Exit", "Shows exit doors locations", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_Exit(v)
+end)
+
+CreateToggle(FTFT_ESPGrid, "ESP Freeze Pad", "Shows freeze pad locations", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_FreezePad(v)
+end)
+
+CreateToggle(FTFT_ESPGrid, "ESP Name", "Shows player names with ESP", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_Name(v)
+end)
+
+CreateToggle(FTFT_ESPGrid, "ESP Players", "Shows all players locations", "VISUAL", function(v)
+    FleeTheFacility:ToggleESP_Players(v)
+end)
+
+CreateSection(FTFT_Data.Page, "Utilities")
+local FTFT_UtilitiesGrid = FTFT_Data.CreateGrid(FTFT_Data.Page)
+
+CreateToggle(FTFT_UtilitiesGrid, "Anti Ragdoll", "Prevents ragdoll effects", "UTILITY", function(v)
+    FleeTheFacility:ToggleAntiRagdoll(v)
+end)
+
+CreateToggle(FTFT_UtilitiesGrid, "Fast Crawl", "Increases crawling speed", "UTILITY", function(v)
+    FleeTheFacility:ToggleFastCrawl(v)
+end)
+
+CreateToggle(FTFT_UtilitiesGrid, "Infinity Double Jump", "Enables infinite double jumps", "UTILITY", function(v)
+    FleeTheFacility:ToggleInfinityDoubleJump(v)
+end)
+
 CreateMenuBtn("Prison Life", GamesList)
 CreateMenuBtn("Blind Shot", GamesList)
 CreateMenuBtn("Find the Brainrot", GamesList)
-CreateMenuBtn("Westbound", GamesList) -- Jogo adicionado
+CreateMenuBtn("Westbound", GamesList)
 CreateMenuBtn("FNAF: Eternal Nights", GamesList)
 CreateMenuBtn("Murder Mystery 2", GamesList)
-CreateMenuBtn("M VS S DUELS", GamesList) -- Nome curto na lateral
-CreateMenuBtn("Tower of Hell", GamesList) -- Novo jogo adicionado
+CreateMenuBtn("M VS S DUELS", GamesList)
+CreateMenuBtn("Tower of Hell", GamesList)
+CreateMenuBtn("One of Us", GamesList)
+CreateMenuBtn("Flee the Facility", GamesList)
 
 local Line3 = Instance.new("Frame")
 Line3.Size = UDim2.new(1, 0, 0, 1)
@@ -3662,7 +4046,7 @@ FooterLayout.Padding = UDim.new(0, 2)
 FooterLayout.Parent = FooterGroup
 
 local VersionLabelBottom = Instance.new("TextLabel")
-VersionLabelBottom.Text = "v2.6.1"
+VersionLabelBottom.Text = "v2.7.0"
 VersionLabelBottom.Size = UDim2.new(1, 0, 0, 14)
 VersionLabelBottom.TextColor3 = Color3.fromRGB(80, 85, 85)
 VersionLabelBottom.Font = Enum.Font.Gotham
@@ -3679,7 +4063,6 @@ DevLabelFinal.Font = Enum.Font.Gotham
 DevLabelFinal.TextSize = 10
 DevLabelFinal.Parent = FooterGroup
 
--- [[ DRAG & KEYBIND - INSERT CORRIGIDO ]]
 local dragging, dragInput, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
@@ -3711,19 +4094,10 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- CORREÇÃO: Bind Insert funcionando corretamente
 UserInputService.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.Insert then
         MainFrame.Visible = not MainFrame.Visible
-        print("[Vortex Hub] Interface " .. (MainFrame.Visible and "aberta" or "fechada") .. " via Insert")
     end
 end)
 
-print("[Vortex Hub] Script loaded successfully! v2.6.1")
-print("[Vortex Hub] WESTBOUND COMPLETAMENTE ADICIONADO COM:")
-print("[Vortex Hub] 1. ESP: Players, Animals, Distance+Name, Name, Health, NameAnimals")
-print("[Vortex Hub] 2. AIMBOT: Aimbot E, Silent Aim (ON/OFF)")
-print("[Vortex Hub] 3. UTILITIES: Anti Lasso, Fast Fire, Fast Reload, No Recoil")
-print("[Vortex Hub] 4. WORLD: Disable Fog, Disable Jump Limite, ESP Items House, Instant Rob, No Fall Damage")
-print("[Vortex Hub] SILENT AIM adicionado na seção AIMBOT do Westbound!")
-print("[Vortex Hub] Use INSERT para abrir/fechar a interface!")
+print("[Vortex Hub] Script loaded successfully! v2.7.0")
