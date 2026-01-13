@@ -1,0 +1,417 @@
+--[[
+YOUTUBE TUTORIAL: https://www.youtube.com/watch?v=Yb2GXlsTmNM
+MADE BY @uerd
+]]
+
+-- Carregando a SDK correta conforme o exemplo fornecido
+local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
+Junkie.service = "Vortex-Hub-Key"
+Junkie.identifier = "1007820"
+Junkie.provider = "Vortex-Hub-Key"
+
+-- Configurar variáveis globais
+getgenv().SCRIPT_KEY = nil
+getgenv().UI_CLOSED = false
+
+-- Função para carregar o hub principal
+local function loadMainHub()
+    local success, err = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/MainHub"))()
+    end)
+    
+    if not success then
+        warn("Erro ao carregar o hub principal:", err)
+    end
+end
+
+-- Função principal do script
+local function main()
+    loadMainHub()
+    print("Vortex Hub carregado com sucesso!")
+end
+
+-- Funções de Persistência de Chave e Timer
+local function hasFileSystemSupport()
+    local hasWritefile = pcall(function() return type(writefile) == "function" end)
+    local hasReadfile = pcall(function() return type(readfile) == "function" end)
+    local hasIsfile = pcall(function() return type(isfile) == "function" end)
+    return hasWritefile and hasReadfile and hasIsfile
+end
+
+local fileSystemSupported = hasFileSystemSupport()
+
+local function saveVerifiedKey(key)
+    if not fileSystemSupported then return false end
+    pcall(function() writefile("vortex_key.txt", key) end)
+end
+
+local function loadVerifiedKey()
+    if not fileSystemSupported then return nil end
+    local ok, content = pcall(function()
+        if isfile("vortex_key.txt") then return readfile("vortex_key.txt") end
+    end)
+    return ok and content or nil
+end
+
+local function clearSavedKey()
+    if fileSystemSupported and isfile("vortex_key.txt") then
+        pcall(function() delfile("vortex_key.txt") end)
+    end
+end
+
+-- Funções do Timer Persistente
+local function saveTimer()
+    if not fileSystemSupported then return end
+    pcall(function() writefile("vortex_timer.txt", tostring(os.time())) end)
+end
+
+local function getRemainingCooldown()
+    if not fileSystemSupported or not isfile("vortex_timer.txt") then return 0 end
+    local ok, lastTime = pcall(function() return tonumber(readfile("vortex_timer.txt")) end)
+    if ok and lastTime then
+        local diff = os.time() - lastTime
+        local remaining = 300 - diff
+        return remaining > 0 and remaining or 0
+    end
+    return 0
+end
+
+-- Vortex Hub Key System GUI
+local KeySystem = {
+    Validated = false,
+    Key = nil,
+    Version = "v2.8.0"
+}
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function ShakeFrame(frame)
+    local originalPos = frame.Position
+    local shakeTime = 0.05
+    local intensity = 5
+    task.spawn(function()
+        for i = 1, 6 do
+            local targetPos = originalPos + UDim2.new(0, (i % 2 == 0 and intensity or -intensity), 0, 0)
+            TweenService:Create(frame, TweenInfo.new(shakeTime, Enum.EasingStyle.Linear), {Position = targetPos}):Play()
+            task.wait(shakeTime)
+        end
+        TweenService:Create(frame, TweenInfo.new(shakeTime, Enum.EasingStyle.Linear), {Position = originalPos}):Play()
+    end)
+end
+
+-- GUI Creation
+function KeySystem:CreateKeyGUI()
+    local KeyScreenGui = Instance.new("ScreenGui")
+    KeyScreenGui.Name = "VortexKeySystem"
+    KeyScreenGui.ResetOnSpawn = false
+    KeyScreenGui.IgnoreGuiInset = true
+    local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+    KeyScreenGui.Parent = success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
+    
+    local BackgroundOverlay = Instance.new("Frame")
+    BackgroundOverlay.Name = "Overlay"
+    BackgroundOverlay.Size = UDim2.new(1, 0, 1, 0)
+    BackgroundOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    BackgroundOverlay.BackgroundTransparency = 1
+    BackgroundOverlay.BorderSizePixel = 0
+    BackgroundOverlay.Parent = KeyScreenGui
+    
+    local MainFrame = Instance.new("Frame")
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainFrame.BackgroundColor3 = Color3.fromHex("17171C")
+    MainFrame.BorderSizePixel = 0
+    MainFrame.AutomaticSize = Enum.AutomaticSize.Y
+    MainFrame.ClipsDescendants = true
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    MainFrame.Parent = KeyScreenGui
+    
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 8)
+    MainCorner.Parent = MainFrame
+    
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Color3.fromHex("25252D")
+    MainStroke.Thickness = 1
+    MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    MainStroke.Parent = MainFrame
+    
+    local TopBar = Instance.new("Frame")
+    TopBar.Size = UDim2.new(1, 0, 0, 40)
+    TopBar.BackgroundColor3 = Color3.fromHex("1C1C22")
+    TopBar.BorderSizePixel = 0
+    TopBar.Parent = MainFrame
+    
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.CornerRadius = UDim.new(0, 8)
+    TopCorner.Parent = TopBar
+    
+    local Title = Instance.new("TextLabel")
+    Title.Text = "VORTEX HUB - KEY SYSTEM"
+    Title.Size = UDim2.new(1, -60, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.TextColor3 = Color3.fromRGB(138, 43, 226)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 14
+    Title.BackgroundTransparency = 1
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TopBar
+    
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Text = "X"
+    CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+    CloseBtn.Position = UDim2.new(1, -30, 0.5, -12)
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    CloseBtn.Font = Enum.Font.Gotham
+    CloseBtn.TextSize = 14
+    CloseBtn.AutoButtonColor = false
+    CloseBtn.Parent = TopBar
+    
+    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+    
+    CloseBtn.MouseEnter:Connect(function()
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 0, BackgroundColor3 = Color3.fromRGB(200, 45, 45), TextColor3 = Color3.new(1, 1, 1)}):Play()
+    end)
+    CloseBtn.MouseLeave:Connect(function()
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(150, 150, 150)}):Play()
+    end)
+    
+    local function CloseGUI()
+        TweenService:Create(BackgroundOverlay, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {BackgroundTransparency = 1}):Play()
+        local outTween = TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0,0,0,0)})
+        outTween:Play()
+        outTween.Completed:Wait()
+        KeyScreenGui:Destroy()
+        getgenv().UI_CLOSED = true
+    end
+
+    CloseBtn.MouseButton1Click:Connect(CloseGUI)
+    
+    local Content = Instance.new("Frame")
+    Content.Size = UDim2.new(1, -40, 0, 0)
+    Content.Position = UDim2.new(0, 20, 0, 55)
+    Content.BackgroundTransparency = 1
+    Content.AutomaticSize = Enum.AutomaticSize.Y
+    Content.Parent = MainFrame
+    
+    local ContentLayout = Instance.new("UIListLayout")
+    ContentLayout.Padding = UDim.new(0, 15)
+    ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    ContentLayout.Parent = Content
+    
+    local Padding = Instance.new("UIPadding")
+    Padding.PaddingBottom = UDim.new(0, 25)
+    Padding.Parent = Content
+
+    local IconFrame = Instance.new("Frame")
+    IconFrame.Size = UDim2.new(0, 80, 0, 80)
+    IconFrame.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    IconFrame.Parent = Content
+    Instance.new("UICorner", IconFrame).CornerRadius = UDim.new(0, 12)
+    
+    local IconLabel = Instance.new("TextLabel")
+    IconLabel.Text = "V"
+    IconLabel.Size = UDim2.new(1, 0, 1, 0)
+    IconLabel.Font = Enum.Font.GothamBold
+    IconLabel.TextSize = 32
+    IconLabel.TextColor3 = Color3.new(1, 1, 1)
+    IconLabel.BackgroundTransparency = 1
+    IconLabel.Parent = IconFrame
+    
+    local WelcomeText = Instance.new("TextLabel")
+    WelcomeText.Text = "VORTEX HUB ACCESS"
+    WelcomeText.Size = UDim2.new(1, 0, 0, 25)
+    WelcomeText.Font = Enum.Font.GothamBold
+    WelcomeText.TextSize = 16
+    WelcomeText.TextColor3 = Color3.new(1, 1, 1)
+    WelcomeText.BackgroundTransparency = 1
+    WelcomeText.Parent = Content
+    
+    local SubText = Instance.new("TextLabel")
+    SubText.Text = "Please enter your access key above"
+    SubText.Size = UDim2.new(1, 0, 0, 15)
+    SubText.Font = Enum.Font.Gotham
+    SubText.TextSize = 11
+    SubText.TextColor3 = Color3.fromRGB(150, 150, 150)
+    SubText.BackgroundTransparency = 1
+    SubText.Parent = Content
+
+    local InputFrame = Instance.new("Frame")
+    InputFrame.Size = UDim2.new(1, 0, 0, 45)
+    InputFrame.BackgroundColor3 = Color3.fromHex("1C1C22")
+    InputFrame.Parent = Content
+    
+    Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 6)
+    local InputStroke = Instance.new("UIStroke")
+    InputStroke.Color = Color3.fromHex("25252D")
+    InputStroke.Thickness = 1.5
+    InputStroke.Parent = InputFrame
+    
+    local KeyInput = Instance.new("TextBox")
+    KeyInput.Size = UDim2.new(1, -20, 1, 0)
+    KeyInput.Position = UDim2.new(0, 10, 0, 0)
+    KeyInput.BackgroundTransparency = 1
+    KeyInput.PlaceholderText = "Enter key here..."
+    KeyInput.PlaceholderColor3 = Color3.fromRGB(80, 80, 100)
+    KeyInput.Text = ""
+    KeyInput.Font = Enum.Font.Gotham
+    KeyInput.TextSize = 14
+    KeyInput.TextColor3 = Color3.new(1, 1, 1)
+    KeyInput.Parent = InputFrame
+    
+    local ValidateButton = Instance.new("TextButton")
+    ValidateButton.Size = UDim2.new(1, 0, 0, 45)
+    ValidateButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    ValidateButton.Text = "VALIDATE KEY"
+    ValidateButton.Font = Enum.Font.GothamBold
+    ValidateButton.TextSize = 14
+    ValidateButton.TextColor3 = Color3.new(1, 1, 1)
+    ValidateButton.AutoButtonColor = false
+    ValidateButton.Parent = Content
+    Instance.new("UICorner", ValidateButton).CornerRadius = UDim.new(0, 6)
+    
+    local GetKeyButton = Instance.new("TextButton")
+    GetKeyButton.Size = UDim2.new(1, 0, 0, 40)
+    GetKeyButton.BackgroundColor3 = Color3.fromHex("25252D")
+    GetKeyButton.Text = "COPY LINK"
+    GetKeyButton.Font = Enum.Font.Gotham
+    GetKeyButton.TextSize = 12
+    GetKeyButton.TextColor3 = Color3.new(1, 1, 1)
+    GetKeyButton.AutoButtonColor = false
+    GetKeyButton.Parent = Content
+    Instance.new("UICorner", GetKeyButton).CornerRadius = UDim.new(0, 6)
+
+    -- Tweens Suaves de Hover
+    ValidateButton.MouseEnter:Connect(function()
+        TweenService:Create(ValidateButton, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(158, 63, 246)}):Play()
+    end)
+    ValidateButton.MouseLeave:Connect(function()
+        TweenService:Create(ValidateButton, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(138, 43, 226)}):Play()
+    end)
+
+    -- Lógica do Timer de Cópia Persistente
+    local isCooldown = false
+    local function startCooldown(seconds)
+        isCooldown = true
+        GetKeyButton.Interactable = false
+        GetKeyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        
+        task.spawn(function()
+            local remaining = seconds
+            while remaining > 0 do
+                local mins = math.floor(remaining / 60)
+                local secs = remaining % 60
+                GetKeyButton.Text = string.format("WAIT %02d:%02d", mins, secs)
+                task.wait(1)
+                remaining = remaining - 1
+                if not GetKeyButton or not GetKeyButton.Parent then break end
+            end
+            if GetKeyButton and GetKeyButton.Parent then
+                isCooldown = false
+                GetKeyButton.Interactable = true
+                GetKeyButton.Text = "COPY LINK"
+                GetKeyButton.BackgroundColor3 = Color3.fromHex("25252D")
+            end
+        end)
+    end
+
+    -- Verificar se já existe um timer salvo ao abrir
+    local timeLeft = getRemainingCooldown()
+    if timeLeft > 0 then
+        startCooldown(timeLeft)
+    end
+
+    GetKeyButton.MouseButton1Click:Connect(function()
+        if isCooldown then return end
+        
+        local secureGetKeyLink = Junkie.get_key_link()
+        if not secureGetKeyLink then
+            GetKeyButton.Text = "ERROR!"
+            task.wait(1.5)
+            GetKeyButton.Text = "COPY LINK"
+            return
+        end
+        
+        if setclipboard then
+            setclipboard(secureGetKeyLink)
+            GetKeyButton.Text = "COPIED!"
+            task.wait(1)
+            saveTimer()
+            startCooldown(300)
+        else
+            print("Key Link:", secureGetKeyLink)
+            saveTimer()
+            startCooldown(300)
+        end
+    end)
+
+    -- Animação de Entrada
+    task.spawn(function()
+        TweenService:Create(BackgroundOverlay, TweenInfo.new(0.6, Enum.EasingStyle.Quart), {BackgroundTransparency = 0.6}):Play()
+        local targetSize = workspace.CurrentCamera.ViewportSize.X < 500 and UDim2.new(0.9, 0, 0, 0) or UDim2.new(0, 380, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = targetSize}):Play()
+    end)
+
+    -- Lógica de Validação
+    ValidateButton.MouseButton1Click:Connect(function()
+        if not ValidateButton.Interactable then return end
+        local key = KeyInput.Text:gsub("%s+", "")
+        if #key == 0 then
+            TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 50, 50)}):Play()
+            ShakeFrame(InputFrame)
+            return
+        end
+        
+        ValidateButton.Text = "VERIFYING..."
+        ValidateButton.Interactable = false
+        KeyInput.Interactable = false
+        
+        task.spawn(function()
+            local result = Junkie.check_key(key)
+            if result and result.valid then
+                TweenService:Create(InputStroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(50, 255, 100)}):Play()
+                ValidateButton.Text = "SUCCESS!"
+                saveVerifiedKey(key)
+                getgenv().SCRIPT_KEY = key
+                task.wait(0.5)
+                CloseGUI()
+                main()
+            else
+                TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 50, 50)}):Play()
+                ValidateButton.Text = "INVALID KEY"
+                ShakeFrame(InputFrame)
+                task.wait(1.5)
+                ValidateButton.Text = "VALIDATE KEY"
+                ValidateButton.Interactable = true
+                KeyInput.Interactable = true
+                TweenService:Create(InputStroke, TweenInfo.new(0.3), {Color = Color3.fromHex("25252D")}):Play()
+            end
+        end)
+    end)
+
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        local targetSize = workspace.CurrentCamera.ViewportSize.X < 500 and UDim2.new(0.9, 0, 0, 0) or UDim2.new(0, 380, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = targetSize}):Play()
+    end)
+
+    return KeyScreenGui
+end
+
+-- Verificação inicial
+local savedKey = loadVerifiedKey()
+if savedKey then
+    local result = Junkie.check_key(savedKey)
+    if result and result.valid then
+        getgenv().SCRIPT_KEY = savedKey
+        main()
+    else
+        clearSavedKey()
+        KeySystem:CreateKeyGUI()
+    end
+else
+    KeySystem:CreateKeyGUI()
+end
