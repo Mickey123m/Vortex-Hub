@@ -1,29 +1,165 @@
--- [[ DESATIVAR BLIND SHOT ESP ]]
+-- [[ ESP TOGGLE PARA BLIND SHOT ]]
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Inicializar ou obter o sistema global
+if not _G.BlindShotESP then
+    _G.BlindShotESP = {
+        Active = false,
+        Connections = {},
+        RenderConnection = nil,
+        Highlights = {}
+    }
+end
+
 local BlindShotESP = _G.BlindShotESP
 
-if BlindShotESP then
-    function BlindShotESP:Disable()
-        if not self.Active then return end
-        
-        self.Active = false
-        
-        if self.RenderConnection then
-            self.RenderConnection:Disconnect()
-            self.RenderConnection = nil
-        end
-        
-        for _, conn in ipairs(self.Connections) do
-            if conn then
-                pcall(function() conn:Disconnect() end)
+-- Função para forçar visibilidade dos jogadores
+local function ForceVisibility()
+    if not BlindShotESP.Active then return end
+    
+    local jogadoresVivos = workspace:FindFirstChild("jogadoresVivos")
+    if not jogadoresVivos then return end
+
+    for _, v in ipairs(jogadoresVivos:GetChildren()) do
+        if v.Name ~= LocalPlayer.Name then
+            local char = workspace:FindFirstChild(v.Name)
+            if char and char:IsA("Model") then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part.Name == "hitbox" or part.Name == "HumanoidRootPart" then
+                        if part.Transparency ~= 1 then
+                            part.Transparency = 1
+                        end
+                    elseif part:IsA("BasePart") then
+                        if part.Transparency ~= 0 then
+                            part.Transparency = 0
+                        end
+                    elseif part:IsA("Decal") or part:IsA("Texture") then
+                        if part.Transparency ~= 0 then
+                            part.Transparency = 0
+                        end
+                    elseif part:IsA("ParticleEmitter") or part:IsA("Beam") or part:IsA("Trail") then
+                        if part.Enabled == false then
+                            part.Enabled = true
+                        end
+                    end
+                end
             end
         end
-        
-        self.Connections = {}
-        self:CleanupHighlights()
-        
-        print("[Blind Shot ESP] Desativado!")
     end
 
-    -- Execução do comando de desativação
-    BlindShotESP:Disable()
+    for _, h in ipairs(workspace:GetChildren()) do
+        if h:IsA("Highlight") and h.Name == "Highlight_TEMP" then
+            h.FillTransparency = 1
+            h.OutlineTransparency = 0
+        end
+    end
+    
+    for playerName, highlight in pairs(BlindShotESP.Highlights) do
+        if highlight and highlight.Parent then
+            highlight:Destroy()
+        end
+    end
+    BlindShotESP.Highlights = {}
 end
+
+-- Função para bypass do jump
+local function BypassJump(char)
+    if not BlindShotESP.Active then return end
+    
+    local hum = char:WaitForChild("Humanoid")
+    hum:GetPropertyChangedSignal("JumpHeight"):Connect(function()
+        if hum.JumpHeight == 0 then
+            hum.JumpHeight = 50
+        end
+    end)
+end
+
+-- Função para limpar highlights
+function BlindShotESP:CleanupHighlights()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("Highlight") and (obj.Name == "Highlight_TEMP" or obj.Name:find("ESP")) then
+            pcall(function() obj:Destroy() end)
+        end
+    end
+    
+    for playerName, highlight in pairs(self.Highlights) do
+        if highlight and highlight.Parent then
+            pcall(function() highlight:Destroy() end)
+        end
+    end
+    self.Highlights = {}
+end
+
+-- Função para inicializar o ESP
+function BlindShotESP:Initialize()
+    self:CleanupHighlights()
+    
+    self.RenderConnection = RunService.RenderStepped:Connect(function()
+        pcall(ForceVisibility)
+    end)
+    
+    if LocalPlayer.Character then 
+        BypassJump(LocalPlayer.Character) 
+    end
+    table.insert(self.Connections, LocalPlayer.CharacterAdded:Connect(BypassJump))
+    
+    print("[Blind Shot ESP] Inicializado!")
+end
+
+-- Função para desativar o ESP
+function BlindShotESP:Disable()
+    if not self.Active then return end
+    
+    self.Active = false
+    
+    if self.RenderConnection then
+        self.RenderConnection:Disconnect()
+        self.RenderConnection = nil
+    end
+    
+    for _, conn in ipairs(self.Connections) do
+        if conn then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+    
+    self.Connections = {}
+    self:CleanupHighlights()
+    
+    print("[Blind Shot ESP] Desativado!")
+end
+
+-- Função para ativar o ESP
+function BlindShotESP:Enable()
+    if self.Active then 
+        -- Se já estiver ativo, desativa
+        self:Disable()
+        return
+    end
+    
+    self.Active = true
+    self:Initialize()
+    print("[Blind Shot ESP] Ativado!")
+end
+
+-- [[ FUNÇÃO PRINCIPAL TOGGLE ]]
+local function ToggleBlindShotESP()
+    if BlindShotESP.Active then
+        BlindShotESP:Disable()
+        return "ESP Desativado"
+    else
+        BlindShotESP:Enable()
+        return "ESP Ativado"
+    end
+end
+
+-- Executar toggle automaticamente (pode ser chamada externamente)
+-- Para usar como loadstring única, você pode:
+-- 1. Chamar ToggleBlindShotESP() para alternar
+-- 2. Chamar BlindShotESP:Enable() para forçar ativar
+-- 3. Chamar BlindShotESP:Disable() para forçar desativar
+
+-- Exemplo de uso: execute esta loadstring para alternar
+ToggleBlindShotESP()
