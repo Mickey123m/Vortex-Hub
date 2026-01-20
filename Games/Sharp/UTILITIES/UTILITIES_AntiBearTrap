@@ -1,21 +1,39 @@
+-- CONFIGURAÇÕES
 local TargetItem = "BearTrap"
 local TargetPart = "HitDetect"
+local ToggleKey = "Vortex_BearTrap_Control" -- Chave única para este script
 
-if _G.AntiTrapActiveID then
-    _G.AntiTrapActiveID = nil
-    warn("ANTI-BEARTRAP: DESATIVADO")
-    return
+-- 1. CHECA SE DEVE DESLIGAR
+if _G[ToggleKey] then
+    -- Avisa o loop para parar
+    _G[ToggleKey] = nil
+    
+    -- Desconecta os eventos de monitoramento (ChildAdded)
+    if _G.BearTrapConnections then
+        for _, conn in pairs(_G.BearTrapConnections) do
+            if conn then conn:Disconnect() end
+        end
+        _G.BearTrapConnections = nil
+    end
+    
+    warn("ANTI-BEARTRAP: >>> DESATIVADO <<<")
+    return -- Para a execução aqui
 end
 
-local currentID = tick()
-_G.AntiTrapActiveID = currentID
-warn("ANTI-BEARTRAP: ATIVADO")
+-- 2. SE CHEGOU AQUI, VAMOS ATIVAR
+_G[ToggleKey] = true
+_G.BearTrapConnections = {}
+local currentID = tick() -- ID único para esta sessão
+_G.BearTrapCurrentID = currentID
 
-local function disableTrap(obj)
+warn("ANTI-BEARTRAP: >>> ATIVADO <<<")
+
+-- FUNÇÃO QUE REMOVE O TOUCHINTEREST
+local function removeTouch(obj)
     if obj.Name == TargetItem then
-        local hit = obj:FindFirstChild(TargetPart) or obj:WaitForChild(TargetPart, 3)
-        
+        local hit = obj:FindFirstChild(TargetPart)
         if hit then
+            -- Procura e deleta o transmissor de toque
             for _, child in pairs(hit:GetChildren()) do
                 if child:IsA("TouchTransmitter") or child.Name == "TouchInterest" then
                     child:Destroy()
@@ -25,38 +43,41 @@ local function disableTrap(obj)
     end
 end
 
-local function getEntitiesFolders()
-    local folders = {}
-    for _, child in pairs(workspace:GetChildren()) do
-        if child.Name == "Entities" and child:IsA("Folder") then
-            table.insert(folders, child)
-        end
+-- FUNÇÃO PARA LOCALIZAR PASTAS
+local function getFolders()
+    local f = {}
+    for _, c in pairs(workspace:GetChildren()) do
+        if c.Name == "Entities" and c:IsA("Folder") then table.insert(f, c) end
     end
-    return folders
+    return f
 end
 
-for _, folder in pairs(getEntitiesFolders()) do
+-- 3. INICIA O MONITORAMENTO
+for _, folder in pairs(getFolders()) do
+    -- Limpa as que já existem no mapa agora
     for _, child in pairs(folder:GetChildren()) do
-        disableTrap(child)
+        removeTouch(child)
     end
     
-    folder.ChildAdded:Connect(function(child)
-        if _G.AntiTrapActiveID == currentID then
-            task.wait(0.2)
-            disableTrap(child)
+    -- Conecta para limpar novas traps que o servidor criar
+    local conn = folder.ChildAdded:Connect(function(child)
+        if _G[ToggleKey] == true and _G.BearTrapCurrentID == currentID then
+            task.wait(0.1) -- Tempo para o servidor criar o TouchInterest
+            removeTouch(child)
         end
     end)
+    table.insert(_G.BearTrapConnections, conn)
 end
 
+-- 4. LOOP DE VARREDURA (BACKUP)
 task.spawn(function()
-    while _G.AntiTrapActiveID == currentID do
-        for _, folder in pairs(getEntitiesFolders()) do
+    while _G[ToggleKey] == true and _G.BearTrapCurrentID == currentID do
+        for _, folder in pairs(getFolders()) do
             for _, child in pairs(folder:GetChildren()) do
-                if child.Name == TargetItem then
-                    disableTrap(child)
-                end
+                removeTouch(child)
             end
         end
-        task.wait(0.5)
+        task.wait(1)
     end
+    print("Anti-BearTrap: Sistema encerrado totalmente.")
 end)
