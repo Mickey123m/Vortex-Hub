@@ -1,10 +1,8 @@
--- CONFIGURAÇÕES DO ESP
 local ESPColor = Color3.fromRGB(255, 0, 0)
 local FillTransparency = 0.5
 local OutlineTransparency = 0
 local TeamCheck = true
 
--- SISTEMA DE TOGGLE
 if _G.ESPActiveID then
     _G.ESPActiveID = nil
     task.wait(0.1)
@@ -26,19 +24,15 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CharactersFolder = workspace:WaitForChild("Characters")
 
--- FUNÇÃO QUE APLICA O HIGHLIGHT
 local function applyESP(char)
     if not char:IsA("Model") then return end
     
-    -- Espera o Humanoid carregar se necessário
     local hum = char:WaitForChild("Humanoid", 5)
     if not hum then return end
 
-    -- Remove ESP antigo se existir
     local oldEsp = char:FindFirstChild("ExternalESP")
     if oldEsp then oldEsp:Destroy() end
 
-    -- Validação: Não é você, é inimigo e está vivo
     local plr = Players:GetPlayerFromCharacter(char)
     if char ~= LocalPlayer.Character and (not TeamCheck or (plr and plr.Team ~= LocalPlayer.Team)) then
         if hum.Health > 0 then
@@ -54,20 +48,17 @@ local function applyESP(char)
     end
 end
 
--- 1. APLICA NOS JOGADORES QUE JÁ ESTÃO NA PASTA
 for _, char in pairs(CharactersFolder:GetChildren()) do
     applyESP(char)
 end
 
--- 2. DETECTA NOVOS SPAWNS IMEDIATAMENTE
 CharactersFolder.ChildAdded:Connect(function(char)
     if _G.ESPActiveID == currentID then
-        task.wait(0.1) -- Pequeno delay pro personagem carregar as partes
+        task.wait(0.1)
         applyESP(char)
     end
 end)
 
--- 3. LOOP DE SEGURANÇA (VERIFICA SE ALGUÉM MUDOU DE TIME OU MORREU)
 task.spawn(function()
     while _G.ESPActiveID == currentID do
         for _, char in pairs(CharactersFolder:GetChildren()) do
@@ -75,13 +66,11 @@ task.spawn(function()
             local hum = char:FindFirstChild("Humanoid")
             
             if esp then
-                -- Se o cara morreu ou mudou pro seu time, tira o ESP
                 local plr = Players:GetPlayerFromCharacter(char)
                 if (hum and hum.Health <= 0) or (TeamCheck and plr and plr.Team == LocalPlayer.Team) then
                     esp:Destroy()
                 end
             elseif char ~= LocalPlayer.Character and hum and hum.Health > 0 then
-                -- Se ele tá vivo e sem ESP (e não é você), tenta aplicar de novo
                 applyESP(char)
             end
         end

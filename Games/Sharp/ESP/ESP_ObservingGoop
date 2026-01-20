@@ -1,9 +1,7 @@
--- CONFIGURAÇÕES DO ESP
-local NameColor = Color3.fromRGB(0, 255, 150) -- Verde "Goop"
+local NameColor = Color3.fromRGB(0, 255, 150)
 local TextSize = 14
 local TargetItem = "ObservingGoop"
 
--- SISTEMA DE TOGGLE
 if _G.ObservingGoopESPActiveID then
     _G.ObservingGoopESPActiveID = nil
     task.wait(0.1)
@@ -20,14 +18,11 @@ local currentID = tick()
 _G.ObservingGoopESPActiveID = currentID
 warn("OBSERVING GOOP ESP: ATIVADO")
 
--- FUNÇÃO QUE APLICA O NOME
 local function applyGoopESP(obj)
     if obj.Name == TargetItem then
-        -- Tenta achar uma peça base ou o próprio modelo
         local adornee = obj:FindFirstChild("HitDetect") or obj:FindFirstChildWhichIsA("BasePart") or obj
         
         if adornee then
-            -- Remove antigo se existir
             local oldName = adornee:FindFirstChild("GoopExternalName")
             if oldName then oldName:Destroy() end
 
@@ -43,7 +38,7 @@ local function applyGoopESP(obj)
             label.Parent = billboard
             label.BackgroundTransparency = 1
             label.Size = UDim2.new(1, 0, 1, 0)
-            label.Text = "👁️ Observing Goop 👁️"
+            label.Text = "Observing Goop"
             label.TextColor3 = NameColor
             label.TextStrokeTransparency = 0
             label.Font = Enum.Font.GothamBold
@@ -52,7 +47,6 @@ local function applyGoopESP(obj)
     end
 end
 
--- FUNÇÃO PARA IDENTIFICAR AS PASTAS ENTITIES
 local function getEntitiesFolders()
     local folders = {}
     for _, child in pairs(workspace:GetChildren()) do
@@ -63,13 +57,11 @@ local function getEntitiesFolders()
     return folders
 end
 
--- 1. APLICA NOS EXISTENTES
 for _, folder in pairs(getEntitiesFolders()) do
     for _, child in pairs(folder:GetChildren()) do
         applyGoopESP(child)
     end
     
-    -- 2. DETECTA NOVOS SPAWNS
     folder.ChildAdded:Connect(function(child)
         if _G.ObservingGoopESPActiveID == currentID then
             task.wait(0.3)
@@ -78,7 +70,6 @@ for _, folder in pairs(getEntitiesFolders()) do
     end)
 end
 
--- 3. LOOP DE SEGURANÇA
 task.spawn(function()
     while _G.ObservingGoopESPActiveID == currentID do
         for _, folder in pairs(getEntitiesFolders()) do

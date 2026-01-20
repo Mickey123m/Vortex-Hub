@@ -39,7 +39,7 @@ local function applyCurseESP(obj)
             label.Parent = billboard
             label.BackgroundTransparency = 1
             label.Size = UDim2.new(1, 0, 1, 0)
-            label.Text = "✨ Curse Circle ✨"
+            label.Text = "Curse Circle"
             label.TextColor3 = NameColor
             label.TextStrokeTransparency = 0
             label.Font = Enum.Font.GothamBold

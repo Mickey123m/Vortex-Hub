@@ -1,9 +1,7 @@
--- CONFIGURAÇÕES DO ESP
-local NameColor = Color3.fromRGB(0, 170, 255) -- Azul Teleporte
+local NameColor = Color3.fromRGB(0, 170, 255)
 local TextSize = 14
 local TargetItem = "TeleportStone"
 
--- SISTEMA DE TOGGLE
 if _G.TeleportStoneESPActiveID then
     _G.TeleportStoneESPActiveID = nil
     task.wait(0.1)
@@ -20,14 +18,11 @@ local currentID = tick()
 _G.TeleportStoneESPActiveID = currentID
 warn("TELEPORT STONE ESP: ATIVADO")
 
--- FUNÇÃO QUE APLICA O NOME
 local function applyTeleportESP(obj)
     if obj.Name == TargetItem then
-        -- Tenta achar a peça principal ou usa o modelo
         local adornee = obj:FindFirstChild("Main") or obj:FindFirstChildWhichIsA("BasePart") or obj
         
         if adornee then
-            -- Remove antigo se existir
             local oldName = adornee:FindFirstChild("TeleportStoneExternalName")
             if oldName then oldName:Destroy() end
 
@@ -35,7 +30,7 @@ local function applyTeleportESP(obj)
             billboard.Name = "TeleportStoneExternalName"
             billboard.Adornee = adornee
             billboard.Size = UDim2.new(0, 150, 0, 40)
-            billboard.StudsOffset = Vector3.new(0, 4, 0) -- Um pouco mais alto para destacar
+            billboard.StudsOffset = Vector3.new(0, 4, 0)
             billboard.AlwaysOnTop = true
             billboard.Parent = adornee
 
@@ -43,7 +38,7 @@ local function applyTeleportESP(obj)
             label.Parent = billboard
             label.BackgroundTransparency = 1
             label.Size = UDim2.new(1, 0, 1, 0)
-            label.Text = "🌀 Teleport Stone 🌀"
+            label.Text = "Teleport Stone"
             label.TextColor3 = NameColor
             label.TextStrokeTransparency = 0
             label.Font = Enum.Font.GothamBold
@@ -52,7 +47,6 @@ local function applyTeleportESP(obj)
     end
 end
 
--- FUNÇÃO PARA IDENTIFICAR AS PASTAS ENTITIES
 local function getEntitiesFolders()
     local folders = {}
     for _, child in pairs(workspace:GetChildren()) do
@@ -63,13 +57,11 @@ local function getEntitiesFolders()
     return folders
 end
 
--- 1. APLICA NOS EXISTENTES
 for _, folder in pairs(getEntitiesFolders()) do
     for _, child in pairs(folder:GetChildren()) do
         applyTeleportESP(child)
     end
     
-    -- 2. DETECTA NOVOS SPAWNS
     folder.ChildAdded:Connect(function(child)
         if _G.TeleportStoneESPActiveID == currentID then
             task.wait(0.3)
@@ -78,7 +70,6 @@ for _, folder in pairs(getEntitiesFolders()) do
     end)
 end
 
--- 3. LOOP DE SEGURANÇA
 task.spawn(function()
     while _G.TeleportStoneESPActiveID == currentID do
         for _, folder in pairs(getEntitiesFolders()) do

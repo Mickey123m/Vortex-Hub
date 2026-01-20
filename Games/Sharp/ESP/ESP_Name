@@ -1,9 +1,7 @@
--- CONFIGURAÇÕES DO NAME ESP
-local NameColor = Color3.fromRGB(255, 255, 255) -- Cor do texto
+local NameColor = Color3.fromRGB(255, 255, 255)
 local TextSize = 14
 local TeamCheck = true
 
--- SISTEMA DE TOGGLE
 if _G.NameESPActiveID then
     _G.NameESPActiveID = nil
     task.wait(0.1)
@@ -25,7 +23,6 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CharactersFolder = workspace:WaitForChild("Characters")
 
--- FUNÇÃO QUE APLICA O NOME
 local function applyNameESP(char)
     if not char:IsA("Model") then return end
     
@@ -33,11 +30,9 @@ local function applyNameESP(char)
     local head = char:WaitForChild("Head", 5)
     if not hum or not head then return end
 
-    -- Remove antigo se existir
     local oldName = char:FindFirstChild("ExternalNameESP")
     if oldName then oldName:Destroy() end
 
-    -- Validação
     local plr = Players:GetPlayerFromCharacter(char)
     if char ~= LocalPlayer.Character and (not TeamCheck or (plr and plr.Team ~= LocalPlayer.Team)) then
         if hum.Health > 0 then
@@ -45,7 +40,7 @@ local function applyNameESP(char)
             billboard.Name = "ExternalNameESP"
             billboard.Adornee = head
             billboard.Size = UDim2.new(0, 200, 0, 50)
-            billboard.StudsOffset = Vector3.new(0, 2.5, 0) -- Distância acima da cabeça
+            billboard.StudsOffset = Vector3.new(0, 2.5, 0)
             billboard.AlwaysOnTop = true
             billboard.Parent = char
 
@@ -55,27 +50,24 @@ local function applyNameESP(char)
             label.Size = UDim2.new(1, 0, 1, 0)
             label.Text = plr and plr.Name or char.Name
             label.TextColor3 = NameColor
-            label.TextStrokeTransparency = 0 -- Borda preta para ler melhor
+            label.TextStrokeTransparency = 0
             label.Font = Enum.Font.GothamBold
             label.TextSize = TextSize
         end
     end
 end
 
--- 1. APLICA NOS JOGADORES QUE JÁ ESTÃO NA PASTA
 for _, char in pairs(CharactersFolder:GetChildren()) do
     applyNameESP(char)
 end
 
--- 2. DETECTA NOVOS SPAWNS
 CharactersFolder.ChildAdded:Connect(function(char)
     if _G.NameESPActiveID == currentID then
-        task.wait(0.2) -- Espera carregar o personagem
+        task.wait(0.2)
         applyNameESP(char)
     end
 end)
 
--- 3. LOOP DE SEGURANÇA
 task.spawn(function()
     while _G.NameESPActiveID == currentID do
         for _, char in pairs(CharactersFolder:GetChildren()) do
@@ -84,7 +76,6 @@ task.spawn(function()
             
             if nameTag then
                 local plr = Players:GetPlayerFromCharacter(char)
-                -- Remove se morreu ou mudou pro time
                 if (hum and hum.Health <= 0) or (TeamCheck and plr and plr.Team == LocalPlayer.Team) then
                     nameTag:Destroy()
                 end

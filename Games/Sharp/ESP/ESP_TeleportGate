@@ -1,45 +1,44 @@
-local NameColor = Color3.fromRGB(255, 0, 0)
+local NameColor = Color3.fromRGB(0, 170, 255)
 local TextSize = 14
-local TargetItem = "BearTrap"
-local TargetPart = "HitDetect"
+local TargetItem = "TeleportGate"
 
-if _G.BearTrapNameESPActiveID then
-    _G.BearTrapNameESPActiveID = nil
+if _G.TeleportGateESPActiveID then
+    _G.TeleportGateESPActiveID = nil
     task.wait(0.1)
     for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name == "BearTrapExternalName" then
+        if obj.Name == "TeleportGateExternalName" then
             obj:Destroy()
         end
     end
-    warn("BEARTRAP ESP: DESATIVADO")
+    warn("TELEPORT GATE ESP: DESATIVADO")
     return
 end
 
 local currentID = tick()
-_G.BearTrapNameESPActiveID = currentID
-warn("BEARTRAP ESP: ATIVADO")
+_G.TeleportGateESPActiveID = currentID
+warn("TELEPORT GATE ESP: ATIVADO")
 
-local function applyTrapName(obj)
+local function applyGateESP(obj)
     if obj.Name == TargetItem then
-        local hit = obj:FindFirstChild(TargetPart) or obj:WaitForChild(TargetPart, 3)
+        local adornee = obj:FindFirstChild("Main") or obj:FindFirstChild("HitDetect") or obj:FindFirstChildWhichIsA("BasePart") or obj
         
-        if hit then
-            local oldName = hit:FindFirstChild("BearTrapExternalName")
+        if adornee then
+            local oldName = adornee:FindFirstChild("TeleportGateExternalName")
             if oldName then oldName:Destroy() end
 
             local billboard = Instance.new("BillboardGui")
-            billboard.Name = "BearTrapExternalName"
-            billboard.Adornee = hit
-            billboard.Size = UDim2.new(0, 100, 0, 40)
-            billboard.StudsOffset = Vector3.new(0, 2, 0)
+            billboard.Name = "TeleportGateExternalName"
+            billboard.Adornee = adornee
+            billboard.Size = UDim2.new(0, 150, 0, 40)
+            billboard.StudsOffset = Vector3.new(0, 5, 0)
             billboard.AlwaysOnTop = true
-            billboard.Parent = hit
+            billboard.Parent = adornee
 
             local label = Instance.new("TextLabel")
             label.Parent = billboard
             label.BackgroundTransparency = 1
             label.Size = UDim2.new(1, 0, 1, 0)
-            label.Text = "BearTrap"
+            label.Text = "Teleport Gate"
             label.TextColor3 = NameColor
             label.TextStrokeTransparency = 0
             label.Font = Enum.Font.GothamBold
@@ -60,29 +59,29 @@ end
 
 for _, folder in pairs(getEntitiesFolders()) do
     for _, child in pairs(folder:GetChildren()) do
-        applyTrapName(child)
+        applyGateESP(child)
     end
     
     folder.ChildAdded:Connect(function(child)
-        if _G.BearTrapNameESPActiveID == currentID then
+        if _G.TeleportGateESPActiveID == currentID then
             task.wait(0.3)
-            applyTrapName(child)
+            applyGateESP(child)
         end
     end)
 end
 
 task.spawn(function()
-    while _G.BearTrapNameESPActiveID == currentID do
+    while _G.TeleportGateESPActiveID == currentID do
         for _, folder in pairs(getEntitiesFolders()) do
             for _, child in pairs(folder:GetChildren()) do
                 if child.Name == TargetItem then
-                    local hit = child:FindFirstChild(TargetPart)
-                    if hit and not hit:FindFirstChild("BearTrapExternalName") then
-                        applyTrapName(child)
+                    local adornee = child:FindFirstChild("Main") or child:FindFirstChild("HitDetect") or child:FindFirstChildWhichIsA("BasePart")
+                    if adornee and not adornee:FindFirstChild("TeleportGateExternalName") then
+                        applyGateESP(child)
                     end
                 end
             end
         end
-        task.wait(1)
+        task.wait(2)
     end
 end)
