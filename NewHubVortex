@@ -1,0 +1,1805 @@
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+
+local PurpleTheme = Color3.fromHex("#8639F1")
+local PurpleHex = "#8639F1"
+local DiscordBlue = Color3.fromRGB(50, 70, 150)
+local DarkBackground = Color3.fromRGB(15, 15, 20)
+local HeaderSidebarColor = Color3.fromRGB(20, 20, 25)
+local CardColor = Color3.fromRGB(25, 25, 35)
+local ServerGreen = Color3.fromRGB(0, 200, 100)
+local FriendsRed = Color3.fromRGB(255, 50, 50)
+
+local CurrentTheme = PurpleTheme
+local CurrentThemeHex = PurpleHex
+
+local ActiveToggles = {}
+
+local function DisableAllToggles()
+    for name, scriptUrl in pairs(ActiveToggles) do
+        task.spawn(function()
+            pcall(function()
+                loadstring(game:HttpGet(scriptUrl))()
+            end)
+        end)
+    end
+    
+    ActiveToggles = {}
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VortexHub"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999999999
+ScreenGui.IgnoreGuiInset = true
+
+local function ShowNotification(title, text, duration)
+    duration = duration or 4
+    
+    local NotifFrame = Instance.new("Frame")
+    NotifFrame.Size = UDim2.new(0, 300, 0, 75)
+    NotifFrame.Position = UDim2.new(1, 40, 1, -100)
+    NotifFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    NotifFrame.BorderSizePixel = 0
+    NotifFrame.Parent = ScreenGui
+    
+    local Corner = Instance.new("UICorner", NotifFrame)
+    Corner.CornerRadius = UDim.new(0, 12)
+    
+    local Stroke = Instance.new("UIStroke", NotifFrame)
+    Stroke.Color = CurrentTheme
+    Stroke.Thickness = 2
+    Stroke.Transparency = 0.3
+
+    local NotifLogo = Instance.new("TextLabel", NotifFrame)
+    NotifLogo.Size = UDim2.new(0, 35, 0, 35)
+    NotifLogo.Position = UDim2.new(0, 12, 0.5, -17)
+    NotifLogo.BackgroundColor3 = CurrentTheme
+    NotifLogo.Text = "V"
+    NotifLogo.TextColor3 = Color3.new(1, 1, 1)
+    NotifLogo.Font = Enum.Font.GothamBold
+    NotifLogo.TextSize = 20
+    Instance.new("UICorner", NotifLogo).CornerRadius = UDim.new(0, 8)
+
+    local TitleLabel = Instance.new("TextLabel", NotifFrame)
+    TitleLabel.Size = UDim2.new(1, -65, 0, 20)
+    TitleLabel.Position = UDim2.new(0, 58, 0, 15)
+    TitleLabel.Text = title:upper()
+    TitleLabel.TextColor3 = CurrentTheme
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.BackgroundTransparency = 1
+
+    local ContentLabel = Instance.new("TextLabel", NotifFrame)
+    ContentLabel.Size = UDim2.new(1, -65, 0, 30)
+    ContentLabel.Position = UDim2.new(0, 58, 0, 33)
+    ContentLabel.Text = text
+    ContentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+    ContentLabel.Font = Enum.Font.GothamMedium
+    ContentLabel.TextSize = 12
+    ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ContentLabel.TextWrapped = true
+    ContentLabel.BackgroundTransparency = 1
+
+    local ProgressBg = Instance.new("Frame", NotifFrame)
+    ProgressBg.Size = UDim2.new(1, -20, 0, 3)
+    ProgressBg.Position = UDim2.new(0, 10, 1, -8)
+    ProgressBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    ProgressBg.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBg)
+
+    local ProgressBar = Instance.new("Frame", ProgressBg)
+    ProgressBar.Size = UDim2.new(1, 0, 1, 0)
+    ProgressBar.BackgroundColor3 = CurrentTheme
+    ProgressBar.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBar)
+
+    NotifFrame:TweenPosition(UDim2.new(1, -320, 1, -100), "Out", "Back", 0.6, true)
+    TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+    
+    task.wait(duration)
+    NotifFrame:TweenPosition(UDim2.new(1, 40, 1, -100), "In", "Quart", 0.5, true)
+    task.wait(0.5)
+    NotifFrame:Destroy()
+end
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 650, 0, 460)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = DarkBackground
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = CurrentTheme
+MainStroke.Thickness = 2
+MainStroke.Transparency = 0.8
+
+local savedPosition = nil
+local savedAnchorPoint = nil
+local CurrentToggleKey = Enum.KeyCode.Insert
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == CurrentToggleKey then
+        if MainFrame.Visible then
+            savedPosition = MainFrame.Position
+            savedAnchorPoint = MainFrame.AnchorPoint
+            
+            TweenService:Create(MainFrame, TweenInfo.new(0.2), {
+                BackgroundTransparency = 0.5
+            }):Play()
+            
+            task.wait(0.1)
+            MainFrame.Visible = false
+            MainFrame.BackgroundTransparency = 0.05
+        else
+            MainFrame.Visible = true
+            
+            if savedPosition then
+                MainFrame.Position = savedPosition
+                MainFrame.AnchorPoint = savedAnchorPoint
+            else
+                MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+                MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+            end
+            
+            MainFrame.BackgroundTransparency = 0.5
+            TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+                BackgroundTransparency = 0.05
+            }):Play()
+        end
+    end
+end)
+
+local function ApplySoftGlow(frame, color)
+    frame.ClipsDescendants = false
+    local Grad = Instance.new("UIGradient", frame)
+    Grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color),
+        ColorSequenceKeypoint.new(1, CardColor)
+    })
+    Grad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.6, 0.8),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    Grad.Rotation = -45
+    
+    local Stroke = Instance.new("UIStroke", frame)
+    Stroke.Color = color
+    Stroke.Thickness = 1.5
+    Stroke.Transparency = 0.4
+    Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
+    Stroke.LineJoinMode = Enum.LineJoinMode.Round
+    
+    local InnerPadding = Instance.new("UIPadding", frame)
+    InnerPadding.PaddingLeft = UDim.new(0, 1)
+    InnerPadding.PaddingRight = UDim.new(0, 1)
+    InnerPadding.PaddingTop = UDim.new(0, 1)
+    InnerPadding.PaddingBottom = UDim.new(0, 1)
+end
+
+local TopBar = Instance.new("Frame", MainFrame)
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundColor3 = HeaderSidebarColor
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
+
+local TopOverlap = Instance.new("Frame", TopBar)
+TopOverlap.Size = UDim2.new(1, 0, 0, 10)
+TopOverlap.Position = UDim2.new(0, 0, 1, -10)
+TopOverlap.BackgroundColor3 = HeaderSidebarColor
+TopOverlap.BorderSizePixel = 0
+
+local TitleContainer = Instance.new("Frame", TopBar)
+TitleContainer.Size = UDim2.new(0.8, 0, 1, 0)
+TitleContainer.Position = UDim2.new(0, 20, 0, 0)
+TitleContainer.BackgroundTransparency = 1
+
+local LogoV = Instance.new("TextLabel", TitleContainer)
+LogoV.Size = UDim2.new(0, 25, 0, 25)
+LogoV.Position = UDim2.new(0, 0, 0.5, -12)
+LogoV.BackgroundColor3 = CurrentTheme
+LogoV.Text = "V"
+LogoV.TextColor3 = Color3.fromRGB(255, 255, 255)
+LogoV.Font = Enum.Font.GothamBold
+LogoV.TextSize = 16
+Instance.new("UICorner", LogoV).CornerRadius = UDim.new(0, 6)
+
+local TitleText = Instance.new("TextLabel", TitleContainer)
+TitleText.Text = "VORTEX HUB"
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextColor3 = CurrentTheme
+TitleText.TextSize = 16
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Position = UDim2.new(0, 35, 0, 0)
+TitleText.Size = UDim2.new(0, 105, 1, 0)
+TitleText.BackgroundTransparency = 1
+
+local SloganText = Instance.new("TextLabel", TitleContainer)
+SloganText.Text = "Best Script Hub"
+SloganText.Font = Enum.Font.GothamMedium
+SloganText.TextColor3 = Color3.fromRGB(150, 150, 150)
+SloganText.TextSize = 13
+SloganText.TextXAlignment = Enum.TextXAlignment.Left
+SloganText.Position = UDim2.new(0, 142, 0, 0)
+SloganText.Size = UDim2.new(0, 200, 1, 0)
+SloganText.BackgroundTransparency = 1
+
+local CloseBtn = Instance.new("TextButton", TopBar)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 16
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -10, 0.5, 0)
+CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
+CloseBtn.BackgroundTransparency = 1
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+
+CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2, BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play() end)
+CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play() end)
+CloseBtn.MouseButton1Click:Connect(function()
+    DisableAllToggles()
+    ScreenGui:Destroy()
+end)
+
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 65, 1, -65)
+Sidebar.Position = UDim2.new(0, 15, 0, 55)
+Sidebar.BackgroundColor3 = HeaderSidebarColor
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
+ApplySoftGlow(Sidebar, CurrentTheme)
+
+local Container = Instance.new("Frame", MainFrame)
+Container.Position = UDim2.new(0, 90, 0, 55)
+Container.Size = UDim2.new(1, -105, 1, -70)
+Container.BackgroundTransparency = 1
+
+local Pages = {}
+local function CreatePage(name)
+    local Page = Instance.new("ScrollingFrame", Container)
+    Page.Name = name
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.Visible = false
+    
+    Page.ScrollBarThickness = 3
+    Page.ScrollBarImageColor3 = CurrentTheme
+    Page.ScrollBarImageTransparency = 0.2
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Page.ElasticBehavior = Enum.ElasticBehavior.Never
+    Page.VerticalScrollBarInset = Enum.ScrollBarInset.None
+    
+    local UIPadding = Instance.new("UIPadding", Page)
+    UIPadding.PaddingRight = UDim.new(0, 12)
+    UIPadding.PaddingLeft = UDim.new(0, 2)
+    UIPadding.PaddingTop = UDim.new(0, 2)
+    UIPadding.PaddingBottom = UDim.new(0, 10)
+    
+    local UIList = Instance.new("UIListLayout", Page)
+    UIList.Padding = UDim.new(0, 12)
+    
+    Pages[name] = Page
+    return Page
+end
+
+local ProfilePage = CreatePage("Profile")
+local MiscPage = CreatePage("Misc")
+local SettingsPage = CreatePage("Settings")
+
+local function CreateHorizontalSubCard(parent, title, value, pos, size)
+    local Card = Instance.new("Frame", parent)
+    Card.Size = size
+    Card.Position = pos
+    Card.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
+    Card.BackgroundTransparency = 0.5
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 6)
+    
+    local Label = Instance.new("TextLabel", Card)
+    Label.Size = UDim2.new(1, -20, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.Text = "<b>" .. title .. ":</b> " .. value
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.Font = Enum.Font.GothamMedium
+    Label.RichText = true
+    Label.TextSize = 11
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.BackgroundTransparency = 1
+    
+    return Label, title
+end
+
+local function CreateSubCard(parent, title, value, pos, size)
+    local Card = Instance.new("Frame", parent)
+    Card.Size = size
+    Card.Position = pos
+    Card.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
+    Card.BackgroundTransparency = 0.5
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 6)
+    
+    local T = Instance.new("TextLabel", Card)
+    T.Size = UDim2.new(1, 0, 0, 15)
+    T.Position = UDim2.new(0, 10, 0, 6)
+    T.Text = title
+    T.TextColor3 = Color3.fromRGB(180, 180, 180)
+    T.Font = Enum.Font.GothamBold
+    T.TextSize = 10
+    T.TextXAlignment = Enum.TextXAlignment.Left
+    T.BackgroundTransparency = 1
+    
+    local V = Instance.new("TextLabel", Card)
+    V.Size = UDim2.new(1, 0, 0, 15)
+    V.Position = UDim2.new(0, 10, 0, 21)
+    V.Text = value
+    V.TextColor3 = Color3.fromRGB(255, 255, 255)
+    V.Font = Enum.Font.GothamMedium
+    V.TextSize = 11
+    V.TextXAlignment = Enum.TextXAlignment.Left
+    V.BackgroundTransparency = 1
+    
+    return V
+end
+
+local ProfileCard = Instance.new("Frame", ProfilePage)
+ProfileCard.Size = UDim2.new(1, 0, 0, 105)
+ProfileCard.BackgroundColor3 = CardColor
+Instance.new("UICorner", ProfileCard).CornerRadius = UDim.new(0, 12)
+ApplySoftGlow(ProfileCard, CurrentTheme)
+
+local AvatarImg = Instance.new("ImageLabel", ProfileCard)
+AvatarImg.Size = UDim2.new(0, 75, 0, 75)
+AvatarImg.Position = UDim2.new(0, 15, 0.5, -37)
+AvatarImg.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+AvatarImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Instance.new("UICorner", AvatarImg).CornerRadius = UDim.new(0, 10)
+local AvatarStroke = Instance.new("UIStroke", AvatarImg)
+AvatarStroke.Color = CurrentTheme
+AvatarStroke.Thickness = 2
+
+local WelcomeLabel = Instance.new("TextLabel", ProfileCard)
+WelcomeLabel.Size = UDim2.new(1, -110, 0, 20)
+WelcomeLabel.Position = UDim2.new(0, 105, 0, 20)
+WelcomeLabel.Text = "Good evening, " .. player.DisplayName
+WelcomeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+WelcomeLabel.Font = Enum.Font.GothamBold
+WelcomeLabel.TextSize = 19
+WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+WelcomeLabel.BackgroundTransparency = 1
+
+local GameLabel = Instance.new("TextLabel", ProfileCard)
+GameLabel.Size = UDim2.new(1, -110, 0, 20)
+GameLabel.Position = UDim2.new(0, 105, 0, 42)
+GameLabel.RichText = true
+GameLabel.Text = "Identifying Game..."
+GameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+GameLabel.Font = Enum.Font.GothamBold
+GameLabel.TextSize = 14
+GameLabel.TextXAlignment = Enum.TextXAlignment.Left
+GameLabel.BackgroundTransparency = 1
+
+task.spawn(function()
+    local success, info = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+    local grayHex = "#B4B4B4"
+    if success and info then
+        GameLabel.Text = '<font color="'..CurrentThemeHex..'">'..info.Name..'</font> <font color="'..grayHex..'"> - Vortex Hub</font>'
+    else
+        GameLabel.Text = '<font color="'..CurrentThemeHex..'">SHARP</font> <font color="'..grayHex..'"> - Vortex Hub</font>'
+    end
+end)
+
+local DeviceLabel = Instance.new("TextLabel", ProfileCard)
+DeviceLabel.Size = UDim2.new(1, -110, 0, 20)
+DeviceLabel.Position = UDim2.new(0, 105, 0, 64)
+DeviceLabel.RichText = true
+DeviceLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+DeviceLabel.Font = Enum.Font.GothamMedium
+DeviceLabel.TextSize = 12
+DeviceLabel.TextXAlignment = Enum.TextXAlignment.Left
+DeviceLabel.BackgroundTransparency = 1
+
+local function GetDeviceType()
+    if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then return "Mobile"
+    elseif UserInputService.GamepadEnabled then return "Console"
+    else return "Desktop" end
+end
+DeviceLabel.Text = 'You are using <font color="'..CurrentThemeHex..'">'..GetDeviceType()..'</font>'
+
+local ColumnContainer = Instance.new("Frame", ProfilePage)
+ColumnContainer.Size = UDim2.new(1, 0, 0, 210)
+ColumnContainer.BackgroundTransparency = 1
+
+local ServerCard = Instance.new("Frame", ColumnContainer)
+ServerCard.Size = UDim2.new(0.58, -5, 1, 0)
+ServerCard.BackgroundColor3 = CardColor
+Instance.new("UICorner", ServerCard).CornerRadius = UDim.new(0, 12)
+ApplySoftGlow(ServerCard, ServerGreen)
+
+local ServerTitle = Instance.new("TextLabel", ServerCard)
+ServerTitle.Text = "Server"
+ServerTitle.Size = UDim2.new(1, -30, 0, 30)
+ServerTitle.Position = UDim2.new(0, 15, 0, 5)
+ServerTitle.Font = Enum.Font.GothamBold
+ServerTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ServerTitle.TextSize = 15
+ServerTitle.TextXAlignment = Enum.TextXAlignment.Left
+ServerTitle.BackgroundTransparency = 1
+
+local PlayVal = CreateSubCard(ServerCard, "Players", "0 playing", UDim2.new(0, 12, 0, 45), UDim2.new(0.5, -16, 0, 42))
+local MaxVal = CreateSubCard(ServerCard, "Maximum Players", "0 max", UDim2.new(0.5, 4, 0, 45), UDim2.new(0.5, -16, 0, 42))
+local LatVal = CreateSubCard(ServerCard, "Latency", "0ms", UDim2.new(0, 12, 0, 100), UDim2.new(0.35, -12, 0, 42))
+local RegVal = CreateSubCard(ServerCard, "Server Region", "Unknown", UDim2.new(0.35, 8, 0, 100), UDim2.new(0.65, -20, 0, 42))
+local TimeVal = CreateSubCard(ServerCard, "In server for", "00:00:00", UDim2.new(0, 12, 0, 155), UDim2.new(1, -24, 0, 42))
+
+task.spawn(function()
+    local start = os.time()
+    while task.wait(1) do
+        PlayVal.Text = #Players:GetPlayers() .. " playing"
+        MaxVal.Text = Players.MaxPlayers .. " players max"
+        LatVal.Text = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
+        local diff = os.time() - start
+        TimeVal.Text = string.format("%02d:%02d:%02d", math.floor(diff/3600), math.floor((diff%3600)/60), diff%60)
+    end
+end)
+
+local RightCol = Instance.new("Frame", ColumnContainer)
+RightCol.Position = UDim2.new(0.58, 5, 0, 0)
+RightCol.Size = UDim2.new(0.42, -5, 1, 0)
+RightCol.BackgroundTransparency = 1
+Instance.new("UIListLayout", RightCol).Padding = UDim.new(0, 10)
+
+local ExCard = Instance.new("Frame", RightCol)
+ExCard.Size = UDim2.new(1, 0, 0, 85)
+ExCard.BackgroundColor3 = CardColor
+Instance.new("UICorner", ExCard).CornerRadius = UDim.new(0, 12)
+ApplySoftGlow(ExCard, Color3.fromRGB(80, 20, 120))
+
+local ExName = Instance.new("TextLabel", ExCard)
+ExName.Text = "Analysing..."
+ExName.Position = UDim2.new(0, 15, 0, 15)
+ExName.Size = UDim2.new(1, -30, 0, 20)
+ExName.Font = Enum.Font.GothamBold
+ExName.TextColor3 = Color3.fromRGB(255, 255, 255)
+ExName.TextSize = 16
+ExName.TextXAlignment = Enum.TextXAlignment.Left
+ExName.BackgroundTransparency = 1
+
+local ExDesc = Instance.new("TextLabel", ExCard)
+ExDesc.Text = "Good Executor. I think u can use all Scripts here."
+ExDesc.Position = UDim2.new(0, 15, 0, 38)
+ExDesc.Size = UDim2.new(1, -30, 0, 30)
+ExDesc.Font = Enum.Font.GothamMedium
+ExDesc.TextColor3 = Color3.fromRGB(0, 255, 120)
+ExDesc.TextSize = 11
+ExDesc.TextWrapped = true
+ExDesc.TextXAlignment = Enum.TextXAlignment.Left
+ExDesc.BackgroundTransparency = 1
+
+task.spawn(function()
+    task.wait(1.5)
+    local name = (identifyexecutor or getexecutorname or function() return "Unknown" end)()
+    ExName.Text = name
+end)
+
+local FriendCard = Instance.new("Frame", RightCol)
+FriendCard.Size = UDim2.new(1, 0, 0, 115)
+FriendCard.BackgroundColor3 = CardColor
+Instance.new("UICorner", FriendCard).CornerRadius = UDim.new(0, 12)
+ApplySoftGlow(FriendCard, FriendsRed)
+
+local FTitle = Instance.new("TextLabel", FriendCard)
+FTitle.Text = "Friends"
+FTitle.Position = UDim2.new(0, 15, 0, 8)
+FTitle.Size = UDim2.new(1, 0, 0, 20)
+FTitle.Font = Enum.Font.GothamBold
+FTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+FTitle.TextSize = 14
+FTitle.TextXAlignment = Enum.TextXAlignment.Left
+FTitle.BackgroundTransparency = 1
+
+local FOnlineLabel, FOnlineTitle = CreateHorizontalSubCard(FriendCard, "Online", "0 friends", UDim2.new(0, 12, 0, 35), UDim2.new(1, -24, 0, 32))
+local FInServerLabel, FInServerTitle = CreateHorizontalSubCard(FriendCard, "In Server", "0 friends", UDim2.new(0, 12, 0, 72), UDim2.new(1, -24, 0, 32))
+
+local function UpdateFriendsLogic()
+    task.spawn(function()
+        local success, friendsOnline = pcall(function() return player:GetFriendsOnline() end)
+        if not success then return end
+        local inServerCount = 0
+        local onlineCount = #friendsOnline
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= player and p:IsFriendsWith(player.UserId) then inServerCount = inServerCount + 1 end
+        end
+        FInServerLabel.Text = "<b>" .. FInServerTitle .. ":</b> " .. inServerCount .. " friends"
+        FOnlineLabel.Text = "<b>" .. FOnlineTitle .. ":</b> " .. onlineCount .. " friends"
+    end)
+end
+
+task.spawn(function() while task.wait(10) do UpdateFriendsLogic() end end)
+UpdateFriendsLogic()
+
+local BottomRow = Instance.new("Frame", ProfilePage)
+BottomRow.Size = UDim2.new(1, 0, 0, 85)
+BottomRow.BackgroundTransparency = 1
+
+local DiscordCard = Instance.new("TextButton", BottomRow)
+DiscordCard.Size = UDim2.new(0.4, -5, 1, 0)
+DiscordCard.BackgroundColor3 = CardColor
+DiscordCard.Text = ""
+Instance.new("UICorner", DiscordCard).CornerRadius = UDim.new(0, 12)
+ApplySoftGlow(DiscordCard, DiscordBlue)
+
+local DiscTitle = Instance.new("TextLabel", DiscordCard)
+DiscTitle.Text = "Discord"
+DiscTitle.Position = UDim2.new(0, 15, 0, 15)
+DiscTitle.Size = UDim2.new(1, -30, 0, 20)
+DiscTitle.Font = Enum.Font.GothamBold
+DiscTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+DiscTitle.TextSize = 16
+DiscTitle.TextXAlignment = Enum.TextXAlignment.Left
+DiscTitle.BackgroundTransparency = 1
+
+local DiscSub = Instance.new("TextLabel", DiscordCard)
+DiscSub.Text = "Tap to join"
+DiscSub.Position = UDim2.new(0, 15, 0, 38)
+DiscSub.Size = UDim2.new(1, -30, 0, 15)
+DiscSub.Font = Enum.Font.GothamMedium
+DiscSub.TextColor3 = Color3.fromRGB(200, 200, 220)
+DiscSub.TextSize = 12
+DiscSub.TextXAlignment = Enum.TextXAlignment.Left
+DiscSub.BackgroundTransparency = 1
+
+DiscordCard.MouseButton1Click:Connect(function()
+    if setclipboard then setclipboard("https://discord.gg/vortexhub") end
+    ShowNotification("Discord", "Link successfully copied to clipboard!", 3)
+end)
+
+local StatsCard = Instance.new("Frame", BottomRow)
+StatsCard.Size = UDim2.new(0.6, -5, 1, 0)
+StatsCard.Position = UDim2.new(0.4, 5, 0, 0)
+StatsCard.BackgroundColor3 = CardColor
+Instance.new("UICorner", StatsCard).CornerRadius = UDim.new(0, 12)
+ApplySoftGlow(StatsCard, CurrentTheme)
+
+local StatsTitle = Instance.new("TextLabel", StatsCard)
+StatsTitle.Text = "Account Summary"
+StatsTitle.Position = UDim2.new(0, 15, 0, 10)
+StatsTitle.Size = UDim2.new(1, 0, 0, 20)
+StatsTitle.Font = Enum.Font.GothamBold
+StatsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatsTitle.TextSize = 14
+StatsTitle.TextXAlignment = Enum.TextXAlignment.Left
+StatsTitle.BackgroundTransparency = 1
+
+local UserIDVal = CreateSubCard(StatsCard, "User ID", tostring(player.UserId), UDim2.new(0, 12, 0, 35), UDim2.new(0.45, -12, 0, 38))
+local AgeVal = CreateSubCard(StatsCard, "Account Age", player.AccountAge .. " days", UDim2.new(0.45, 8, 0, 35), UDim2.new(0.55, -20, 0, 38))
+
+local function CreateToggle(parent, name, scriptUrl)
+    local ToggleFrame = Instance.new("Frame", parent)
+    ToggleFrame.Size = UDim2.new(0.5, -5, 0, 45)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    ToggleFrame.BackgroundTransparency = 0.4
+    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 8)
+
+    local Title = Instance.new("TextLabel", ToggleFrame)
+    Title.Size = UDim2.new(1, -60, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Text = name
+    Title.TextColor3 = Color3.fromRGB(230, 230, 230)
+    Title.Font = Enum.Font.GothamMedium
+    Title.TextSize = 13
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.BackgroundTransparency = 1
+
+    local SwitchBG = Instance.new("TextButton", ToggleFrame)
+    SwitchBG.Size = UDim2.new(0, 38, 0, 20)
+    SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
+    SwitchBG.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    SwitchBG.Text = ""
+    Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(1, 0)
+
+    local Circle = Instance.new("Frame", SwitchBG)
+    Circle.Size = UDim2.new(0, 14, 0, 14)
+    Circle.Position = UDim2.new(0, 3, 0.5, -7)
+    Circle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
+
+    local isActive = false
+
+    SwitchBG.MouseButton1Click:Connect(function()
+        isActive = not isActive
+        
+        if isActive then
+            TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = CurrentTheme}):Play()
+            TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+            
+            ActiveToggles[name] = scriptUrl
+            
+            task.spawn(function()
+                local success, err = pcall(function()
+                    loadstring(game:HttpGet(scriptUrl))()
+                end)
+                if not success then
+                    warn("[Vortex Hub] Error loading " .. name .. ":", err)
+                    isActive = false
+                    ActiveToggles[name] = nil
+                    TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                    TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+                end
+            end)
+        else
+            TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+            TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+            
+            ActiveToggles[name] = nil
+            
+            task.spawn(function()
+                pcall(function()
+                    loadstring(game:HttpGet(scriptUrl))()
+                end)
+            end)
+        end
+    end)
+    
+    return ToggleFrame
+end
+
+local ESPHeader = Instance.new("Frame", SettingsPage)
+ESPHeader.Size = UDim2.new(1, 0, 0, 45)
+ESPHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+ESPHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", ESPHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", ESPHeader).Color = CurrentTheme
+local ESPHeaderText = Instance.new("TextLabel", ESPHeader)
+ESPHeaderText.Size = UDim2.new(1, 0, 1, 0)
+ESPHeaderText.Position = UDim2.new(0, 20, 0, 0)
+ESPHeaderText.Text = "ESP VISUALS"
+ESPHeaderText.TextColor3 = CurrentTheme
+ESPHeaderText.Font = Enum.Font.GothamBold
+ESPHeaderText.TextSize = 14
+ESPHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+ESPHeaderText.BackgroundTransparency = 1
+
+local ESPContainer = Instance.new("Frame", SettingsPage)
+ESPContainer.Size = UDim2.new(1, 0, 0, 0)
+ESPContainer.AutomaticSize = Enum.AutomaticSize.Y
+ESPContainer.BackgroundTransparency = 1
+local UIGridESP = Instance.new("UIGridLayout", ESPContainer)
+UIGridESP.CellSize = UDim2.new(0.5, -6, 0, 45)
+UIGridESP.CellPadding = UDim2.new(0, 12, 0, 10)
+
+CreateToggle(ESPContainer, "Player Highlight", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_Players")
+CreateToggle(ESPContainer, "Name ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_Name")
+CreateToggle(ESPContainer, "Bear Trap ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_BearTrap")
+CreateToggle(ESPContainer, "Shock Mine ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_ShockMine")
+CreateToggle(ESPContainer, "Curse Circle ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_CurseCircle")
+CreateToggle(ESPContainer, "Teleport Stone ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_TeleportStone")
+CreateToggle(ESPContainer, "Observing Goop ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_ObservingGoop")
+CreateToggle(ESPContainer, "Teleport Gate ESP", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/ESP/ESP_TeleportGate")
+
+local UtilsHeader = Instance.new("Frame", SettingsPage)
+UtilsHeader.Size = UDim2.new(1, 0, 0, 45)
+UtilsHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+UtilsHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", UtilsHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", UtilsHeader).Color = CurrentTheme
+local UtilsText = Instance.new("TextLabel", UtilsHeader)
+UtilsText.Size = UDim2.new(1, 0, 1, 0)
+UtilsText.Position = UDim2.new(0, 20, 0, 0)
+UtilsText.Text = "UTILITIES"
+UtilsText.TextColor3 = CurrentTheme
+UtilsText.Font = Enum.Font.GothamBold
+UtilsText.TextSize = 14
+UtilsText.TextXAlignment = Enum.TextXAlignment.Left
+UtilsText.BackgroundTransparency = 1
+
+local UtilsContainer = Instance.new("Frame", SettingsPage)
+UtilsContainer.Size = UDim2.new(1, 0, 0, 0)
+UtilsContainer.AutomaticSize = Enum.AutomaticSize.Y
+UtilsContainer.BackgroundTransparency = 1
+local UIGridUtils = Instance.new("UIGridLayout", UtilsContainer)
+UIGridUtils.CellSize = UDim2.new(0.5, -6, 0, 45)
+UIGridUtils.CellPadding = UDim2.new(0, 12, 0, 10)
+
+CreateToggle(UtilsContainer, "Anti BearTrap", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/UTILITIES/UTILITIES_AntiBearTrap")
+CreateToggle(UtilsContainer, "Anti CurseCircle", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/UTILITIES/UTILITIES_AntiCurseCircle")
+CreateToggle(UtilsContainer, "Anti ShockMine", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/UTILITIES/UTILITIES_AntiShockMine")
+CreateToggle(UtilsContainer, "Anti ObservingGoop", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/UTILITIES/UTILITIES_AntiObservingGoop")
+
+local PVPHeader = Instance.new("Frame", SettingsPage)
+PVPHeader.Size = UDim2.new(1, 0, 0, 45)
+PVPHeader.BackgroundColor3 = Color3.fromRGB(25, 15, 15)
+PVPHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", PVPHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", PVPHeader).Color = Color3.fromRGB(255, 60, 60)
+local PVPHeaderText = Instance.new("TextLabel", PVPHeader)
+PVPHeaderText.Size = UDim2.new(1, 0, 1, 0)
+PVPHeaderText.Position = UDim2.new(0, 20, 0, 0)
+PVPHeaderText.Text = "PVP COMBAT"
+PVPHeaderText.TextColor3 = Color3.fromRGB(255, 80, 80)
+PVPHeaderText.Font = Enum.Font.GothamBold
+PVPHeaderText.TextSize = 14
+PVPHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+PVPHeaderText.BackgroundTransparency = 1
+
+local PVPContainer = Instance.new("Frame", SettingsPage)
+PVPContainer.Size = UDim2.new(1, 0, 0, 105)
+PVPContainer.BackgroundTransparency = 1
+
+local PVPFirstRow = Instance.new("Frame", PVPContainer)
+PVPFirstRow.Size = UDim2.new(1, 0, 0, 45)
+PVPFirstRow.BackgroundTransparency = 1
+
+local AimbotToggle = Instance.new("Frame", PVPFirstRow)
+AimbotToggle.Size = UDim2.new(0.5, -5, 0, 45)
+AimbotToggle.Position = UDim2.new(0, 0, 0, 0)
+AimbotToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+AimbotToggle.BackgroundTransparency = 0.4
+Instance.new("UICorner", AimbotToggle).CornerRadius = UDim.new(0, 8)
+
+local AimbotTitle = Instance.new("TextLabel", AimbotToggle)
+AimbotTitle.Size = UDim2.new(1, -60, 1, 0)
+AimbotTitle.Position = UDim2.new(0, 15, 0, 0)
+AimbotTitle.Text = "Aimbot"
+AimbotTitle.TextColor3 = Color3.fromRGB(230, 230, 230)
+AimbotTitle.Font = Enum.Font.GothamMedium
+AimbotTitle.TextSize = 13
+AimbotTitle.TextXAlignment = Enum.TextXAlignment.Left
+AimbotTitle.BackgroundTransparency = 1
+
+local AimbotSwitchBG = Instance.new("TextButton", AimbotToggle)
+AimbotSwitchBG.Size = UDim2.new(0, 38, 0, 20)
+AimbotSwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
+AimbotSwitchBG.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+AimbotSwitchBG.Text = ""
+Instance.new("UICorner", AimbotSwitchBG).CornerRadius = UDim.new(1, 0)
+
+local AimbotCircle = Instance.new("Frame", AimbotSwitchBG)
+AimbotCircle.Size = UDim2.new(0, 14, 0, 14)
+AimbotCircle.Position = UDim2.new(0, 3, 0.5, -7)
+AimbotCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", AimbotCircle).CornerRadius = UDim.new(1, 0)
+
+local aimbotActive = false
+
+AimbotSwitchBG.MouseButton1Click:Connect(function()
+    aimbotActive = not aimbotActive
+    
+    if aimbotActive then
+        TweenService:Create(AimbotSwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+        TweenService:Create(AimbotCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        ActiveToggles["Aimbot"] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_Aimbot"
+        
+        task.spawn(function()
+            local success, err = pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_Aimbot"))()
+            end)
+            if not success then
+                warn("[Vortex Hub] Error loading Aimbot:", err)
+                aimbotActive = false
+                ActiveToggles["Aimbot"] = nil
+                TweenService:Create(AimbotSwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                TweenService:Create(AimbotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+            end
+        end)
+    else
+        TweenService:Create(AimbotSwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(AimbotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        ActiveToggles["Aimbot"] = nil
+        
+        task.spawn(function()
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_Aimbot"))()
+            end)
+        end)
+    end
+end)
+
+local AutoGunToggle = Instance.new("Frame", PVPFirstRow)
+AutoGunToggle.Size = UDim2.new(0.5, -5, 0, 45)
+AutoGunToggle.Position = UDim2.new(0.5, 5, 0, 0)
+AutoGunToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+AutoGunToggle.BackgroundTransparency = 0.4
+Instance.new("UICorner", AutoGunToggle).CornerRadius = UDim.new(0, 8)
+
+local AutoGunTitle = Instance.new("TextLabel", AutoGunToggle)
+AutoGunTitle.Size = UDim2.new(1, -60, 1, 0)
+AutoGunTitle.Position = UDim2.new(0, 15, 0, 0)
+AutoGunTitle.Text = "Auto Change Gun"
+AutoGunTitle.TextColor3 = Color3.fromRGB(230, 230, 230)
+AutoGunTitle.Font = Enum.Font.GothamMedium
+AutoGunTitle.TextSize = 13
+AutoGunTitle.TextXAlignment = Enum.TextXAlignment.Left
+AutoGunTitle.BackgroundTransparency = 1
+
+local AutoGunSwitchBG = Instance.new("TextButton", AutoGunToggle)
+AutoGunSwitchBG.Size = UDim2.new(0, 38, 0, 20)
+AutoGunSwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
+AutoGunSwitchBG.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+AutoGunSwitchBG.Text = ""
+Instance.new("UICorner", AutoGunSwitchBG).CornerRadius = UDim.new(1, 0)
+
+local AutoGunCircle = Instance.new("Frame", AutoGunSwitchBG)
+AutoGunCircle.Size = UDim2.new(0, 14, 0, 14)
+AutoGunCircle.Position = UDim2.new(0, 3, 0.5, -7)
+AutoGunCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", AutoGunCircle).CornerRadius = UDim.new(1, 0)
+
+local autoGunActive = false
+
+AutoGunSwitchBG.MouseButton1Click:Connect(function()
+    autoGunActive = not autoGunActive
+    
+    if autoGunActive then
+        TweenService:Create(AutoGunSwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+        TweenService:Create(AutoGunCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        ActiveToggles["AutoChangeGun"] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_AutoChangeGun"
+        
+        task.spawn(function()
+            local success, err = pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_AutoChangeGun"))()
+            end)
+            if not success then
+                warn("[Vortex Hub] Error loading AutoChangeGun:", err)
+                autoGunActive = false
+                ActiveToggles["AutoChangeGun"] = nil
+                TweenService:Create(AutoGunSwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                TweenService:Create(AutoGunCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+            end
+        end)
+    else
+        TweenService:Create(AutoGunSwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(AutoGunCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        ActiveToggles["AutoChangeGun"] = nil
+        
+        task.spawn(function()
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_AutoChangeGun"))()
+            end)
+        end)
+    end
+end)
+
+local AutoTriggerToggle = Instance.new("Frame", PVPContainer)
+AutoTriggerToggle.Size = UDim2.new(1, 0, 0, 45)
+AutoTriggerToggle.Position = UDim2.new(0, 0, 0, 55)
+AutoTriggerToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+AutoTriggerToggle.BackgroundTransparency = 0.4
+Instance.new("UICorner", AutoTriggerToggle).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel", AutoTriggerToggle)
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Text = "Auto Trigger [Better With Aimbot]"
+Title.TextColor3 = Color3.fromRGB(230, 230, 230)
+Title.Font = Enum.Font.GothamMedium
+Title.TextSize = 13
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
+
+local SwitchBG = Instance.new("TextButton", AutoTriggerToggle)
+SwitchBG.Size = UDim2.new(0, 38, 0, 20)
+SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
+SwitchBG.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+SwitchBG.Text = ""
+Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(1, 0)
+
+local Circle = Instance.new("Frame", SwitchBG)
+Circle.Size = UDim2.new(0, 14, 0, 14)
+Circle.Position = UDim2.new(0, 3, 0.5, -7)
+Circle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
+
+local isActive = false
+
+SwitchBG.MouseButton1Click:Connect(function()
+    isActive = not isActive
+    
+    if isActive then
+        TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}):Play()
+        TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        ActiveToggles["AutoTrigger"] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_AutoTrigger"
+        
+        task.spawn(function()
+            local success, err = pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_AutoTrigger"))()
+            end)
+            if not success then
+                warn("[Vortex Hub] Error loading AutoTrigger:", err)
+                isActive = false
+                ActiveToggles["AutoTrigger"] = nil
+                TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+            else
+                ShowNotification("PVP", "AutoTrigger activated! Works better with Aimbot.", 4)
+            end
+        end)
+    else
+        TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        ActiveToggles["AutoTrigger"] = nil
+        
+        task.spawn(function()
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/Sharp/PVP/PVP_AutoTrigger"))()
+            end)
+        end)
+    end
+end)
+
+local InterfaceHeader = Instance.new("Frame", MiscPage)
+InterfaceHeader.Size = UDim2.new(1, 0, 0, 45)
+InterfaceHeader.BackgroundColor3 = Color3.fromRGB(15, 25, 15)
+InterfaceHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", InterfaceHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", InterfaceHeader).Color = Color3.fromRGB(80, 200, 80)
+local InterfaceHeaderText = Instance.new("TextLabel", InterfaceHeader)
+InterfaceHeaderText.Size = UDim2.new(1, 0, 1, 0)
+InterfaceHeaderText.Position = UDim2.new(0, 20, 0, 0)
+InterfaceHeaderText.Text = "INTERFACE"
+InterfaceHeaderText.TextColor3 = Color3.fromRGB(80, 200, 80)
+InterfaceHeaderText.Font = Enum.Font.GothamBold
+InterfaceHeaderText.TextSize = 14
+InterfaceHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+InterfaceHeaderText.BackgroundTransparency = 1
+
+local InterfaceContainer = Instance.new("Frame", MiscPage)
+InterfaceContainer.Size = UDim2.new(1, 0, 0, 100)
+InterfaceContainer.BackgroundTransparency = 1
+
+local ToggleKeyContainer = Instance.new("Frame", InterfaceContainer)
+ToggleKeyContainer.Size = UDim2.new(1, 0, 0, 45)
+ToggleKeyContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ToggleKeyContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", ToggleKeyContainer).CornerRadius = UDim.new(0, 8)
+
+local ToggleKeyLabel = Instance.new("TextLabel", ToggleKeyContainer)
+ToggleKeyLabel.Size = UDim2.new(0.4, -10, 1, 0)
+ToggleKeyLabel.Position = UDim2.new(0, 15, 0, 0)
+ToggleKeyLabel.Text = "Toggle Key: [ INSERT ]"
+ToggleKeyLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+ToggleKeyLabel.Font = Enum.Font.GothamMedium
+ToggleKeyLabel.TextSize = 13
+ToggleKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+ToggleKeyLabel.BackgroundTransparency = 1
+
+local ChangeKeyBtn = Instance.new("TextButton", ToggleKeyContainer)
+ChangeKeyBtn.Size = UDim2.new(0, 120, 0, 30)
+ChangeKeyBtn.Position = UDim2.new(1, -140, 0.5, -15)
+ChangeKeyBtn.Text = "CHANGE KEY"
+ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
+ChangeKeyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ChangeKeyBtn.Font = Enum.Font.GothamMedium
+ChangeKeyBtn.TextSize = 13
+Instance.new("UICorner", ChangeKeyBtn).CornerRadius = UDim.new(0, 6)
+
+local waitingForKey = false
+ChangeKeyBtn.MouseButton1Click:Connect(function()
+    waitingForKey = true
+    ToggleKeyLabel.Text = "Press any key..."
+    ChangeKeyBtn.Text = "WAITING..."
+    ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 50)
+    
+    local connection
+    connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if waitingForKey and not gameProcessed and input.KeyCode ~= Enum.KeyCode.Unknown then
+            waitingForKey = false
+            local keyName = tostring(input.KeyCode):gsub("Enum.KeyCode.", "")
+            
+            keyName = keyName:upper()
+            
+            local success, key = pcall(function()
+                return Enum.KeyCode[keyName]
+            end)
+            
+            if success then
+                CurrentToggleKey = key
+                ToggleKeyLabel.Text = "Toggle Key: [ " .. keyName .. " ]"
+                ShowNotification("Interface", "Hotkey changed to " .. keyName, 3)
+            else
+                ShowNotification("Error", "Invalid key", 3)
+                ToggleKeyLabel.Text = "Toggle Key: [ INSERT ]"
+            end
+            
+            ChangeKeyBtn.Text = "CHANGE KEY"
+            ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
+            connection:Disconnect()
+        end
+    end)
+end)
+
+local ThemeContainer = Instance.new("Frame", InterfaceContainer)
+ThemeContainer.Size = UDim2.new(1, 0, 0, 45)
+ThemeContainer.Position = UDim2.new(0, 0, 0, 55)
+ThemeContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ThemeContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", ThemeContainer).CornerRadius = UDim.new(0, 8)
+
+local ThemeLabel = Instance.new("TextLabel", ThemeContainer)
+ThemeLabel.Size = UDim2.new(0.4, -10, 1, 0)
+ThemeLabel.Position = UDim2.new(0, 15, 0, 0)
+ThemeLabel.Text = "Theme Color"
+ThemeLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+ThemeLabel.Font = Enum.Font.GothamMedium
+ThemeLabel.TextSize = 13
+ThemeLabel.TextXAlignment = Enum.TextXAlignment.Left
+ThemeLabel.BackgroundTransparency = 1
+
+local ThemeButtons = Instance.new("Frame", ThemeContainer)
+ThemeButtons.Size = UDim2.new(0.6, -15, 1, 0)
+ThemeButtons.Position = UDim2.new(0.4, 0, 0, 0)
+ThemeButtons.BackgroundTransparency = 1
+
+local themes = {
+    {Name = "Purple", Color = Color3.fromHex("#8639F1"), Hex = "#8639F1"},
+    {Name = "Blue", Color = Color3.fromHex("#2D9BDB"), Hex = "#2D9BDB"},
+    {Name = "Red", Color = Color3.fromHex("#DB2D2D"), Hex = "#DB2D2D"},
+    {Name = "Green", Color = Color3.fromHex("#2DDB5D"), Hex = "#2DDB5D"},
+    {Name = "Orange", Color = Color3.fromHex("#DB8B2D"), Hex = "#DB8B2D"},
+    {Name = "Cyan", Color = Color3.fromHex("#2DDBC6"), Hex = "#2DDBC6"}
+}
+
+local function UpdateTheme(newColor, newHex)
+    CurrentTheme = newColor
+    CurrentThemeHex = newHex
+    
+    MainStroke.Color = CurrentTheme
+    
+    local sidebarGradient = Sidebar:FindFirstChildWhichIsA("UIGradient")
+    if sidebarGradient then
+        sidebarGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme),
+            ColorSequenceKeypoint.new(1, CardColor)
+        })
+    end
+    
+    local sidebarStroke = Sidebar:FindFirstChildWhichIsA("UIStroke")
+    if sidebarStroke then
+        sidebarStroke.Color = CurrentTheme
+    end
+    
+    LogoV.BackgroundColor3 = CurrentTheme
+    TitleText.TextColor3 = CurrentTheme
+    
+    local profileStroke = ProfileCard:FindFirstChildWhichIsA("UIStroke")
+    if profileStroke then
+        profileStroke.Color = CurrentTheme
+    end
+    
+    local profileGradient = ProfileCard:FindFirstChildWhichIsA("UIGradient")
+    if profileGradient then
+        profileGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme),
+            ColorSequenceKeypoint.new(1, CardColor)
+        })
+    end
+    
+    local statsStroke = StatsCard:FindFirstChildWhichIsA("UIStroke")
+    if statsStroke then
+        statsStroke.Color = CurrentTheme
+    end
+    
+    local statsGradient = StatsCard:FindFirstChildWhichIsA("UIGradient")
+    if statsGradient then
+        statsGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, CurrentTheme),
+            ColorSequenceKeypoint.new(1, CardColor)
+        })
+    end
+    
+    for _, page in pairs(Pages) do
+        page.ScrollBarImageColor3 = CurrentTheme
+    end
+    
+    ESPHeader:FindFirstChildWhichIsA("UIStroke").Color = CurrentTheme
+    ESPHeaderText.TextColor3 = CurrentTheme
+    UtilsHeader:FindFirstChildWhichIsA("UIStroke").Color = CurrentTheme
+    UtilsText.TextColor3 = CurrentTheme
+    
+    for _, notif in pairs(ScreenGui:GetChildren()) do
+        if notif:IsA("Frame") and notif:FindFirstChildWhichIsA("UIStroke") then
+            notif:FindFirstChildWhichIsA("UIStroke").Color = CurrentTheme
+        end
+    end
+    
+    AvatarStroke.Color = CurrentTheme
+    
+    for _, btnData in pairs(TabButtons) do
+        if btnData.CurrentlyActive then
+            local btn = btnData.Button
+            local icon = btn:FindFirstChildWhichIsA("ImageLabel")
+            local indicator = btn:FindFirstChildWhichIsA("Frame")
+            local btnStroke = btn:FindFirstChildWhichIsA("UIStroke")
+            
+            if icon then
+                TweenService:Create(icon, TweenInfo.new(0.3), {ImageColor3 = CurrentTheme}):Play()
+            end
+            if indicator then
+                indicator.BackgroundColor3 = CurrentTheme
+            end
+            if btnStroke then
+                btnStroke.Color = CurrentTheme
+            end
+        end
+    end
+    
+    local grayHex = "#B4B4B4"
+    local success, info = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+    if success and info then
+        GameLabel.Text = '<font color="'..CurrentThemeHex..'">'..info.Name..'</font> <font color="'..grayHex..'"> - Vortex Hub</font>'
+    else
+        GameLabel.Text = '<font color="'..CurrentThemeHex..'">SHARP</font> <font color="'..grayHex..'"> - Vortex Hub</font>'
+    end
+    
+    DeviceLabel.Text = 'You are using <font color="'..CurrentThemeHex..'">'..(UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled and "Mobile" or UserInputService.GamepadEnabled and "Console" or "Desktop")..'</font>'
+    
+    ShowNotification("Interface", "Theme changed successfully!", 3)
+end
+
+for i, theme in ipairs(themes) do
+    local ThemeBtn = Instance.new("TextButton", ThemeButtons)
+    ThemeBtn.Size = UDim2.new(0.15, -2, 0.6, 0)
+    ThemeBtn.Position = UDim2.new((i-1) * 0.16, 0, 0.2, 0)
+    ThemeBtn.BackgroundColor3 = theme.Color
+    ThemeBtn.Text = ""
+    Instance.new("UICorner", ThemeBtn).CornerRadius = UDim.new(0, 4)
+    
+    ThemeBtn.MouseButton1Click:Connect(function()
+        UpdateTheme(theme.Color, theme.Hex)
+    end)
+end
+
+local GameHeader = Instance.new("Frame", MiscPage)
+GameHeader.Size = UDim2.new(1, 0, 0, 45)
+GameHeader.Position = UDim2.new(0, 0, 0, 120)
+GameHeader.BackgroundColor3 = Color3.fromRGB(25, 20, 15)
+GameHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", GameHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", GameHeader).Color = Color3.fromRGB(200, 120, 50)
+local GameHeaderText = Instance.new("TextLabel", GameHeader)
+GameHeaderText.Size = UDim2.new(1, 0, 1, 0)
+GameHeaderText.Position = UDim2.new(0, 20, 0, 0)
+GameHeaderText.Text = "GAME SETTINGS"
+GameHeaderText.TextColor3 = Color3.fromRGB(200, 120, 50)
+GameHeaderText.Font = Enum.Font.GothamBold
+GameHeaderText.TextSize = 14
+GameHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+GameHeaderText.BackgroundTransparency = 1
+
+local GameContainer = Instance.new("Frame", MiscPage)
+GameContainer.Size = UDim2.new(1, 0, 0, 100)
+GameContainer.Position = UDim2.new(0, 0, 0, 175)
+GameContainer.BackgroundTransparency = 1
+
+local FOVContainer = Instance.new("Frame", GameContainer)
+FOVContainer.Size = UDim2.new(1, 0, 0, 45)
+FOVContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+FOVContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", FOVContainer).CornerRadius = UDim.new(0, 8)
+
+local FOVLabel = Instance.new("TextLabel", FOVContainer)
+FOVLabel.Size = UDim2.new(0.4, -10, 1, 0)
+FOVLabel.Position = UDim2.new(0, 15, 0, 0)
+FOVLabel.Text = "FOV: 70"
+FOVLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+FOVLabel.Font = Enum.Font.GothamMedium
+FOVLabel.TextSize = 13
+FOVLabel.TextXAlignment = Enum.TextXAlignment.Left
+FOVLabel.BackgroundTransparency = 1
+
+local FOVSliderContainer = Instance.new("Frame", FOVContainer)
+FOVSliderContainer.Size = UDim2.new(0.6, -20, 1, 0)
+FOVSliderContainer.Position = UDim2.new(0.4, 0, 0, 0)
+FOVSliderContainer.BackgroundTransparency = 1
+
+local FOVSlider = Instance.new("Frame", FOVSliderContainer)
+FOVSlider.Size = UDim2.new(1, -10, 0, 20)
+FOVSlider.Position = UDim2.new(0, 0, 0.5, -10)
+FOVSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+FOVSlider.BorderSizePixel = 0
+Instance.new("UICorner", FOVSlider).CornerRadius = UDim.new(1, 0)
+
+local FOVFill = Instance.new("Frame", FOVSlider)
+FOVFill.Size = UDim2.new(0.5, 0, 1, 0)
+FOVFill.BackgroundColor3 = Color3.fromRGB(200, 120, 50)
+FOVFill.BorderSizePixel = 0
+Instance.new("UICorner", FOVFill).CornerRadius = UDim.new(1, 0)
+
+local FOVBtn = Instance.new("TextButton", FOVSlider)
+FOVBtn.Size = UDim2.new(0, 20, 0, 20)
+FOVBtn.Position = UDim2.new(0.5, -10, 0, 0)
+FOVBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+FOVBtn.Text = ""
+Instance.new("UICorner", FOVBtn).CornerRadius = UDim.new(1, 0)
+
+local draggingFOV = false
+local MinFOV = 70
+local MaxFOV = 120
+_G.TargetFOV = 70
+
+workspace.CurrentCamera.FieldOfView = _G.TargetFOV
+
+local function SetupMetatableBypass()
+    local mt = getrawmetatable(game)
+    local old_newindex = mt.__newindex
+    setreadonly(mt, false)
+    
+    mt.__newindex = newcclosure(function(t, k, v)
+        if t:IsA("Camera") and k == "FieldOfView" then
+            return old_newindex(t, k, _G.TargetFOV)
+        end
+        return old_newindex(t, k, v)
+    end)
+    
+    setreadonly(mt, true)
+end
+
+task.spawn(function()
+    SetupMetatableBypass()
+end)
+
+local function UpdateFOV(value)
+    _G.TargetFOV = math.clamp(math.floor(value), MinFOV, MaxFOV)
+    FOVLabel.Text = "FOV: " .. _G.TargetFOV
+    local fillPercent = (_G.TargetFOV - MinFOV) / (MaxFOV - MinFOV)
+    FOVFill.Size = UDim2.new(fillPercent, 0, 1, 0)
+    FOVBtn.Position = UDim2.new(fillPercent, -10, 0, 0)
+    
+    workspace.CurrentCamera.FieldOfView = _G.TargetFOV
+end
+
+UpdateFOV(_G.TargetFOV)
+
+FOVBtn.MouseButton1Down:Connect(function()
+    draggingFOV = true
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingFOV and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mousePos = UserInputService:GetMouseLocation()
+        local sliderAbsPos = FOVSlider.AbsolutePosition
+        local sliderSize = FOVSlider.AbsoluteSize
+        local relativeX = math.clamp((mousePos.X - sliderAbsPos.X) / sliderSize.X, 0, 1)
+        local newValue = MinFOV + math.floor(relativeX * (MaxFOV - MinFOV))
+        UpdateFOV(newValue)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingFOV = false
+    end
+end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if workspace.CurrentCamera.FieldOfView ~= _G.TargetFOV then
+            workspace.CurrentCamera.FieldOfView = _G.TargetFOV
+        end
+    end
+end)
+
+local AntiAFKContainer = Instance.new("Frame", GameContainer)
+AntiAFKContainer.Size = UDim2.new(1, 0, 0, 45)
+AntiAFKContainer.Position = UDim2.new(0, 0, 0, 55)
+AntiAFKContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+AntiAFKContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", AntiAFKContainer).CornerRadius = UDim.new(0, 8)
+
+local AntiAFKLabel = Instance.new("TextLabel", AntiAFKContainer)
+AntiAFKLabel.Size = UDim2.new(0.6, -60, 1, 0)
+AntiAFKLabel.Position = UDim2.new(0, 15, 0, 0)
+AntiAFKLabel.Text = "Anti AFK"
+AntiAFKLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+AntiAFKLabel.Font = Enum.Font.GothamMedium
+AntiAFKLabel.TextSize = 13
+AntiAFKLabel.TextXAlignment = Enum.TextXAlignment.Left
+AntiAFKLabel.BackgroundTransparency = 1
+
+local AntiAFKSwitch = Instance.new("TextButton", AntiAFKContainer)
+AntiAFKSwitch.Size = UDim2.new(0, 38, 0, 20)
+AntiAFKSwitch.Position = UDim2.new(1, -50, 0.5, -10)
+AntiAFKSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+AntiAFKSwitch.Text = ""
+Instance.new("UICorner", AntiAFKSwitch).CornerRadius = UDim.new(1, 0)
+
+local AntiAFKCircle = Instance.new("Frame", AntiAFKSwitch)
+AntiAFKCircle.Size = UDim2.new(0, 14, 0, 14)
+AntiAFKCircle.Position = UDim2.new(0, 3, 0.5, -7)
+AntiAFKCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", AntiAFKCircle).CornerRadius = UDim.new(1, 0)
+
+local antiAFKActive = false
+local antiAFKConnection
+
+AntiAFKSwitch.MouseButton1Click:Connect(function()
+    antiAFKActive = not antiAFKActive
+    
+    if antiAFKActive then
+        TweenService:Create(AntiAFKSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(200, 120, 50)}):Play()
+        TweenService:Create(AntiAFKCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        antiAFKConnection = RunService.Heartbeat:Connect(function()
+            local virtualUser = game:GetService("VirtualUser")
+            virtualUser:CaptureController()
+            virtualUser:ClickButton2(Vector2.new())
+        end)
+        
+        ShowNotification("Game Settings", "Anti AFK activated", 3)
+    else
+        TweenService:Create(AntiAFKSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(AntiAFKCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        if antiAFKConnection then
+            antiAFKConnection:Disconnect()
+        end
+        
+        ShowNotification("Game Settings", "Anti AFK deactivated", 3)
+    end
+end)
+
+local GeneralHeader = Instance.new("Frame", MiscPage)
+GeneralHeader.Size = UDim2.new(1, 0, 0, 45)
+GeneralHeader.Position = UDim2.new(0, 0, 0, 295)
+GeneralHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+GeneralHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", GeneralHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", GeneralHeader).Color = Color3.fromRGB(50, 100, 200)
+local GeneralHeaderText = Instance.new("TextLabel", GeneralHeader)
+GeneralHeaderText.Size = UDim2.new(1, 0, 1, 0)
+GeneralHeaderText.Position = UDim2.new(0, 20, 0, 0)
+GeneralHeaderText.Text = "GENERAL UTILITIES"
+GeneralHeaderText.TextColor3 = Color3.fromRGB(50, 100, 200)
+GeneralHeaderText.Font = Enum.Font.GothamBold
+GeneralHeaderText.TextSize = 14
+GeneralHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+GeneralHeaderText.BackgroundTransparency = 1
+
+local GeneralContainer = Instance.new("Frame", MiscPage)
+GeneralContainer.Size = UDim2.new(1, 0, 0, 100)
+GeneralContainer.Position = UDim2.new(0, 0, 0, 350)
+GeneralContainer.BackgroundTransparency = 1
+
+local RejoinContainer = Instance.new("Frame", GeneralContainer)
+RejoinContainer.Size = UDim2.new(1, 0, 0, 45)
+RejoinContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+RejoinContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", RejoinContainer).CornerRadius = UDim.new(0, 8)
+
+local RejoinBtn = Instance.new("TextButton", RejoinContainer)
+RejoinBtn.Size = UDim2.new(0.6, 0, 0, 35)
+RejoinBtn.Position = UDim2.new(0.2, 0, 0.5, -17.5)
+RejoinBtn.Text = "REJOIN SERVER"
+RejoinBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+RejoinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+RejoinBtn.Font = Enum.Font.GothamMedium
+RejoinBtn.TextSize = 14
+Instance.new("UICorner", RejoinBtn).CornerRadius = UDim.new(0, 6)
+
+RejoinBtn.MouseButton1Click:Connect(function()
+    local currentPlaceId = game.PlaceId
+    local currentJobId = game.JobId
+    TeleportService:TeleportToPlaceInstance(currentPlaceId, currentJobId, player)
+    ShowNotification("Utilities", "Rejoining server...", 3)
+end)
+
+local ServerHopContainer = Instance.new("Frame", GeneralContainer)
+ServerHopContainer.Size = UDim2.new(1, 0, 0, 45)
+ServerHopContainer.Position = UDim2.new(0, 0, 0, 55)
+ServerHopContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ServerHopContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", ServerHopContainer).CornerRadius = UDim.new(0, 8)
+
+local ServerHopBtn = Instance.new("TextButton", ServerHopContainer)
+ServerHopBtn.Size = UDim2.new(0.6, 0, 0, 35)
+ServerHopBtn.Position = UDim2.new(0.2, 0, 0.5, -17.5)
+ServerHopBtn.Text = "SERVER HOP"
+ServerHopBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+ServerHopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ServerHopBtn.Font = Enum.Font.GothamMedium
+ServerHopBtn.TextSize = 14
+Instance.new("UICorner", ServerHopBtn).CornerRadius = UDim.new(0, 6)
+
+ServerHopBtn.MouseButton1Click:Connect(function()
+    ShowNotification("Utilities", "Searching for new server...", 2)
+    task.spawn(function()
+        local servers = {}
+        local success, result = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"))
+        end)
+        
+        if success and result and result.data then
+            for _, server in pairs(result.data) do
+                if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                    table.insert(servers, server)
+                end
+            end
+            
+            if #servers > 0 then
+                local randomServer = servers[math.random(1, #servers)]
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id, player)
+            else
+                ShowNotification("Error", "No available servers found", 3)
+            end
+        else
+            ShowNotification("Error", "Failed to get server list", 3)
+        end
+    end)
+end)
+
+local CustomHeader = Instance.new("Frame", MiscPage)
+CustomHeader.Size = UDim2.new(1, 0, 0, 45)
+CustomHeader.Position = UDim2.new(0, 0, 0, 470)
+CustomHeader.BackgroundColor3 = Color3.fromRGB(25, 15, 25)
+CustomHeader.BackgroundTransparency = 0.5
+Instance.new("UICorner", CustomHeader).CornerRadius = UDim.new(0, 10)
+Instance.new("UIStroke", CustomHeader).Color = Color3.fromRGB(180, 80, 200)
+local CustomHeaderText = Instance.new("TextLabel", CustomHeader)
+CustomHeaderText.Size = UDim2.new(1, 0, 1, 0)
+CustomHeaderText.Position = UDim2.new(0, 20, 0, 0)
+CustomHeaderText.Text = "CUSTOMIZATION"
+CustomHeaderText.TextColor3 = Color3.fromRGB(180, 80, 200)
+CustomHeaderText.Font = Enum.Font.GothamBold
+CustomHeaderText.TextSize = 14
+CustomHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+CustomHeaderText.BackgroundTransparency = 1
+
+local CustomContainer = Instance.new("Frame", MiscPage)
+CustomContainer.Size = UDim2.new(1, 0, 0, 105)
+CustomContainer.Position = UDim2.new(0, 0, 0, 525)
+CustomContainer.BackgroundTransparency = 1
+
+local RainbowContainer = Instance.new("Frame", CustomContainer)
+RainbowContainer.Size = UDim2.new(1, 0, 0, 45)
+RainbowContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+RainbowContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", RainbowContainer).CornerRadius = UDim.new(0, 8)
+
+local RainbowLabel = Instance.new("TextLabel", RainbowContainer)
+RainbowLabel.Size = UDim2.new(0.6, -60, 1, 0)
+RainbowLabel.Position = UDim2.new(0, 15, 0, 0)
+RainbowLabel.Text = "Rainbow UI"
+RainbowLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+RainbowLabel.Font = Enum.Font.GothamMedium
+RainbowLabel.TextSize = 13
+RainbowLabel.TextXAlignment = Enum.TextXAlignment.Left
+RainbowLabel.BackgroundTransparency = 1
+
+local RainbowSwitch = Instance.new("TextButton", RainbowContainer)
+RainbowSwitch.Size = UDim2.new(0, 38, 0, 20)
+RainbowSwitch.Position = UDim2.new(1, -50, 0.5, -10)
+RainbowSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+RainbowSwitch.Text = ""
+Instance.new("UICorner", RainbowSwitch).CornerRadius = UDim.new(1, 0)
+
+local RainbowCircle = Instance.new("Frame", RainbowSwitch)
+RainbowCircle.Size = UDim2.new(0, 14, 0, 14)
+RainbowCircle.Position = UDim2.new(0, 3, 0.5, -7)
+RainbowCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", RainbowCircle).CornerRadius = UDim.new(1, 0)
+
+local rainbowActive = false
+local rainbowConnection
+
+RainbowSwitch.MouseButton1Click:Connect(function()
+    rainbowActive = not rainbowActive
+    
+    if rainbowActive then
+        TweenService:Create(RainbowSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(180, 80, 200)}):Play()
+        TweenService:Create(RainbowCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        local hue = 0
+        rainbowConnection = RunService.Heartbeat:Connect(function(delta)
+            hue = (hue + delta * 60) % 360
+            local color = Color3.fromHSV(hue/360, 0.8, 1)
+            
+            MainStroke.Color = color
+            
+            local sidebarGradient = Sidebar:FindFirstChildWhichIsA("UIGradient")
+            if sidebarGradient then
+                sidebarGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, color),
+                    ColorSequenceKeypoint.new(1, CardColor)
+                })
+            end
+            
+            local sidebarStroke = Sidebar:FindFirstChildWhichIsA("UIStroke")
+            if sidebarStroke then
+                sidebarStroke.Color = color
+            end
+            
+            LogoV.BackgroundColor3 = color
+            TitleText.TextColor3 = color
+            
+            local profileStroke = ProfileCard:FindFirstChildWhichIsA("UIStroke")
+            if profileStroke then
+                profileStroke.Color = color
+            end
+            
+            local profileGradient = ProfileCard:FindFirstChildWhichIsA("UIGradient")
+            if profileGradient then
+                profileGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, color),
+                    ColorSequenceKeypoint.new(1, CardColor)
+                })
+            end
+            
+            local statsStroke = StatsCard:FindFirstChildWhichIsA("UIStroke")
+            if statsStroke then
+                statsStroke.Color = color
+            end
+            
+            local statsGradient = StatsCard:FindFirstChildWhichIsA("UIGradient")
+            if statsGradient then
+                statsGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, color),
+                    ColorSequenceKeypoint.new(1, CardColor)
+                })
+            end
+            
+            for _, btnData in pairs(TabButtons) do
+                if btnData.CurrentlyActive then
+                    local btn = btnData.Button
+                    local icon = btn:FindFirstChildWhichIsA("ImageLabel")
+                    local indicator = btn:FindFirstChildWhichIsA("Frame")
+                    local btnStroke = btn:FindFirstChildWhichIsA("UIStroke")
+                    
+                    if icon then
+                        icon.ImageColor3 = color
+                    end
+                    if indicator then
+                        indicator.BackgroundColor3 = color
+                    end
+                    if btnStroke then
+                        btnStroke.Color = color
+                    end
+                end
+            end
+            
+            for _, page in pairs(Pages) do
+                page.ScrollBarImageColor3 = color
+            end
+        end)
+        
+        ShowNotification("Customization", "Rainbow UI activated", 3)
+    else
+        TweenService:Create(RainbowSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(RainbowCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        if rainbowConnection then
+            rainbowConnection:Disconnect()
+        end
+        
+        UpdateTheme(CurrentTheme, CurrentThemeHex)
+        
+        ShowNotification("Customization", "Rainbow UI deactivated", 3)
+    end
+end)
+
+local CursorContainer = Instance.new("Frame", CustomContainer)
+CursorContainer.Size = UDim2.new(1, 0, 0, 45)
+CursorContainer.Position = UDim2.new(0, 0, 0, 55)
+CursorContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+CursorContainer.BackgroundTransparency = 0.4
+Instance.new("UICorner", CursorContainer).CornerRadius = UDim.new(0, 8)
+
+local CursorLabel = Instance.new("TextLabel", CursorContainer)
+CursorLabel.Size = UDim2.new(0.6, -60, 1, 0)
+CursorLabel.Position = UDim2.new(0, 15, 0, 0)
+CursorLabel.Text = "Precision Cursor"
+CursorLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+CursorLabel.Font = Enum.Font.GothamMedium
+CursorLabel.TextSize = 13
+CursorLabel.TextXAlignment = Enum.TextXAlignment.Left
+CursorLabel.BackgroundTransparency = 1
+
+local CursorSwitch = Instance.new("TextButton", CursorContainer)
+CursorSwitch.Size = UDim2.new(0, 38, 0, 20)
+CursorSwitch.Position = UDim2.new(1, -50, 0.5, -10)
+CursorSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+CursorSwitch.Text = ""
+Instance.new("UICorner", CursorSwitch).CornerRadius = UDim.new(1, 0)
+
+local CursorCircle = Instance.new("Frame", CursorSwitch)
+CursorCircle.Size = UDim2.new(0, 14, 0, 14)
+CursorCircle.Position = UDim2.new(0, 3, 0.5, -7)
+CursorCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+Instance.new("UICorner", CursorCircle).CornerRadius = UDim.new(1, 0)
+
+local cursorActive = false
+local cursorGui = nil
+local cursorLoop = nil
+
+CursorSwitch.MouseButton1Click:Connect(function()
+    cursorActive = not cursorActive
+    
+    if cursorActive then
+        TweenService:Create(CursorSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(180, 80, 200)}):Play()
+        TweenService:Create(CursorCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        cursorGui = Instance.new("ScreenGui")
+        cursorGui.Name = "VortexPriorityCursor"
+        cursorGui.Parent = game.CoreGui
+        cursorGui.IgnoreGuiInset = true
+        cursorGui.DisplayOrder = 2147483647
+        
+        local CursorColor = Color3.fromRGB(255, 255, 255)
+        local Size = 7
+        local Thickness = 1
+        
+        local function CreatePart(name, isVertical)
+            local f = Instance.new("Frame")
+            f.Name = name
+            f.Parent = cursorGui
+            f.BackgroundColor3 = CursorColor
+            f.BorderSizePixel = 0
+            f.ZIndex = 1000000
+            
+            if isVertical then
+                f.Size = UDim2.new(0, Thickness, 0, Size)
+            else
+                f.Size = UDim2.new(0, Size, 0, Thickness)
+            end
+            
+            f.AnchorPoint = Vector2.new(0.5, 0.5)
+            
+            local stroke = Instance.new("UIStroke")
+            stroke.Thickness = 0.5
+            stroke.Color = Color3.fromRGB(0, 0, 0)
+            stroke.Transparency = 0.3
+            stroke.Parent = f
+            
+            return f
+        end
+        
+        local Vertical = CreatePart("V", true)
+        local Horizontal = CreatePart("H", false)
+        
+        UserInputService.MouseIconEnabled = false
+        
+        cursorLoop = RunService.RenderStepped:Connect(function()
+            if cursorGui then
+                local mPos = UserInputService:GetMouseLocation()
+                local pos = UDim2.new(0, mPos.X, 0, mPos.Y)
+                
+                Vertical.Position = pos
+                Horizontal.Position = pos
+            end
+        end)
+        
+        ShowNotification("Customization", "Precision cursor activated", 3)
+    else
+        TweenService:Create(CursorSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(CursorCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        if cursorLoop then
+            cursorLoop:Disconnect()
+            cursorLoop = nil
+        end
+        
+        if cursorGui then
+            cursorGui:Destroy()
+            cursorGui = nil
+        end
+        
+        UserInputService.MouseIconEnabled = true
+        
+        ShowNotification("Customization", "Precision cursor deactivated", 3)
+    end
+end)
+
+local TabButtons = {}
+local function CreateTabBtn(iconId, pos, tabName, isBottom)
+    local Btn = Instance.new("TextButton", Sidebar)
+    Btn.Size = UDim2.new(0, 45, 0, 45)
+    if isBottom then Btn.Position = UDim2.new(0.5, -22, 1, -60) else Btn.Position = UDim2.new(0.5, -22, 0, pos) end
+    Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Btn.Text = ""
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 10)
+    
+    local Icon = Instance.new("ImageLabel", Btn)
+    Icon.Size = UDim2.new(0, 24, 0, 24)
+    Icon.Position = UDim2.new(0.5, -12, 0.5, -12)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://" .. tostring(iconId)
+    Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+
+    local Indicator = Instance.new("Frame", Btn)
+    Indicator.Size = UDim2.new(0, 4, 0, 15)
+    Indicator.Position = UDim2.new(0, -8, 0.5, -7.5)
+    Indicator.BackgroundColor3 = CurrentTheme
+    Indicator.BackgroundTransparency = 1
+    Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+
+    local BtnStroke = Instance.new("UIStroke", Btn)
+    BtnStroke.Color = CurrentTheme
+    BtnStroke.Thickness = 1.5
+    BtnStroke.Transparency = 0.6
+
+    local function SetActive(active)
+        TabButtons[tabName].CurrentlyActive = active
+        if active then
+            TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+            TweenService:Create(Icon, TweenInfo.new(0.3), {ImageColor3 = CurrentTheme}):Play()
+            TweenService:Create(Indicator, TweenInfo.new(0.3), {BackgroundTransparency = 0, Size = UDim2.new(0, 4, 0, 20), Position = UDim2.new(0, -8, 0.5, -10)}):Play()
+            TweenService:Create(BtnStroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
+        else
+            TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(35, 35, 45)}):Play()
+            TweenService:Create(Icon, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            TweenService:Create(Indicator, TweenInfo.new(0.3), {BackgroundTransparency = 1, Size = UDim2.new(0, 4, 0, 15), Position = UDim2.new(0, -8, 0.5, -7.5)}):Play()
+            TweenService:Create(BtnStroke, TweenInfo.new(0.3), {Transparency = 0.6}):Play()
+        end
+    end
+
+    Btn.MouseButton1Click:Connect(function()
+        for name, btnData in pairs(TabButtons) do 
+            Pages[name].Visible = false 
+            btnData.Update(false) 
+        end
+        Pages[tabName].Visible = true
+        SetActive(true)
+    end)
+    TabButtons[tabName] = {Button = Btn, Update = SetActive, CurrentlyActive = false}
+    return SetActive
+end
+
+local SetProfileActive = CreateTabBtn(10747373176, 15, "Profile", false) 
+local SetSettingsActive = CreateTabBtn(94273763185070, 75, "Settings", false) 
+local SetMiscActive = CreateTabBtn(103394806347580, 0, "Misc", true) 
+
+Pages["Profile"].Visible = true
+SetProfileActive(true)
+
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    local screenSize = ScreenGui.AbsoluteSize
+    local frameSize = MainFrame.AbsoluteSize
+    local newPosX = math.clamp(startPos.X + delta.X, 0, screenSize.X - frameSize.X)
+    local newPosY = math.clamp(startPos.Y + delta.Y, 0, screenSize.Y - frameSize.Y)
+    MainFrame.Position = UDim2.new(0, newPosX + (frameSize.X * MainFrame.AnchorPoint.X), 0, newPosY + (frameSize.Y * MainFrame.AnchorPoint.Y))
+end
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true 
+        dragStart = input.Position 
+        startPos = MainFrame.AbsolutePosition
+        input.Changed:Connect(function() 
+            if input.UserInputState == Enum.UserInputState.End then 
+                dragging = false 
+            end 
+        end)
+    end
+end)
+TopBar.InputChanged:Connect(function(input) 
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then 
+        dragInput = input 
+    end 
+end)
+UserInputService.InputChanged:Connect(function(input) 
+    if input == dragInput and dragging then 
+        update(input) 
+    end 
+end)
+
+task.spawn(function()
+    ShowNotification("Vortex Hub", "Welcome back, " .. player.DisplayName .. "! Press [ INSERT ] to toggle the hub menu.", 6)
+end)
