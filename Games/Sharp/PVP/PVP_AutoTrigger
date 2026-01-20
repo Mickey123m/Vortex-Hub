@@ -4,9 +4,10 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-local ToggleKey = "Vortex_AutoTrigger_Control"
+local ToggleKey = "Vortex_AutoTrigger_Pro"
 local MaxDistance = 1000
-local Cooldown = 0.1
+local Cooldown = 0.05
+local TriggerRadius = 2.5
 
 if _G[ToggleKey] then
     _G[ToggleKey] = nil
@@ -19,7 +20,7 @@ if _G[ToggleKey] then
 end
 
 _G[ToggleKey] = true
-warn("AUTO-TRIGGER: >>> ATIVADO <<<")
+warn("AUTO-TRIGGER: >>> ATIVADO (MODO PRECISÃO) <<<")
 
 local isShooting = false
 local function shoot()
@@ -27,7 +28,7 @@ local function shoot()
     isShooting = true
     
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-    task.wait(0.02)
+    task.wait(0.01)
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
     
     task.wait(Cooldown)
@@ -42,24 +43,40 @@ _G.TriggerConnection = RunService.RenderStepped:Connect(function()
     
     local rayParams = RaycastParams.new()
     rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
     
     local rayResult = workspace:Raycast(unitRay.Origin, unitRay.Direction * MaxDistance, rayParams)
     
     if rayResult and rayResult.Instance then
         local hitObject = rayResult.Instance
         local character = hitObject:FindFirstAncestorOfClass("Model")
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
         
-        if character then
+        if not humanoid then
+            for _, v in pairs(workspace:GetPartBoundsInRadius(rayResult.Position, TriggerRadius)) do
+                local model = v:FindFirstAncestorOfClass("Model")
+                if model and model:FindFirstChildOfClass("Humanoid") then
+                    character = model
+                    humanoid = model.Humanoid
+                    break
+                end
+            end
+        end
+        
+        if character and humanoid and humanoid.Health > 0 then
             local targetPlayer = Players:GetPlayerFromCharacter(character)
             
-            if targetPlayer and targetPlayer ~= LocalPlayer then
-                if targetPlayer.Team ~= LocalPlayer.Team then
-                    local humanoid = character:FindFirstChildOfClass("Humanoid")
-                    if humanoid and humanoid.Health > 0 then
-                        task.spawn(shoot)
-                    end
+            local isEnemy = false
+            if targetPlayer then
+                if targetPlayer ~= LocalPlayer and targetPlayer.Team ~= LocalPlayer.Team then
+                    isEnemy = true
                 end
+            else
+                isEnemy = true 
+            end
+
+            if isEnemy then
+                task.spawn(shoot)
             end
         end
     end
