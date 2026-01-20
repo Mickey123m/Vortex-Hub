@@ -5,7 +5,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 local ToggleKey = "Vortex_AutoTrigger_Control"
-local MaxDistance = 500
+local MaxDistance = 1000
 local Cooldown = 0.1
 
 if _G[ToggleKey] then
