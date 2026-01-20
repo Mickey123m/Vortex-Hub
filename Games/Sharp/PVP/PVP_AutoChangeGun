@@ -1,0 +1,39 @@
+local SwapKey = Enum.KeyCode.Q -- Tecla de troca do jogo
+local ToggleKey = "FastSwitch_Vortex_Control"
+
+if _G[ToggleKey] then
+    _G[ToggleKey] = nil
+
+    if _G.FastSwitchConnection then
+        _G.FastSwitchConnection:Disconnect()
+        _G.FastSwitchConnection = nil
+    end
+    warn("TOGGLE SWITCH: >>> DESATIVADO <<<")
+    return
+end
+
+_G[ToggleKey] = true
+local currentID = tick()
+_G.FastSwitchID = currentID
+warn("TOGGLE SWITCH: >>> ATIVADO (1 CLIQUE = 1 TROCA) <<<")
+
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local function pressSwapKey()
+    VirtualInputManager:SendKeyEvent(true, SwapKey, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, SwapKey, false, game)
+end
+
+_G.FastSwitchConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if _G[ToggleKey] and not gameProcessed then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            task.wait(0.02)
+            
+            if _G.FastSwitchID == currentID then
+                pressSwapKey()
+            end
+        end
+    end
+end)

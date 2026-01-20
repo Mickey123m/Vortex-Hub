@@ -2,78 +2,77 @@ local ESPColor = Color3.fromRGB(255, 0, 0)
 local FillTransparency = 0.5
 local OutlineTransparency = 0
 local TeamCheck = true
+local ToggleKey = "ESP_Vortex_Control_V2"
 
-if _G.ESPActiveID then
-    _G.ESPActiveID = nil
-    task.wait(0.1)
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-        if player.Character then
-            local esp = player.Character:FindFirstChild("ExternalESP")
-            if esp then esp:Destroy() end
+if _G[ToggleKey] then
+    _G[ToggleKey] = nil
+    if _G.ESPLoop then _G.ESPLoop:Disconnect() end
+    
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj:IsA("Highlight") and obj.Name == "ExternalESP" then
+            obj:Destroy()
         end
     end
-    warn("ESP DETECT: DESATIVADO")
+    
+    warn("ESP DETECT: >>> DESATIVADO <<<")
     return
 end
 
+_G[ToggleKey] = true
 local currentID = tick()
 _G.ESPActiveID = currentID
-warn("ESP DETECT: ATIVADO (AUTO-REFRESH)")
+warn("ESP DETECT: >>> ATIVADO (RECONSTRUIDO) <<<")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local CharactersFolder = workspace:WaitForChild("Characters")
+local RunService = game:GetService("RunService")
 
-local function applyESP(char)
-    if not char:IsA("Model") then return end
+local function updateESP(player)
+    if player == LocalPlayer then return end
     
-    local hum = char:WaitForChild("Humanoid", 5)
-    if not hum then return end
+    local char = player.Character
+    if not char then return end
 
-    local oldEsp = char:FindFirstChild("ExternalESP")
-    if oldEsp then oldEsp:Destroy() end
+    local isEnemy = not TeamCheck or (player.Team ~= LocalPlayer.Team)
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local isAlive = hum and hum.Health > 0
 
-    local plr = Players:GetPlayerFromCharacter(char)
-    if char ~= LocalPlayer.Character and (not TeamCheck or (plr and plr.Team ~= LocalPlayer.Team)) then
-        if hum.Health > 0 then
-            local esp = Instance.new("Highlight")
+    local esp = char:FindFirstChild("ExternalESP")
+
+    if isEnemy and isAlive then
+        if not esp then
+            esp = Instance.new("Highlight")
             esp.Name = "ExternalESP"
             esp.Parent = char
-            esp.FillColor = ESPColor
-            esp.FillTransparency = FillTransparency
-            esp.OutlineColor = Color3.new(1, 1, 1)
-            esp.OutlineTransparency = OutlineTransparency
-            esp.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         end
+        
+        esp.FillColor = ESPColor
+        esp.FillTransparency = FillTransparency
+        esp.OutlineColor = Color3.new(1, 1, 1)
+        esp.OutlineTransparency = OutlineTransparency
+        esp.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    else
+        if esp then esp:Destroy() end
     end
 end
 
-for _, char in pairs(CharactersFolder:GetChildren()) do
-    applyESP(char)
-end
-
-CharactersFolder.ChildAdded:Connect(function(char)
-    if _G.ESPActiveID == currentID then
-        task.wait(0.1)
-        applyESP(char)
+_G.ESPLoop = RunService.RenderStepped:Connect(function()
+    if _G.ESPActiveID ~= currentID then 
+        _G.ESPLoop:Disconnect()
+        return 
     end
-end)
 
-task.spawn(function()
-    while _G.ESPActiveID == currentID do
-        for _, char in pairs(CharactersFolder:GetChildren()) do
-            local esp = char:FindFirstChild("ExternalESP")
-            local hum = char:FindFirstChild("Humanoid")
-            
-            if esp then
-                local plr = Players:GetPlayerFromCharacter(char)
-                if (hum and hum.Health <= 0) or (TeamCheck and plr and plr.Team == LocalPlayer.Team) then
-                    esp:Destroy()
-                end
-            elseif char ~= LocalPlayer.Character and hum and hum.Health > 0 then
-                applyESP(char)
+    for _, plr in pairs(Players:GetPlayers()) do
+        updateESP(plr)
+    end
+    
+    local charFolder = workspace:FindFirstChild("Characters")
+    if charFolder then
+        for _, model in pairs(charFolder:GetChildren()) do
+            local plr = Players:GetPlayerFromCharacter(model)
+            if plr then
+                updateESP(plr)
             end
         end
-        task.wait(1)
     end
 end)

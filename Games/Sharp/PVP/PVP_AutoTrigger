@@ -1,0 +1,93 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local ToggleKey = "Vortex_Aimbot_Control"
+local AimPart = "Head"
+local Sensitivity = 1
+
+local LockedTarget = nil
+
+if _G[ToggleKey] then
+    _G[ToggleKey] = nil
+    if _G.AimbotConnection then
+        _G.AimbotConnection:Disconnect()
+        _G.AimbotConnection = nil
+    end
+    LockedTarget = nil
+    warn("AIMBOT: >>> DESATIVADO <<<")
+    return
+end
+
+_G[ToggleKey] = true
+warn("AIMBOT: >>> ATIVADO <<<")
+
+local function isRealPlayer(obj)
+    local plr = Players:GetPlayerFromCharacter(obj)
+    if plr and plr ~= LocalPlayer then
+        if plr.Team ~= LocalPlayer.Team then
+            local hum = obj:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    local mousePos = UserInputService:GetMouseLocation()
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
+            local char = player.Character
+            if char and char:FindFirstChild(AimPart) then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health > 0 then
+                    local targetPos = char[AimPart].Position
+                    local pos, onScreen = Camera:WorldToViewportPoint(targetPos)
+                    
+                    if onScreen then
+                        local distance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                        if distance < shortestDistance then
+                            closestPlayer = player
+                            shortestDistance = distance
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+_G.AimbotConnection = RunService.RenderStepped:Connect(function()
+    if _G[ToggleKey] then
+        if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            
+            if LockedTarget == nil then
+                LockedTarget = getClosestPlayer()
+            end
+
+            if LockedTarget and LockedTarget.Character and LockedTarget.Character:FindFirstChild(AimPart) then
+                local char = LockedTarget.Character
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                
+                if hum and hum.Health > 0 and LockedTarget.Team ~= LocalPlayer.Team then
+                    local targetPos = char[AimPart].Position
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+                else
+                    LockedTarget = nil
+                end
+            else
+                LockedTarget = nil
+            end
+        else
+            LockedTarget = nil
+        end
+    end
+end)
