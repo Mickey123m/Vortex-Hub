@@ -1,0 +1,88 @@
+local NameColor = Color3.fromRGB(255, 0, 0)
+local TextSize = 14
+local TargetItem = "BearTrap"
+local TargetPart = "HitDetect"
+
+if _G.BearTrapNameESPActiveID then
+    _G.BearTrapNameESPActiveID = nil
+    task.wait(0.1)
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "BearTrapExternalName" then
+            obj:Destroy()
+        end
+    end
+    warn("BEARTRAP ESP: DESATIVADO")
+    return
+end
+
+local currentID = tick()
+_G.BearTrapNameESPActiveID = currentID
+warn("BEARTRAP ESP: ATIVADO")
+
+local function applyTrapName(obj)
+    if obj.Name == TargetItem then
+        local hit = obj:FindFirstChild(TargetPart) or obj:WaitForChild(TargetPart, 3)
+        
+        if hit then
+            local oldName = hit:FindFirstChild("BearTrapExternalName")
+            if oldName then oldName:Destroy() end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "BearTrapExternalName"
+            billboard.Adornee = hit
+            billboard.Size = UDim2.new(0, 100, 0, 40)
+            billboard.StudsOffset = Vector3.new(0, 2, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = hit
+
+            local label = Instance.new("TextLabel")
+            label.Parent = billboard
+            label.BackgroundTransparency = 1
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Text = "⚠️ BearTrap ⚠️"
+            label.TextColor3 = NameColor
+            label.TextStrokeTransparency = 0
+            label.Font = Enum.Font.GothamBold
+            label.TextSize = TextSize
+        end
+    end
+end
+
+local function getEntitiesFolders()
+    local folders = {}
+    for _, child in pairs(workspace:GetChildren()) do
+        if child.Name == "Entities" and child:IsA("Folder") then
+            table.insert(folders, child)
+        end
+    end
+    return folders
+end
+
+for _, folder in pairs(getEntitiesFolders()) do
+    for _, child in pairs(folder:GetChildren()) do
+        applyTrapName(child)
+    end
+    
+    folder.ChildAdded:Connect(function(child)
+        if _G.BearTrapNameESPActiveID == currentID then
+            task.wait(0.3)
+            applyTrapName(child)
+        end
+    end)
+end
+
+task.spawn(function()
+    while _G.BearTrapNameESPActiveID == currentID do
+        for _, folder in pairs(getEntitiesFolders()) do
+            for _, child in pairs(folder:GetChildren()) do
+                if child.Name == TargetItem then
+                    local hit = child:FindFirstChild(TargetPart)
+                    if hit and not hit:FindFirstChild("BearTrapExternalName") then
+                        applyTrapName(child)
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)

@@ -1,0 +1,88 @@
+local NameColor = Color3.fromRGB(134, 57, 241)
+local TextSize = 14
+local TargetItem = "CurseCircle"
+local TargetPart = "HitDetect"
+
+if _G.CurseCircleESPActiveID then
+    _G.CurseCircleESPActiveID = nil
+    task.wait(0.1)
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "CurseCircleExternalName" then
+            obj:Destroy()
+        end
+    end
+    warn("CURSE CIRCLE ESP: DESATIVADO")
+    return
+end
+
+local currentID = tick()
+_G.CurseCircleESPActiveID = currentID
+warn("CURSE CIRCLE ESP: ATIVADO")
+
+local function applyCurseESP(obj)
+    if obj.Name == TargetItem then
+        local adornee = obj:FindFirstChild(TargetPart) or obj:FindFirstChildWhichIsA("BasePart") or obj
+        
+        if adornee then
+            local oldName = adornee:FindFirstChild("CurseCircleExternalName")
+            if oldName then oldName:Destroy() end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "CurseCircleExternalName"
+            billboard.Adornee = adornee
+            billboard.Size = UDim2.new(0, 120, 0, 40)
+            billboard.StudsOffset = Vector3.new(0, 3, 0)
+            billboard.AlwaysOnTop = true
+            billboard.Parent = adornee
+
+            local label = Instance.new("TextLabel")
+            label.Parent = billboard
+            label.BackgroundTransparency = 1
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Text = "✨ Curse Circle ✨"
+            label.TextColor3 = NameColor
+            label.TextStrokeTransparency = 0
+            label.Font = Enum.Font.GothamBold
+            label.TextSize = TextSize
+        end
+    end
+end
+
+local function getEntitiesFolders()
+    local folders = {}
+    for _, child in pairs(workspace:GetChildren()) do
+        if child.Name == "Entities" and child:IsA("Folder") then
+            table.insert(folders, child)
+        end
+    end
+    return folders
+end
+
+for _, folder in pairs(getEntitiesFolders()) do
+    for _, child in pairs(folder:GetChildren()) do
+        applyCurseESP(child)
+    end
+    
+    folder.ChildAdded:Connect(function(child)
+        if _G.CurseCircleESPActiveID == currentID then
+            task.wait(0.3)
+            applyCurseESP(child)
+        end
+    end)
+end
+
+task.spawn(function()
+    while _G.CurseCircleESPActiveID == currentID do
+        for _, folder in pairs(getEntitiesFolders()) do
+            for _, child in pairs(folder:GetChildren()) do
+                if child.Name == TargetItem then
+                    local adornee = child:FindFirstChild(TargetPart) or child:FindFirstChildWhichIsA("BasePart")
+                    if adornee and not adornee:FindFirstChild("CurseCircleExternalName") then
+                        applyCurseESP(child)
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)
