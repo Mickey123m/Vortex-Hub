@@ -1,0 +1,62 @@
+local TargetItem = "BearTrap"
+local TargetPart = "HitDetect"
+
+if _G.AntiTrapActiveID then
+    _G.AntiTrapActiveID = nil
+    warn("ANTI-BEARTRAP: DESATIVADO")
+    return
+end
+
+local currentID = tick()
+_G.AntiTrapActiveID = currentID
+warn("ANTI-BEARTRAP: ATIVADO")
+
+local function disableTrap(obj)
+    if obj.Name == TargetItem then
+        local hit = obj:FindFirstChild(TargetPart) or obj:WaitForChild(TargetPart, 3)
+        
+        if hit then
+            for _, child in pairs(hit:GetChildren()) do
+                if child:IsA("TouchTransmitter") or child.Name == "TouchInterest" then
+                    child:Destroy()
+                end
+            end
+        end
+    end
+end
+
+local function getEntitiesFolders()
+    local folders = {}
+    for _, child in pairs(workspace:GetChildren()) do
+        if child.Name == "Entities" and child:IsA("Folder") then
+            table.insert(folders, child)
+        end
+    end
+    return folders
+end
+
+for _, folder in pairs(getEntitiesFolders()) do
+    for _, child in pairs(folder:GetChildren()) do
+        disableTrap(child)
+    end
+    
+    folder.ChildAdded:Connect(function(child)
+        if _G.AntiTrapActiveID == currentID then
+            task.wait(0.2)
+            disableTrap(child)
+        end
+    end)
+end
+
+task.spawn(function()
+    while _G.AntiTrapActiveID == currentID do
+        for _, folder in pairs(getEntitiesFolders()) do
+            for _, child in pairs(folder:GetChildren()) do
+                if child.Name == TargetItem then
+                    disableTrap(child)
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
