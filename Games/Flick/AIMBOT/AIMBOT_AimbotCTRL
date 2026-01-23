@@ -1,0 +1,78 @@
+-- Configurações e Variáveis Globais
+if _G.Aimbot_Enabled == nil then
+    _G.Aimbot_Enabled = false
+end
+
+-- Inverte o estado ao executar (Toggle)
+_G.Aimbot_Enabled = not _G.Aimbot_Enabled
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Configurações do Aimbot
+local AimKey = Enum.KeyCode.LeftControl -- Tecla para segurar
+local Smoothness = 0.15 -- Quão suave o movimento é (menor é mais rápido)
+
+local Holding = false
+
+-- Função para pegar o jogador mais próximo da mira (Cursor)
+local function GetClosestPlayer()
+    local ClosestPlayer = nil
+    local ShortestDistance = math.huge
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+            local Pos, OnScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if OnScreen then
+                local MousePos = UserInputService:GetMouseLocation()
+                local Distance = (Vector2.new(Pos.X, Pos.Y) - MousePos).Magnitude
+                
+                if Distance < ShortestDistance then
+                    ClosestPlayer = player
+                    ShortestDistance = Distance
+                end
+            end
+        end
+    end
+    return ClosestPlayer
+end
+
+-- Detecção de teclas
+local InputBegan = UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == AimKey then
+        Holding = true
+    end
+end)
+
+local InputEnded = UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == AimKey then
+        Holding = false
+    end
+end)
+
+-- Loop principal do Aimbot
+local AimbotLoop = RunService.RenderStepped:Connect(function()
+    if _G.Aimbot_Enabled and Holding then
+        local Target = GetClosestPlayer()
+        if Target and Target.Character and Target.Character:FindFirstChild("Head") then
+            local TargetPos = Target.Character.Head.Position
+            local CameraPos = Camera.CFrame.Position
+            
+            -- Move a câmera suavemente em direção à cabeça do alvo
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(CameraPos, TargetPos), Smoothness)
+        end
+    end
+end)
+
+-- Lógica de Desativação (Toggle)
+if not _G.Aimbot_Enabled then
+    if InputBegan then InputBegan:Disconnect() end
+    if InputEnded then InputEnded:Disconnect() end
+    if AimbotLoop then AimbotLoop:Disconnect() end
+    print("Aimbot DESATIVADO")
+else
+    print("Aimbot ATIVADO (Segure CTRL)")
+end

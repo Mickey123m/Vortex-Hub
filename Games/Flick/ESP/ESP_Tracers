@@ -1,0 +1,81 @@
+-- Configurações
+local Max_Distance = 500 -- Distância para ignorar o lobby
+local Line_Thickness = 3.5 -- Linha bem visível
+
+-- Toggle Global
+if _G.Tracers_Enabled == nil then _G.Tracers_Enabled = false end
+_G.Tracers_Enabled = not _G.Tracers_Enabled
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Tabela global para persistir entre execuções
+if _G.Lines_Table == nil then _G.Lines_Table = {} end
+
+-- Função de Limpeza Definitiva
+local function FullCleanup()
+    if _G.TracerLoop then
+        _G.TracerLoop:Disconnect()
+        _G.TracerLoop = nil
+    end
+    
+    for player, line in pairs(_G.Lines_Table) do
+        line.Visible = false
+        line:Remove()
+    end
+    table.clear(_G.Lines_Table)
+end
+
+-- Se o toggle for para desligar
+if not _G.Tracers_Enabled then
+    FullCleanup()
+    print("ESP Tracers: REMOVIDO E DESATIVADO")
+    return
+end
+
+-- Se o toggle for para ligar
+print("ESP Tracers: ATIVADO")
+local RedColor = Color3.fromRGB(255, 0, 0)
+
+_G.TracerLoop = RunService.RenderStepped:Connect(function()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            local char = player.Character
+            local root = char.HumanoidRootPart
+            local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            
+            local dist = myRoot and (root.Position - myRoot.Position).Magnitude or 0
+            
+            -- Gerencia a linha
+            local line = _G.Lines_Table[player]
+            if not line then
+                line = Drawing.new("Line")
+                _G.Lines_Table[player] = line
+            end
+            
+            if dist < Max_Distance and char.Humanoid.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                
+                if onScreen then
+                    line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    line.To = Vector2.new(screenPos.X, screenPos.Y)
+                    line.Color = RedColor
+                    line.Thickness = Line_Thickness
+                    line.Transparency = 1
+                    line.Visible = true
+                else
+                    line.Visible = false
+                end
+            else
+                line.Visible = false
+            end
+        else
+            -- Se o jogador morreu ou saiu, esconde a linha dele
+            if _G.Lines_Table[player] then
+                _G.Lines_Table[player].Visible = false
+            end
+        end
+    end
+end)

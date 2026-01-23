@@ -1,0 +1,60 @@
+-- Configurações e Variáveis Globais
+if _G.Trigger_Enabled == nil then
+    _G.Trigger_Enabled = false
+end
+
+-- Inverte o estado (Toggle)
+_G.Trigger_Enabled = not _G.Trigger_Enabled
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+-- Função de clique simulado
+local function MouseClick()
+    -- Simula o pressionar e soltar do mouse
+    mouse1press()
+    task.wait(0.01)
+    mouse1release()
+end
+
+-- Loop principal do Triggerbot
+local TriggerConnection
+if _G.Trigger_Enabled then
+    print("Auto Trigger ATIVADO")
+    
+    TriggerConnection = RunService.RenderStepped:Connect(function()
+        if _G.Trigger_Enabled then
+            local Target = Mouse.Target
+            
+            -- Verifica se o mouse está em cima de algo
+            if Target and Target.Parent then
+                -- Verifica se o que o mouse toca pertence a um jogador
+                local character = Target.Parent
+                local player = Players:GetPlayerFromCharacter(character)
+                
+                -- Se não achou no Parent, tenta no Parent do Parent (acessórios/partes do corpo)
+                if not player then
+                    character = Target.Parent.Parent
+                    player = Players:GetPlayerFromCharacter(character)
+                end
+                
+                -- Verifica se o alvo é um jogador inimigo, se está vivo e não é você
+                if player and player ~= LocalPlayer and character:FindFirstChild("Humanoid") and character.Humanoid.Health > 0 then
+                    MouseClick()
+                end
+            end
+        end
+    end)
+    
+    -- Salva a conexão para poder desligar depois
+    _G.TriggerConnection = TriggerConnection
+else
+    print("Auto Trigger DESATIVADO")
+    -- Desconecta o loop se o toggle for falso
+    if _G.TriggerConnection then
+        _G.TriggerConnection:Disconnect()
+        _G.TriggerConnection = nil
+    end
+end

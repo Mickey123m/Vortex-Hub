@@ -1,0 +1,83 @@
+-- Configurações e Variáveis Globais
+if _G.Highlight_Enabled == nil then
+    _G.Highlight_Enabled = false
+end
+
+-- Inverte o estado atual (Toggle)
+_G.Highlight_Enabled = not _G.Highlight_Enabled
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Outline_Color = Color3.fromRGB(255, 0, 0) -- Cor Vermelha
+
+-- Função para aplicar o Highlight em um jogador
+local function ApplyHighlight(player)
+    local function CreateHighlight()
+        local character = player.Character or player.CharacterAdded:Wait()
+        
+        -- Remove highlight antigo se existir
+        if character:FindFirstChild("ESP_Highlight") then
+            character.ESP_Highlight:Destroy()
+        end
+
+        -- Cria o objeto Highlight focado apenas no contorno (mais leve)
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight"
+        highlight.FillColor = Color3.fromRGB(0, 0, 0) -- Cor de preenchimento irrelevante aqui
+        highlight.FillTransparency = 1 -- TORNA O PREENCHIMENTO INVISÍVEL
+        highlight.OutlineColor = Outline_Color
+        highlight.OutlineTransparency = 0 -- CONTORNO TOTALMENTE VISÍVEL
+        highlight.Adornee = character
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = character
+    end
+
+    -- Aplica ao entrar e sempre que o personagem renascer
+    if player.Character then
+        CreateHighlight()
+    end
+    
+    -- Conexão para quando o jogador morrer e voltar
+    player.CharacterAdded:Connect(function()
+        if _G.Highlight_Enabled then
+            task.wait(0.3)
+            CreateHighlight()
+        end
+    end)
+end
+
+-- Função para remover todos os Highlights
+local function RemoveHighlights()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("ESP_Highlight") then
+            player.Character.ESP_Highlight:Destroy()
+        end
+    end
+end
+
+-- Lógica Principal
+if _G.Highlight_Enabled then
+    print("ESP Contorno Ativado")
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            ApplyHighlight(player)
+        end
+    end
+
+    -- Novos jogadores
+    if not _G.HighlightPlayerAdded then
+        _G.HighlightPlayerAdded = Players.PlayerAdded:Connect(function(player)
+            ApplyHighlight(player)
+        end)
+    end
+else
+    print("ESP Contorno Desativado")
+    
+    if _G.HighlightPlayerAdded then
+        _G.HighlightPlayerAdded:Disconnect()
+        _G.HighlightPlayerAdded = nil
+    end
+    
+    RemoveHighlights()
+end
