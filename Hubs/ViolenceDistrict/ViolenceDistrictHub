@@ -281,7 +281,7 @@ local function CreatePage(name)
     Page.ScrollBarImageTransparency = 0.2
     Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-    Page.ElasticBehavior = Enum.ElasticBehavior.Never
+    Page.ElasticBehavior = Enum.ElasticBehavior.Never 
     Page.VerticalScrollBarInset = Enum.ScrollBarInset.None
     
     local UIPadding = Instance.new("UIPadding", Page)
