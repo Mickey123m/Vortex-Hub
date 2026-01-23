@@ -1,0 +1,66 @@
+-- Identificador único para o Toggle
+local ID_SKILL_ULTRA = "TOGGLE_SKILLCHECK_UNIVERSAL"
+
+if _G[ID_SKILL_ULTRA] then
+    _G[ID_SKILL_ULTRA] = nil
+    print("Auto Skill Check (Geral): DESATIVADO")
+    return
+end
+
+_G[ID_SKILL_ULTRA] = true
+print("Auto Skill Check (Geral): ATIVADO")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+
+-- Função para pressionar Espaço
+local function pressSpace()
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+end
+
+local connection
+connection = RunService.RenderStepped:Connect(function()
+    if not _G[ID_SKILL_ULTRA] then
+        connection:Disconnect()
+        return
+    end
+
+    -- 1. Localiza a GUI de Skill Check (usada tanto para cura quanto gerador)
+    local skillGui = pGui:FindFirstChild("SkillCheckPromptGui")
+    if skillGui and skillGui.Enabled then
+        local checkFrame = skillGui:FindFirstChild("Check")
+        
+        -- 2. Verifica se o círculo está visível na tela
+        if checkFrame and checkFrame.Visible then
+            local line = checkFrame:FindFirstChild("Line")
+            local goal = checkFrame:FindFirstChild("Goal")
+
+            if line and goal and line.Visible then
+                -- 3. MATEMÁTICA EXTRAÍDA DOS SEUS SCRIPTS:
+                -- Sucesso Great: v_rotation entre (104 + goal.Rotation) e (114 + goal.Rotation)
+                local currentRotation = line.Rotation
+                local goalRotation = goal.Rotation
+                
+                local successZoneStart = 104 + goalRotation
+                local successZoneEnd = 114 + goalRotation
+
+                -- 4. Gatilho de acerto automático
+                if currentRotation >= successZoneStart and currentRotation <= successZoneEnd then
+                    pressSpace()
+                    
+                    -- Trava de segurança: espera o Skill Check sumir para não clicar de novo
+                    repeat 
+                        RunService.RenderStepped:Wait() 
+                    until not checkFrame.Visible or not skillGui.Enabled
+                    task.wait(0.1) -- Pequeno resfriamento
+                end
+            end
+        end
+    end
+end)

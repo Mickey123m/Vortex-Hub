@@ -1,0 +1,65 @@
+-- TRXSH HUB: FLASHLIGHT AIMBOT (Killer Focus - Mouse2)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local lp = Players.LocalPlayer
+
+-- Identificador único para o Toggle
+local ID_FLASH_AIM = "TOGGLE_FLASH_AIMBOT_MOUSE"
+
+-- CONFIGURAÇÕES
+local DISTANCIA_MAXIMA = 70 -- Distância para o imã funcionar
+
+if _G[ID_FLASH_AIM] then
+    -- === MODO DESATIVAR ===
+    _G[ID_FLASH_AIM] = nil
+    if _G.FlashAimConn then _G.FlashAimConn:Disconnect() _G.FlashAimConn = nil end
+    print("Flashlight Aim: DESATIVADO")
+    return
+else
+    -- === MODO ATIVAR ===
+    _G[ID_FLASH_AIM] = true
+    print("Flashlight Aim: ATIVADO (Use o Botão Direito para focar)")
+
+    -- Função para localizar o Killer através da Weapon (Sua Base)
+    local function getKillerHead()
+        for _, child in ipairs(Workspace:GetChildren()) do
+            if child:IsA("Model") and child ~= lp.Character then
+                -- Identifica o Killer pela posse da Weapon
+                local weapon = child:FindFirstChild("Weapon", true)
+                local head = child:FindFirstChild("Head")
+                
+                if weapon and head then
+                    return head
+                end
+            end
+        end
+        return nil
+    end
+
+    -- Loop de RenderStepped para trava de mira
+    _G.FlashAimConn = RunService.RenderStepped:Connect(function()
+        if not _G[ID_FLASH_AIM] then return end
+        
+        -- Verifica se o Botão Direito do Mouse está pressionado
+        if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+            local targetHead = getKillerHead()
+            
+            if targetHead then
+                local char = lp.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                
+                if hrp then
+                    local dist = (hrp.Position - targetHead.Position).Magnitude
+                    
+                    if dist <= DISTANCIA_MAXIMA then
+                        local cam = Workspace.CurrentCamera
+                        -- Trava a CFrame da câmera na posição da cabeça do Killer
+                        cam.CFrame = CFrame.lookAt(cam.CFrame.Position, targetHead.Position)
+                    end
+                end
+            end
+        end
+    end)
+end

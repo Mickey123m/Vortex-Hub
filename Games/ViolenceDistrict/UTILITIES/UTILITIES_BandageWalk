@@ -1,0 +1,88 @@
+-- Identificador único
+local ID_SPEED_BYPASS = "BYPASS_BANDAGE_SPEED_FINAL"
+
+if _G[ID_SPEED_BYPASS] then
+    _G[ID_SPEED_BYPASS] = nil
+    print("Bypass: DESATIVADO")
+    return
+end
+
+_G[ID_SPEED_BYPASS] = true
+print("Bypass: ATIVADO (Velocidade Normal Destravada)")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Defina aqui a velocidade que você quer ter enquanto se cura (16 é o padrão do Roblox)
+local VELOCIDADE_DESEJADA = 16 
+
+-- 1. BYPASS DE VELOCIDADE (FORÇA BRUTA)
+task.spawn(function()
+    while _G[ID_SPEED_BYPASS] do
+        RunService.Heartbeat:Wait()
+        if character and humanoid then
+            -- Se o jogo tentar abaixar sua velocidade, nós subimos de volta no mesmo frame
+            if humanoid.WalkSpeed < VELOCIDADE_DESEJADA then
+                humanoid.WalkSpeed = VELOCIDADE_DESEJADA
+            end
+            
+            -- Destrava a rotação do personagem (que o kit desativa)
+            if not humanoid.AutoRotate then
+                humanoid.AutoRotate = true
+            end
+            
+            -- Remove a tag de lentidão do RootPart (referente ao script decompilado)
+            local root = character:FindFirstChild("HumanoidRootPart")
+            if root and root:HasTag("doing action") then
+                root:RemoveTag("doing action")
+            end
+        end
+    end
+end)
+
+-- 2. AUTO SKILL CHECK INTEGRADO (USANDO A MATEMÁTICA DO SEU DECOMPILADO)
+local function pressSpace()
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+end
+
+local connection
+connection = RunService.RenderStepped:Connect(function()
+    if not _G[ID_SPEED_BYPASS] then
+        connection:Disconnect()
+        return
+    end
+
+    local pGui = player:FindFirstChild("PlayerGui")
+    local skillGui = pGui and pGui:FindFirstChild("SkillCheckPromptGui")
+    
+    if skillGui and skillGui.Enabled then
+        local checkFrame = skillGui:FindFirstChild("Check")
+        if checkFrame and checkFrame.Visible then
+            local line = checkFrame:FindFirstChild("Line")
+            local goal = checkFrame:FindFirstChild("Goal")
+
+            if line and goal and line.Visible then
+                -- Lógica exata: 104 + GoalRotation (sucesso absoluto)
+                local currentRotation = line.Rotation
+                local goalRotation = goal.Rotation
+                
+                local successZoneStart = 104 + goalRotation
+                local successZoneEnd = 114 + goalRotation
+
+                if currentRotation >= successZoneStart and currentRotation <= successZoneEnd then
+                    pressSpace()
+                    -- Espera o check sumir para não repetir o clique
+                    repeat RunService.RenderStepped:Wait() 
+                    until not checkFrame.Visible or not skillGui.Enabled
+                end
+            end
+        end
+    end
+end)

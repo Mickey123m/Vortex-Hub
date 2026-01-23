@@ -1,0 +1,36 @@
+-- TRXSH HUB: GOD HEALTH BYPASS (Fixed Toggle)
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+
+-- Identificador único para o Toggle
+local ID_GOD_HEALTH = "GodHealth_Bypass_v2"
+
+if _G[ID_GOD_HEALTH] then
+    -- === MODO DESATIVAR ===
+    _G[ID_GOD_HEALTH] = false -- Definimos como false para o Hook saber que deve parar
+    print("God Health: DESATIVADO (Vida real restaurada para os scripts)")
+    return
+else
+    -- === MODO ATIVAR ===
+    _G[ID_GOD_HEALTH] = true
+    print("God Health: ATIVADO (Bypass de Vida ativo)")
+
+    -- Aplicamos o Hook apenas UMA VEZ na sessão para evitar crashes
+    if not _G.GodHealthHookApplied then
+        _G.GodHealthHookApplied = true
+        
+        local oldIndex
+        oldIndex = hookmetamethod(game, "__index", function(self, idx)
+            -- Se o toggle global estiver ATIVO e não for o executor pedindo
+            if _G[ID_GOD_HEALTH] == true and not checkcaller() then
+                if self:IsA("Humanoid") and (idx == "Health") then
+                    -- Retorna a vida máxima fake
+                    return self.MaxHealth
+                end
+            end
+            
+            -- Se o toggle estiver DESATIVADO ou não for vida, retorna o valor real original
+            return oldIndex(self, idx)
+        end)
+    end
+end

@@ -1,0 +1,64 @@
+-- Identificador único para o Toggle
+local ID_SKILL = "TOGGLE_SKILLCHECK_MASTER"
+
+if _G[ID_SKILL] then
+    _G[ID_SKILL] = nil
+    print("Auto Skill Check: DESATIVADO")
+    return
+end
+
+_G[ID_SKILL] = true
+print("Auto Skill Check: ATIVADO")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+
+-- Função para simular o aperto da tecla Espaço
+local function pressSpace()
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+end
+
+local connection
+connection = RunService.RenderStepped:Connect(function()
+    if not _G[ID_SKILL] then
+        connection:Disconnect()
+        return
+    end
+
+    -- Localiza os elementos conforme o código original do jogo
+    local checkGui = pGui:FindFirstChild("SkillCheckPromptGui")
+    if checkGui and checkGui.Enabled then
+        local checkFrame = checkGui:FindFirstChild("Check")
+        if checkFrame and checkFrame.Visible then
+            local line = checkFrame:FindFirstChild("Line")
+            local goal = checkFrame:FindFirstChild("Goal")
+
+            if line and goal and line.Visible then
+                local v_rotation = line.Rotation
+                local goalRot = goal.Rotation
+                
+                -- VALORES EXTRAÍDOS DO DECOMPILADO:
+                -- O jogo considera sucesso entre (104 + goalRot) e (114 + goalRot)
+                local v_success_start = 104 + goalRot
+                local v_success_end = 114 + goalRot
+
+                -- Verifica se a linha entrou na zona de "Great success"
+                if v_rotation >= v_success_start and v_rotation <= v_success_end then
+                    pressSpace()
+                    
+                    -- Trava para não repetir o clique no mesmo ciclo
+                    repeat 
+                        RunService.RenderStepped:Wait() 
+                    until not checkFrame.Visible or not checkGui.Enabled
+                    task.wait(0.2)
+                end
+            end
+        end
+    end
+end)

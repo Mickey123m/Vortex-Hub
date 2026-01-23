@@ -1,0 +1,91 @@
+-- TRXSH HUB: NOCLIP FLYING + JUMP SYSTEM (Toggle + Force Jump)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local lp = Players.LocalPlayer
+
+-- Identificador único para o Toggle
+local ID_NOCLIP = "NoclipJump_Ativo"
+local JUMP_HEIGHT = 50 -- Altura do pulo forçado
+
+-- Função para aplicar o Noclip e Anti-Void
+local function ApplyNoclipJump()
+    local char = lp.Character
+    if not char then return end
+    
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    
+    if hrp and hum then
+        -- 1. DEFINE A ALTURA DE SEGURANÇA
+        if _G.InitialHeight == nil then
+            _G.InitialHeight = hrp.Position.Y - 0.5
+        end
+        
+        -- 2. DESATIVA TODAS AS COLISÕES
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+        
+        -- 3. ANTI-VOID E TRAVA DE QUEDA
+        if hrp.Position.Y < _G.InitialHeight then
+            hrp.CFrame = CFrame.new(hrp.Position.X, _G.InitialHeight, hrp.Position.Z) * hrp.CFrame.Rotation
+            hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, 0, hrp.AssemblyLinearVelocity.Z)
+        end
+
+        -- 4. FORÇA O PULO (Ignora bloqueio do jogo)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+    end
+end
+
+-- Lógica de Ativar/Desativar
+if _G[ID_NOCLIP] then
+    -- === MODO DESATIVAR ===
+    _G[ID_NOCLIP] = false
+    _G.InitialHeight = nil
+    
+    -- Restaura as colisões e conexões
+    local char = lp.Character
+    if char then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+    if _G.JumpConnection then _G.JumpConnection:Disconnect() _G.JumpConnection = nil end
+    
+    print("TRXSH HUB: Noclip e Force Jump DESATIVADOS.")
+else
+    -- === MODO ATIVAR ===
+    _G[ID_NOCLIP] = true
+    print("TRXSH HUB: Noclip e Force Jump ATIVADOS.")
+    
+    -- Conexão para o Pulo Forçado (Detecta Tecla Espaço)
+    _G.JumpConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.Space and _G[ID_NOCLIP] then
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            
+            if hrp and hum then
+                -- Aplica força vertical ignorando o JumpPower do jogo
+                hrp.AssemblyLinearVelocity = Vector3.new(hrp.AssemblyLinearVelocity.X, JUMP_HEIGHT, hrp.AssemblyLinearVelocity.Z)
+            end
+        end
+    end)
+
+    -- Conexão Stepped para Noclip
+    task.spawn(function()
+        local noclipConnection
+        noclipConnection = RunService.Stepped:Connect(function()
+            if not _G[ID_NOCLIP] then
+                noclipConnection:Disconnect()
+                return
+            end
+            pcall(ApplyNoclipJump)
+        end)
+    end)
+end
