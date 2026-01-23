@@ -1,0 +1,137 @@
+-- Identificador único para o Toggle do 3-Gen com IDs
+local ID_3GEN_G = "TOGGLE_3GEN_G_CLEAN"
+
+-- Função para limpar assets específicos deste script
+local function clear3GenAssets()
+    for _, item in ipairs(game.Workspace:GetDescendants()) do
+        if item.Name == "ThreeGenHighlight" or item.Name == "ThreeGenLinkUI" then
+            item:Destroy()
+        end
+    end
+end
+
+if _G[ID_3GEN_G] then
+    _G[ID_3GEN_G] = nil
+    clear3GenAssets()
+    print("ESP 3-Gen (G): DESATIVADO")
+    return
+end
+
+_G[ID_3GEN_G] = true
+print("ESP 3-Gen (G): ATIVADO")
+
+local Workspace = game:GetService("Workspace")
+local COLOR_ROXO = Color3.fromRGB(170, 0, 255)
+local FOLDER = "Map"
+
+-- Função para localizar geradores ativos
+local function getActiveGens()
+    local gens = {}
+    local mapFolder = Workspace:FindFirstChild(FOLDER)
+    if mapFolder then
+        for _, model in ipairs(mapFolder:GetDescendants()) do
+            if model.Name == "Generator" then
+                local hasPoint = false
+                for _, child in ipairs(model:GetDescendants()) do
+                    if string.find(child.Name, "GeneratorPoint") then
+                        hasPoint = true
+                        break
+                    end
+                end
+                if hasPoint then table.insert(gens, model) end
+            end
+        end
+    end
+    return gens
+end
+
+-- Lógica para achar o trio mais próximo
+local function getTrio(gens)
+    if #gens < 3 then return gens end
+    local bestTrio = {}
+    local minTotalDist = math.huge
+    for i = 1, #gens do
+        for j = i + 1, #gens do
+            for k = j + 1, #gens do
+                local p1 = gens[i]:GetModelCFrame().Position
+                local p2 = gens[j]:GetModelCFrame().Position
+                local p3 = gens[k]:GetModelCFrame().Position
+                local d = (p1 - p2).Magnitude + (p2 - p3).Magnitude + (p3 - p1).Magnitude
+                if d < minTotalDist then
+                    minTotalDist = d
+                    bestTrio = {gens[i], gens[j], gens[k]}
+                end
+            end
+        end
+    end
+    return bestTrio
+end
+
+-- Função para criar UI LIMPA com ID incluso
+local function createLinkUI(parent, text)
+    local bill = Instance.new("BillboardGui")
+    bill.Name = "ThreeGenLinkUI"
+    bill.Size = UDim2.new(0, 200, 0, 30) 
+    bill.Adornee = parent
+    bill.AlwaysOnTop = true
+    bill.ExtentsOffset = Vector3.new(0, 0.1, 0) -- Altura baixa como você pediu
+    bill.DistanceLowerLimit = 0
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = bill
+    label.BackgroundTransparency = 1
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.Text = text
+    label.TextColor3 = COLOR_ROXO
+    label.TextStrokeColor3 = Color3.new(0, 0, 0)
+    label.TextStrokeTransparency = 0
+    label.TextScaled = false
+    label.TextSize = 15 -- Tamanho fixo
+    label.Font = Enum.Font.SourceSansBold
+    
+    bill.Parent = parent
+end
+
+-- Loop de atualização
+task.spawn(function()
+    while _G[ID_3GEN_G] do
+        local allGens = getActiveGens()
+        local trio = getTrio(allGens)
+
+        clear3GenAssets()
+
+        if #trio >= 3 then
+            local p = {
+                trio[1]:GetModelCFrame().Position,
+                trio[2]:GetModelCFrame().Position,
+                trio[3]:GetModelCFrame().Position
+            }
+
+            local d12 = math.floor((p[1] - p[2]).Magnitude)
+            local d23 = math.floor((p[2] - p[3]).Magnitude)
+            local d31 = math.floor((p[3] - p[1]).Magnitude)
+
+            for i, gen in ipairs(trio) do
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "ThreeGenHighlight"
+                highlight.FillColor = COLOR_ROXO
+                highlight.FillTransparency = 0.4
+                highlight.Adornee = gen
+                highlight.Parent = gen
+
+                -- Texto unificado e limpo: ex "G1: 40m ↔ G2 | 30m ↔ G3"
+                local infoText = ""
+                if i == 1 then
+                    infoText = "G1: " .. d12 .. "m ↔ G2 | " .. d31 .. "m ↔ G3"
+                elseif i == 2 then
+                    infoText = "G2: " .. d12 .. "m ↔ G1 | " .. d23 .. "m ↔ G3"
+                elseif i == 3 then
+                    infoText = "G3: " .. d31 .. "m ↔ G1 | " .. d23 .. "m ↔ G2"
+                end
+                
+                createLinkUI(gen, infoText)
+            end
+        end
+        task.wait(5)
+    end
+end)

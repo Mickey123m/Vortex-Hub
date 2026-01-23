@@ -1,0 +1,56 @@
+-- Identificador único para o Toggle da Pallet
+local ID_PALLET = "TOGGLE_PALLET_ESP"
+
+if _G[ID_PALLET] then
+	_G[ID_PALLET] = nil
+	-- Limpeza: Remove apenas os ESPs de Pallet
+	for _, item in ipairs(game.Workspace:GetDescendants()) do
+		if item.Name == "PalletHighlight" then
+			item:Destroy()
+		end
+	end
+	print("ESP Pallet: DESATIVADO")
+	return
+end
+
+_G[ID_PALLET] = true
+print("ESP Pallet: ATIVADO")
+
+local Workspace = game:GetService("Workspace")
+local COLOR = Color3.fromRGB(255, 255, 0) -- Amarelo
+local FOLDER = "Map"
+
+local function applyESP(model)
+	if model.Name == "Palletwrong" and _G[ID_PALLET] then
+		if not model:FindFirstChild("PalletHighlight") then
+			local highlight = Instance.new("Highlight")
+			highlight.Name = "PalletHighlight"
+			highlight.FillColor = COLOR
+			highlight.OutlineColor = Color3.new(1, 1, 1)
+			highlight.FillTransparency = 0.5
+			highlight.Adornee = model
+			highlight.Parent = model
+		end
+	end
+end
+
+local function monitor()
+	local mapFolder = Workspace:FindFirstChild(FOLDER)
+	if mapFolder then
+		for _, child in ipairs(mapFolder:GetDescendants()) do
+			applyESP(child)
+		end
+		mapFolder.DescendantAdded:Connect(function(desc)
+			if _G[ID_PALLET] then applyESP(desc) end
+		end)
+	end
+end
+
+Workspace.ChildAdded:Connect(function(child)
+	if child.Name == FOLDER and _G[ID_PALLET] then
+		task.wait(0.5)
+		monitor()
+	end
+end)
+
+monitor()

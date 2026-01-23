@@ -1,0 +1,73 @@
+-- Identificador único para o Toggle do Killer
+local ID_KILLER = "TOGGLE_KILLER_ESP"
+
+if _G[ID_KILLER] then
+	_G[ID_KILLER] = nil
+	-- Limpeza: Remove apenas os ESPs do Killer
+	for _, item in ipairs(game.Workspace:GetDescendants()) do
+		if item.Name == "KillerHighlight" then
+			item:Destroy()
+		end
+	end
+	print("ESP Killer: DESATIVADO")
+	return
+end
+
+_G[ID_KILLER] = true
+print("ESP Killer: ATIVADO")
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local COLOR_KILLER = Color3.fromRGB(255, 0, 0) -- Vermelho
+
+-- Função para aplicar o ESP se for o Killer
+local function checkAndApplyKillerESP(character)
+	if not _G[ID_KILLER] or not character then return end
+
+	-- Verifica se o personagem sendo checado é o SEU personagem
+	local player = Players:GetPlayerFromCharacter(character)
+	if player == LocalPlayer then return end
+
+	-- O Killer é identificado por ter um model chamado "Weapon" dentro dele
+	local weapon = character:FindFirstChild("Weapon", true)
+	
+	if weapon then
+		local existing = character:FindFirstChild("KillerHighlight")
+		if not existing then
+			local highlight = Instance.new("Highlight")
+			highlight.Name = "KillerHighlight"
+			highlight.FillColor = COLOR_KILLER
+			highlight.OutlineColor = Color3.new(1, 1, 1)
+			highlight.FillTransparency = 0.5
+			highlight.OutlineTransparency = 0
+			highlight.Adornee = character
+			highlight.Parent = character
+		end
+	end
+end
+
+-- Monitora a Workspace
+local function monitorWorkspace()
+	-- Checa quem já está no jogo
+	for _, child in ipairs(Workspace:GetChildren()) do
+		checkAndApplyKillerESP(child)
+	end
+
+	-- Monitora novos personagens ou objetos entrando na Workspace
+	Workspace.ChildAdded:Connect(function(child)
+		if not _G[ID_KILLER] then return end
+		
+		-- Pequeno delay para a arma carregar no personagem
+		task.wait(0.5)
+		checkAndApplyKillerESP(child)
+		
+		-- Caso a arma seja equipada/adicionada depois
+		child.ChildAdded:Connect(function()
+			if _G[ID_KILLER] then checkAndApplyKillerESP(child) end
+		end)
+	end)
+end
+
+-- Inicia o monitoramento
+monitorWorkspace()

@@ -1,0 +1,83 @@
+-- Identificador único para o Toggle
+local ID_SURVIVOR = "TOGGLE_SURVIVOR_LOBBY_ESP"
+
+if _G[ID_SURVIVOR] then
+	_G[ID_SURVIVOR] = nil
+	for _, item in ipairs(game.Workspace:GetDescendants()) do
+		if item.Name == "SurvivorHighlight" then
+			item:Destroy()
+		end
+	end
+	print("ESP Survivor c/ Lobby: DESATIVADO")
+	return
+end
+
+_G[ID_SURVIVOR] = true
+print("ESP Survivor c/ Lobby: ATIVADO")
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local COLOR_SURVIVOR = Color3.fromRGB(0, 255, 0) -- Verde
+
+-- Configurações de Distância
+local SAFE_DISTANCE = 50 -- Distância do Lobby para desativar o ESP
+local CHECK_INTERVAL = 0.5 -- Verifica a cada meio segundo para economizar CPU
+
+-- Função para verificar se você está perto de algo na pasta "Lobby"
+local function isNearLobby()
+	local lobbyFolder = Workspace:FindFirstChild("Lobby")
+	if not lobbyFolder or not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		return false
+	end
+
+	local myPos = LocalPlayer.Character.HumanoidRootPart.Position
+	
+	-- Verifica cada parte dentro da pasta Lobby
+	for _, part in ipairs(lobbyFolder:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local distance = (myPos - part.Position).Magnitude
+			if distance < SAFE_DISTANCE then
+				return true -- Você está perto do Lobby
+			end
+		end
+	end
+	return false
+end
+
+-- Função para aplicar/remover ESP
+local function updateSurvivorESP(isInLobby)
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local char = player.Character
+			local weapon = char:FindFirstChild("Weapon", true)
+			
+			-- Se eu estiver no lobby OU o player for o killer, remove o ESP
+			if isInLobby or weapon then
+				local h = char:FindFirstChild("SurvivorHighlight")
+				if h then h:Destroy() end
+			else
+				-- Se eu NÃO estou no lobby e ele é survivor, coloca o ESP
+				local h = char:FindFirstChild("SurvivorHighlight")
+				if not h then
+					local highlight = Instance.new("Highlight")
+					highlight.Name = "SurvivorHighlight"
+					highlight.FillColor = COLOR_SURVIVOR
+					highlight.OutlineColor = Color3.new(1, 1, 1)
+					highlight.FillTransparency = 0.5
+					highlight.Adornee = char
+					highlight.Parent = char
+				end
+			end
+		end
+	end
+end
+
+-- Loop principal de monitoramento
+task.spawn(function()
+	while _G[ID_SURVIVOR] do
+		local nearLobby = isNearLobby()
+		updateSurvivorESP(nearLobby)
+		task.wait(CHECK_INTERVAL)
+	end
+end)

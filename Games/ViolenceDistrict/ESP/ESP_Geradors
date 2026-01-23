@@ -1,0 +1,116 @@
+-- Identificador único para o Toggle do Gerador
+local ID_GEN = "TOGGLE_GENERATOR_ESP"
+
+if _G[ID_GEN] then
+	_G[ID_GEN] = nil
+	-- Limpeza: Remove todos os ESPs de Gerador existentes
+	for _, item in ipairs(game.Workspace:GetDescendants()) do
+		if item.Name == "GeneratorHighlight" then
+			item:Destroy()
+		end
+	end
+	print("ESP Gerador: DESATIVADO")
+	return
+end
+
+_G[ID_GEN] = true
+print("ESP Gerador: ATIVADO")
+
+local Workspace = game:GetService("Workspace")
+local COLOR = Color3.fromRGB(0, 162, 255) -- Azul
+local FOLDER = "Map"
+
+-- Função para verificar se o GeneratorPoint existe
+local function findGeneratorPoint(model)
+	for _, child in ipairs(model:GetDescendants()) do
+		if string.find(child.Name, "GeneratorPoint") then
+			return child
+		end
+	end
+	return nil
+end
+
+-- Função para aplicar ou remover o ESP
+local function applyESP(model)
+	if model.Name == "Generator" and _G[ID_GEN] then
+		local point = findGeneratorPoint(model)
+		
+		-- Se NÃO tem o point, não coloca ESP (ou remove se já tiver)
+		if not point then
+			local existing = model:FindFirstChild("GeneratorHighlight")
+			if existing then existing:Destroy() end
+			return
+		end
+
+		-- Se TEM o point, cria o ESP
+		local highlight = model:FindFirstChild("GeneratorHighlight")
+		if not highlight then
+			highlight = Instance.new("Highlight")
+			highlight.Name = "GeneratorHighlight"
+			highlight.FillColor = COLOR
+			highlight.OutlineColor = Color3.new(1, 1, 1)
+			highlight.FillTransparency = 0.5
+			highlight.Adornee = model
+			highlight.Parent = model
+		end
+
+		-- Monitora quando o GeneratorPoint for REMOVIDO
+		local removeConn
+		removeConn = model.DescendantRemoving:Connect(function(descendant)
+			if string.find(descendant.Name, "GeneratorPoint") then
+				-- Verifica se ainda resta algum outro GeneratorPoint
+				task.wait() -- Pequeno delay para a engine processar a remoção
+				if not findGeneratorPoint(model) then
+					local h = model:FindFirstChild("GeneratorHighlight")
+					if h then h:Destroy() end
+					removeConn:Disconnect()
+				end
+			end
+			
+			if not _G[ID_GEN] then
+				removeConn:Disconnect()
+			end
+		end)
+		
+		-- Monitora se o GeneratorPoint for ADICIONADO depois (caso ele não existisse antes)
+		local addConn
+		addConn = model.DescendantAdded:Connect(function(descendant)
+			if string.find(descendant.Name, "GeneratorPoint") then
+				applyESP(model) -- Reaplica a lógica
+				addConn:Disconnect()
+			end
+			
+			if not _G[ID_GEN] then
+				addConn:Disconnect()
+			end
+		end)
+	end
+end
+
+-- Função que monitora a pasta Map
+local function monitor()
+	local mapFolder = Workspace:FindFirstChild(FOLDER)
+	if mapFolder then
+		-- Aplica nos geradores atuais
+		for _, child in ipairs(mapFolder:GetDescendants()) do
+			applyESP(child)
+		end
+		
+		-- Monitora novos geradores que surgirem (troca de mapa)
+		mapFolder.DescendantAdded:Connect(function(desc)
+			if _G[ID_GEN] and desc.Name == "Generator" then
+				applyESP(desc)
+			end
+		end)
+	end
+end
+
+-- Monitora troca de pasta Map
+Workspace.ChildAdded:Connect(function(child)
+	if child.Name == FOLDER and _G[ID_GEN] then
+		task.wait(0.5)
+		monitor()
+	end
+end)
+
+monitor()
