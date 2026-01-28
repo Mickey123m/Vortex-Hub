@@ -1,0 +1,80 @@
+-- UNIVERSAL ANTI-AFK + ONLINE TIMER
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local CoreGui = game:GetService("CoreGui")
+local localPlayer = Players.LocalPlayer
+
+-- Configuração de segurança
+if _G.AntiAFK_Enabled then
+    _G.AntiAFK_Enabled = false
+    warn("!!! ANTI-AFK: DESATIVADO !!!")
+    -- Remove a interface se ela existir
+    local oldGui = localPlayer.PlayerGui:FindFirstChild("AntiAFK_Timer") or CoreGui:FindFirstChild("AntiAFK_Timer")
+    if oldGui then oldGui:Destroy() end
+    return
+else
+    _G.AntiAFK_Enabled = true
+    warn("!!! ANTI-AFK: ATIVADO !!!")
+end
+
+-- Criando a Interface (GUI)
+local screenGui = Instance.new("ScreenGui")
+local timerLabel = Instance.new("TextLabel")
+
+screenGui.Name = "AntiAFK_Timer"
+screenGui.Parent = localPlayer:WaitForChild("PlayerGui") -- Em alguns exploits, usar CoreGui é melhor para não sumir ao morrer
+screenGui.ResetOnSpawn = false
+
+timerLabel.Name = "TimerDisplay"
+timerLabel.Parent = screenGui
+timerLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+timerLabel.BackgroundTransparency = 0.5
+timerLabel.Position = UDim2.new(0, 10, 0, 50) -- Posição abaixo do menu do Roblox
+timerLabel.Size = UDim2.new(0, 150, 0, 25)
+timerLabel.Font = Enum.Font.SourceSansBold
+timerLabel.Text = "Online: 00:00:00"
+timerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+timerLabel.TextSize = 16
+timerLabel.BorderSizePixel = 0
+
+-- Arredondar os cantos da GUI
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 5)
+uiCorner.Parent = timerLabel
+
+-- Função para formatar o tempo
+local function formatTime(seconds)
+    local hours = math.floor(seconds / 3600)
+    local mins = math.floor((seconds % 3600) / 60)
+    local secs = seconds % 60
+    return string.format("Online: %02d:%02d:%02d", hours, mins, secs)
+end
+
+-- Lógica do Anti-AFK
+localPlayer.Idled:Connect(function()
+    if _G.AntiAFK_Enabled then
+        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        warn("Anti-AFK executado.")
+    end
+end)
+
+-- Loop do Contador e Movimento
+task.spawn(function()
+    local startTime = tick()
+    while _G.AntiAFK_Enabled do
+        -- Atualiza o Texto
+        local elapsed = math.floor(tick() - startTime)
+        timerLabel.Text = formatTime(elapsed)
+        
+        -- Pequeno pulo a cada 2 minutos para garantir
+        if elapsed % 120 == 0 and elapsed > 0 then
+            if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+                localPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+        
+        task.wait(1)
+    end
+end)

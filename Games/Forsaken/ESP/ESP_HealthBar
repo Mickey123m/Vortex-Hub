@@ -1,0 +1,133 @@
+-- ESP HEALTH BAR (FIXA AO CORPO - NÃO DEITA)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- 1. Detecção do Killer (Ajuste os nomes dos times se necessário)
+local function isKiller(plr)
+    if not plr or plr == localPlayer then return false end
+    local teamName = plr.Team and plr.Team.Name:lower() or ""
+    local char = plr.Character
+    
+    if teamName:find("killer") or teamName:find("assassin") or teamName:find("assassino") then
+        return true
+    end
+    if char and (char:FindFirstChild("Knife") or plr.Backpack:FindFirstChild("Knife")) then
+        return true
+    end
+    return false
+end
+
+-- Controle de Toggle
+if _G.HealthESP_Fixed_Enabled then
+    _G.HealthESP_Fixed_Enabled = false
+    warn("Health ESP: DESATIVADO")
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.Character then
+            local folder = plr.Character:FindFirstChild("Health_Fixed_Holder")
+            if folder then folder:Destroy() end
+        end
+    end
+    return
+else
+    _G.HealthESP_Fixed_Enabled = true
+    warn("Health ESP: ATIVADO")
+end
+
+-- 2. Função da Barra Fixa
+local function createHealthBar(char)
+    if not _G.HealthESP_Fixed_Enabled then return end
+    
+    local plr = Players:GetPlayerFromCharacter(char)
+    if not plr or plr == localPlayer or isKiller(plr) then return end
+    if char:FindFirstChild("Health_Fixed_Holder") then return end
+
+    local root = char:WaitForChild("HumanoidRootPart", 5)
+    local hum = char:WaitForChild("Humanoid", 5)
+    if not root or not hum then return end
+
+    local holder = Instance.new("Folder")
+    holder.Name = "Health_Fixed_Holder"
+    holder.Parent = char
+
+    -- Criamos uma "Haste" invisível para a barra
+    local barPart = Instance.new("Part")
+    barPart.Name = "HealthBarPart"
+    barPart.Size = Vector3.new(0.2, 4, 0.05) -- Altura da barra no mundo
+    barPart.Transparency = 1
+    barPart.CanCollide = false
+    barPart.CanQuery = false
+    barPart.Massless = true
+    barPart.Parent = holder
+
+    -- Solda a peça na lateral do jogador (Fixa ao corpo)
+    local weld = Instance.new("Weld")
+    weld.Part0 = root
+    weld.Part1 = barPart
+    weld.C0 = CFrame.new(-2.2, 0, 0) -- Distância lateral
+    weld.Parent = barPart
+
+    -- SurfaceGui para a barra não deitar com a câmera
+    local function addSurface(face)
+        local gui = Instance.new("SurfaceGui")
+        gui.Name = "HealthGui_" .. face.Name
+        gui.Face = face
+        gui.CanvasSize = Vector2.new(100, 400)
+        gui.AlwaysOnTop = true
+        gui.Adornee = barPart
+        gui.Parent = barPart
+
+        local bg = Instance.new("Frame")
+        bg.Size = UDim2.new(1, 0, 1, 0)
+        bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        bg.BackgroundTransparency = 0.5
+        bg.BorderSizePixel = 0
+        bg.Parent = gui
+
+        local bar = Instance.new("Frame")
+        bar.Name = "Bar"
+        bar.Size = UDim2.new(1, 0, 1, 0)
+        bar.AnchorPoint = Vector2.new(0, 1)
+        bar.Position = UDim2.new(0, 0, 1, 0)
+        bar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        bar.BorderSizePixel = 0
+        bar.Parent = bg
+        return bar
+    end
+
+    -- Cria as faces para ser visível de frente e de trás
+    local barFront = addSurface(Enum.NormalId.Front)
+    local barBack = addSurface(Enum.NormalId.Back)
+
+    -- Atualização
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if not _G.HealthESP_Fixed_Enabled or not char:IsDescendantOf(workspace) or not hum then
+            connection:Disconnect()
+            return
+        end
+
+        if isKiller(plr) then
+            holder:Destroy()
+            connection:Disconnect()
+            return
+        end
+
+        local hpPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+        local color = Color3.fromRGB(255, 0, 0):Lerp(Color3.fromRGB(0, 255, 0), hpPercent)
+        
+        barFront.Size = UDim2.new(1, 0, hpPercent, 0)
+        barFront.BackgroundColor3 = color
+        barBack.Size = UDim2.new(1, 0, hpPercent, 0)
+        barBack.BackgroundColor3 = color
+    end)
+end
+
+-- 3. Setup
+local function setup(plr)
+    plr.CharacterAdded:Connect(createHealthBar)
+    if plr.Character then createHealthBar(plr.Character) end
+end
+
+for _, plr in pairs(Players:GetPlayers()) do setup(plr) end
+Players.PlayerAdded:Connect(setup)

@@ -1,0 +1,60 @@
+-- SURVIVOR JUMP ENABLER (FIXED TOGGLE)
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local localPlayer = Players.LocalPlayer
+
+-- Configurações
+local JUMP_HEIGHT = 50 
+
+-- Lógica de Toggle (Ligar/Desligar)
+if _G.JumpEnabler_Enabled then
+    _G.JumpEnabler_Enabled = false
+    warn("!!! JUMP ENABLER: DESATIVADO !!!")
+    
+    -- Restaura o pulo padrão ao desativar
+    local char = localPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.JumpPower = 0 -- Ou o valor que o jogo usa (geralmente 0 em jogos que travam o pulo)
+        hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+    end
+    return
+else
+    _G.JumpEnabler_Enabled = true
+    warn("!!! JUMP ENABLER: ATIVADO !!!")
+end
+
+-- Função para aplicar as propriedades de pulo
+local function applyJumpSettings()
+    local char = localPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    
+    if hum and _G.JumpEnabler_Enabled then
+        hum.JumpPower = JUMP_HEIGHT
+        hum.UseJumpPower = true
+        hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+    end
+end
+
+-- Detecta o pedido de pulo (Tecla Espaço)
+local connection
+connection = UserInputService.JumpRequest:Connect(function()
+    if not _G.JumpEnabler_Enabled then
+        connection:Disconnect() -- Mata a conexão se o script for desativado
+        return
+    end
+
+    local char = localPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- Loop de Persistência (Mantém o pulo ativo contra scripts do jogo)
+task.spawn(function()
+    while _G.JumpEnabler_Enabled do
+        applyJumpSettings()
+        task.wait(0.5) -- Verifica mais rápido para ganhar dos scripts do servidor
+    end
+end)

@@ -1,0 +1,46 @@
+-- FAST AUTO-SKILL CHECK (Optimized Speed)
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- Configurações de Velocidade (Ajustadas para o limite do servidor)
+-- Diminuir esses valores aumenta a velocidade, mas aumenta o risco de Kick.
+local MIN_SPEED = 1.2 -- Mínimo de segundos por "puzzle"
+local MAX_SPEED = 2.0 -- Máximo de segundos por "puzzle"
+
+-- Global Toggle Logic
+if _G.FastSkillCheck_Enabled then
+    _G.FastSkillCheck_Enabled = false
+    warn("Fast Auto-Skill: DISABLED")
+    return
+else
+    _G.FastSkillCheck_Enabled = true
+    warn("Fast Auto-Skill: ENABLED (High Speed Mode)")
+end
+
+-- Loop de Progresso Acelerado
+task.spawn(function()
+    while _G.FastSkillCheck_Enabled do
+        local mapModel = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map")
+        
+        if mapModel then
+            for _, gen in pairs(mapModel:GetChildren()) do
+                if not _G.FastSkillCheck_Enabled then break end
+                
+                if gen.Name == "Generator" then
+                    local progress = gen:FindFirstChild("Progress")
+                    local remotes = gen:FindFirstChild("Remotes")
+                    local remoteEvent = remotes and remotes:FindFirstChildOfClass("RemoteEvent")
+                    
+                    -- Verifica se o gerador existe e se você está perto/interagindo
+                    if progress and progress.Value < 100 and remoteEvent then
+                        -- Envia o sinal de puzzle completo
+                        remoteEvent:FireServer("finishedPuzzle")
+                    end
+                end
+            end
+        end
+        
+        -- Delay acelerado: Simula acertar puzzles um atrás do outro muito rápido
+        task.wait(math.random(MIN_SPEED * 100, MAX_SPEED * 100) / 100)
+    end
+end)

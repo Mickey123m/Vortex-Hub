@@ -1,0 +1,88 @@
+-- ESP SURVIVORS (Toggle Mode) - Ultra Anti-Self (UserId Check)
+local FolderName = "Survivors"
+local PlayersService = game:GetService("Players")
+local LocalPlayer = PlayersService.LocalPlayer
+
+-- Controle de Toggle
+if _G.ESP_Survivors_Enabled then
+    _G.ESP_Survivors_Enabled = false
+    warn("ESP Survivors: DESATIVADO")
+    
+    -- Limpeza total ao desativar
+    local targetFolder = workspace:FindFirstChild("Players") and workspace.Players:FindFirstChild(FolderName)
+    if targetFolder then
+        for _, model in pairs(targetFolder:GetChildren()) do
+            local hl = model:FindFirstChild("ESP_Highlight_Survivor")
+            if hl then hl:Destroy() end
+        end
+    end
+    return
+else
+    _G.ESP_Survivors_Enabled = true
+    warn("ESP Survivors: ATIVADO")
+end
+
+-- Função para verificar se o modelo pertence ao LocalPlayer
+local function isMe(model)
+    -- 1. Verifica se o modelo é o Character oficial do LocalPlayer
+    if model == LocalPlayer.Character then return true end
+    
+    -- 2. Verifica via PlayersService (caso o nome seja diferente)
+    local playerObj = PlayersService:GetPlayerFromCharacter(model)
+    if playerObj == LocalPlayer then return true end
+    
+    -- 3. Verifica se o nome do modelo é igual ao seu nome de usuário
+    if model.Name == LocalPlayer.Name then return true end
+    
+    return false
+end
+
+-- Função para aplicar ou atualizar o Highlight
+local function applyESP(model)
+    if not _G.ESP_Survivors_Enabled then return end
+    if not model:IsA("Model") then return end
+    
+    -- SE FOR VOCÊ, DESTRÓI QUALQUER ESP E PARA
+    if isMe(model) then
+        local selfHl = model:FindFirstChild("ESP_Highlight_Survivor")
+        if selfHl then selfHl:Destroy() end
+        return
+    end
+    
+    -- Só aplica se não for você
+    local highlight = model:FindFirstChild("ESP_Highlight_Survivor")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight_Survivor"
+        highlight.FillColor = Color3.fromRGB(0, 255, 0) -- Verde
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.Parent = model
+    end
+    
+    highlight.Adornee = model
+    highlight.Enabled = true
+end
+
+-- Loop de persistência e detecção agressiva
+task.spawn(function()
+    while _G.ESP_Survivors_Enabled do
+        local playersFolder = workspace:FindFirstChild("Players")
+        local targetFolder = playersFolder and playersFolder:FindFirstChild(FolderName)
+
+        if targetFolder then
+            for _, child in pairs(targetFolder:GetChildren()) do
+                applyESP(child)
+            end
+        end
+        
+        -- Limpeza forçada de segurança no seu personagem (onde quer que ele esteja)
+        if LocalPlayer.Character then
+            local selfHl = LocalPlayer.Character:FindFirstChild("ESP_Highlight_Survivor")
+            if selfHl then selfHl:Destroy() end
+        end
+
+        task.wait(0.2) -- Verificação ultra rápida (5 vezes por segundo)
+    end
+end)

@@ -1,0 +1,77 @@
+-- NOCLIP SYSTEM (With Jump Support & Correct Collisions)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- Global Toggle Logic
+if _G.NoClip_Direct_Enabled then
+    _G.NoClip_Direct_Enabled = false
+    warn("NoClip: DISABLED")
+    
+    -- Reset collisions to default when disabled
+    if localPlayer.Character then
+        for _, part in pairs(localPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+    return
+else
+    _G.NoClip_Direct_Enabled = true
+    warn("NoClip: ENABLED (Jump is Active)")
+end
+
+-- Main Physics Loop
+local connection
+connection = RunService.Stepped:Connect(function()
+    if not _G.NoClip_Direct_Enabled then
+        connection:Disconnect()
+        return
+    end
+
+    if localPlayer.Character then
+        for _, part in pairs(localPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide == true then
+                -- O segredo para pular é não desativar a colisão se a parte for o pé 
+                -- ou se o Humanoid estiver tentando detectar o chão.
+                -- Aqui desativamos para tudo para permitir atravessar paredes:
+                part.CanCollide = false
+            end
+        end
+        
+        -- Garante que o estado de pulo permaneça ativo mesmo sem colisão
+        local humanoid = localPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            -- Força o Humanoid a aceitar o comando de pulo
+            if humanoid:GetState() == Enum.HumanoidStateType.FallingDown then
+                humanoid:ChangeState(Enum.HumanoidStateType.Running)
+            end
+        end
+    end
+end)
+
+-- Safety: Anti-Void Logic & Jump Fix
+task.spawn(function()
+    while _G.NoClip_Direct_Enabled do
+        if localPlayer.Character then
+            local root = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local hum = localPlayer.Character:FindFirstChildOfClass("Humanoid")
+            
+            -- Anti-Void
+            if root and root.Position.Y < -100 then
+                root.Velocity = Vector3.new(0, 50, 0)
+                warn("Safety: Pushing character up from void")
+            end
+            
+            -- Se o NoClip bugar o pulo, isso aqui força o reconhecimento do chão
+            if hum and hum.FloorMaterial == Enum.Material.Air then
+                -- Pequeno ajuste para o motor de física entender que você pode pular
+                hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+            end
+        end
+        task.wait(0.5)
+    end
+end)

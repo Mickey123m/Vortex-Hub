@@ -1,0 +1,102 @@
+-- AUTO COLLECT INSTANT (Com Verificação de Inventário)
+-- LOCAIS: Workspace (Direto) OU Workspace.Map.Ingame.Map
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:FindFirstChild("HumanoidRootPart")
+
+-- 1. Itens que queremos
+local itemNames = {"BloxyCola", "Medkit"}
+
+-- 2. Função para verificar se o jogador JÁ TEM o item
+local function hasItem(name)
+    -- Verifica na mochila
+    if player.Backpack:FindFirstChild(name) then return true end
+    -- Verifica se está segurando na mão
+    if character:FindFirstChild(name) then return true end
+    return false
+end
+
+-- 3. Função para simular o aperto da tecla F
+local function pressF()
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.F, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.F, false, game)
+end
+
+-- 4. Função de Coleta
+local function collectItems()
+    if not rootPart then return end
+    
+    -- Verifica quais itens realmente precisamos buscar
+    local itemsToFind = {}
+    for _, name in pairs(itemNames) do
+        if not hasItem(name) then
+            itemsToFind[name] = true
+        end
+    end
+
+    -- Se já tivermos tudo, cancela o teleporte
+    local needsAnything = false
+    for _ in pairs(itemsToFind) do needsAnything = true break end
+    
+    if not needsAnything then
+        warn("Você já possui BloxyCola e Medkit. Teleporte cancelado.")
+        return
+    end
+
+    local oldPos = rootPart.CFrame
+    local mapFolder = workspace:FindFirstChild("Map")
+    local ingameFolder = mapFolder and mapFolder:FindFirstChild("Ingame")
+    local targetMapModel = ingameFolder and ingameFolder:FindFirstChild("Map")
+
+    local itemsFound = {}
+
+    -- Busca 1: Workspace Raiz
+    for _, obj in pairs(workspace:GetChildren()) do
+        if itemsToFind[obj.Name] then
+            table.insert(itemsFound, obj)
+        end
+    end
+
+    -- Busca 2: Caminho Map.Ingame.Map
+    if targetMapModel then
+        for _, obj in pairs(targetMapModel:GetChildren()) do
+            if itemsToFind[obj.Name] then
+                table.insert(itemsFound, obj)
+            end
+        end
+    end
+
+    -- Se achou itens necessários, começa o TP
+    if #itemsFound > 0 then
+        for _, item in pairs(itemsFound) do
+            -- Verifica novamente se pegou o item no TP anterior (caso tenha 2 no chão)
+            if not hasItem(item.Name) then
+                local targetPart = item:IsA("BasePart") and item or item:FindFirstChildWhichIsA("BasePart", true)
+                
+                if targetPart then
+                    rootPart.CFrame = targetPart.CFrame
+                    task.wait(0.12)
+
+                    pressF()
+                    local prompt = item:FindFirstChildWhichIsA("ProximityPrompt", true)
+                    if prompt then
+                        fireproximityprompt(prompt)
+                    end
+                    task.wait(0.15)
+                end
+            end
+        end
+        -- Volta para a posição original
+        rootPart.CFrame = oldPos
+        warn("Coleta finalizada!")
+    else
+        warn("Itens necessários não encontrados no chão.")
+    end
+end
+
+-- Executa
+collectItems()

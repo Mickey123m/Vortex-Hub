@@ -1,0 +1,90 @@
+-- ESP GENERATOR PROGRESS (Text Only) - Color (0, 170, 255)
+local RunService = game:GetService("RunService")
+
+-- Toggle Control
+if _G.ESP_Progress_Enabled then
+    _G.ESP_Progress_Enabled = false
+    warn("Progress ESP: DISABLED")
+    
+    -- Cleanup
+    local mapFolder = workspace:FindFirstChild("Map")
+    local ingame = mapFolder and mapFolder:FindFirstChild("Ingame")
+    local mapModel = ingame and ingame:FindFirstChild("Map")
+    
+    if mapModel then
+        for _, obj in pairs(mapModel:GetDescendants()) do
+            if obj.Name == "Generator_Progress_ESP" then
+                obj:Destroy()
+            end
+        end
+    end
+    return
+else
+    _G.ESP_Progress_Enabled = true
+    warn("Progress ESP: ENABLED")
+end
+
+-- Function to apply/update only the Progress Text
+local function updateProgressESP(model)
+    if not _G.ESP_Progress_Enabled then return end
+    if not model:IsA("Model") or model.Name ~= "Generator" then return end
+
+    local progressValue = model:FindFirstChild("Progress")
+    local holder = model:FindFirstChild("Generator_Progress_ESP")
+
+    -- If progress is 100, remove the text
+    if progressValue and progressValue:IsA("NumberValue") and progressValue.Value >= 100 then
+        if holder then holder:Destroy() end
+        return
+    end
+
+    -- Create BillboardGui if missing
+    if not holder then
+        holder = Instance.new("Folder")
+        holder.Name = "Generator_Progress_ESP"
+        holder.Parent = model
+
+        local gui = Instance.new("BillboardGui")
+        gui.Name = "ProgressGui"
+        gui.Size = UDim2.new(4, 0, 1, 0)
+        gui.StudsOffset = Vector3.new(0, 4, 0)
+        gui.AlwaysOnTop = true
+        gui.Adornee = model:FindFirstChildWhichIsA("BasePart", true) or model.PrimaryPart
+        gui.Parent = holder
+
+        local label = Instance.new("TextLabel")
+        label.Name = "ProgressLabel"
+        label.Parent = gui
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.TextStrokeTransparency = 0
+        label.TextScaled = true
+        label.Font = Enum.Font.GothamBold
+        -- COR EXATA SOLICITADA: (0, 170, 255)
+        label.TextColor3 = Color3.fromRGB(0, 170, 255)
+    end
+
+    -- Update Text Value
+    local label = holder:FindFirstChild("ProgressLabel", true)
+    if progressValue and progressValue:IsA("NumberValue") and label then
+        label.Text = "Progress: " .. math.floor(progressValue.Value) .. "%"
+    end
+end
+
+-- Persistence Loop
+task.spawn(function()
+    while _G.ESP_Progress_Enabled do
+        local mapFolder = workspace:FindFirstChild("Map")
+        local ingame = mapFolder and mapFolder:FindFirstChild("Ingame")
+        local mapModel = ingame and ingame:FindFirstChild("Map")
+
+        if mapModel then
+            for _, child in pairs(mapModel:GetChildren()) do
+                if child.Name == "Generator" then
+                    updateProgressESP(child)
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)

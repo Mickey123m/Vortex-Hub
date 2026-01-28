@@ -1,0 +1,98 @@
+-- ULTIMATE PERSISTENT FARMER (Pure Farm & ESP - No Rejoin)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+
+-- Configurações
+local WALK_TIME = 0.5 
+local SYNC_WAIT = 0.1 
+
+-- Global Toggle
+if _G.LobbyFarm_Enabled then
+    _G.LobbyFarm_Enabled = false
+    warn("!!! FARM: DISABLED !!!")
+    if _G.KillerESP then _G.KillerESP:Disconnect() end
+    if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        localPlayer.Character.HumanoidRootPart.Anchored = false
+    end
+    return
+else
+    _G.LobbyFarm_Enabled = true
+    warn("!!! FARM: ENABLED (Pure Mode) !!!")
+end
+
+-- Função para detectar o Killer (apenas para o ESP)
+local function getKiller()
+    for _, p in pairs(Players:GetPlayers()) do
+        local role = p:FindFirstChild("Role", true) or p:FindFirstChild("Status", true)
+        if (role and (role.Value == "Killer" or role.Value == "Assassino")) or 
+           (p.Backpack:FindFirstChild("Knife") or (p.Character and p.Character:FindFirstChild("Knife"))) then
+            return p
+        end
+    end
+    return nil
+end
+
+-- KILLER ESP (Destaque visual para você saber onde ele está)
+_G.KillerESP = RunService.RenderStepped:Connect(function()
+    local killer = getKiller()
+    if killer and killer.Character then
+        local highlight = killer.Character:FindFirstChild("KillerHighlight") or Instance.new("Highlight")
+        highlight.Name = "KillerHighlight"
+        highlight.Parent = killer.Character
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+    end
+end)
+
+-- LOOP DE FARM CONTÍNUO
+task.spawn(function()
+    while _G.LobbyFarm_Enabled do
+        task.wait(0.1)
+
+        local char = localPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        
+        -- Busca a pasta de moedas em todo o Workspace (sem cache para evitar erros quando ela renasce)
+        local currencyFolder = workspace:FindFirstChild("CurrencyLocations", true)
+        
+        if root then
+            if currencyFolder and #currencyFolder:GetChildren() > 0 then
+                local items = currencyFolder:GetChildren()
+                
+                for _, item in pairs(items) do
+                    if not _G.LobbyFarm_Enabled then break end
+                    
+                    pcall(function()
+                        if item and item.Parent == currencyFolder then
+                            local touchPart = item:FindFirstChild("Part") or item:FindFirstChild("BuildermanExp") or item:FindFirstChildOfClass("BasePart")
+                            
+                            if touchPart then
+                                -- TELEPORTE PARA O ITEM
+                                root.Anchored = false
+                                root.CFrame = touchPart.CFrame * CFrame.new(0, 0.5, 0)
+                                
+                                task.wait(SYNC_WAIT)
+                                firetouchinterest(root, touchPart, 0)
+                                
+                                local start = tick()
+                                -- Vibração para garantir o toque e registro no servidor
+                                while item.Parent == currencyFolder and (tick() - start) < WALK_TIME do
+                                    root.CFrame = touchPart.CFrame * CFrame.new(0, 0.5, math.sin(tick() * 30) * 1.5)
+                                    task.wait()
+                                end
+                                firetouchinterest(root, touchPart, 1)
+                            end
+                        end
+                    end)
+                end
+            else
+                -- Se não houver itens ou a pasta for excluída, apenas garante que não está travado
+                if root.Anchored then
+                    root.Anchored = false
+                end
+            end
+        end
+    end
+end)

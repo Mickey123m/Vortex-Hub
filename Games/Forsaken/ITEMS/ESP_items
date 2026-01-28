@@ -1,0 +1,119 @@
+-- ESP ITEMS (Toggle Mode) - Medkit & BloxyCola
+-- LOCAIS: Workspace OU Workspace.Map.Ingame.Map
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- 1. Definição de Cores
+local ItemColors = {
+    ["BloxyCola"] = Color3.fromRGB(255, 120, 0), -- Laranja
+    ["Medkit"]    = Color3.fromRGB(0, 255, 127), -- Verde
+}
+
+-- Controle de Toggle
+if _G.ESP_Items_Enabled then
+    _G.ESP_Items_Enabled = false
+    warn("ESP Items: DESATIVADO")
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj.Name == "Item_ESP_Holder" then 
+            obj:Destroy() 
+        end
+    end
+    return
+else
+    _G.ESP_Items_Enabled = true
+    warn("ESP Items: ATIVADO")
+end
+
+-- 2. Função para aplicar o ESP
+local function applyESP(object)
+    if not _G.ESP_Items_Enabled then return end
+    if object:FindFirstChild("Item_ESP_Holder") then return end
+
+    local targetPart = object:IsA("BasePart") and object or object:FindFirstChildWhichIsA("BasePart", true)
+    
+    if targetPart then
+        local itemColor = ItemColors[object.Name]
+        local holder = Instance.new("Folder")
+        holder.Name = "Item_ESP_Holder"
+        holder.Parent = object
+
+        local hl = Instance.new("Highlight")
+        hl.Name = "Highlight"
+        hl.FillColor = itemColor
+        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+        hl.FillTransparency = 0.4
+        hl.Adornee = object
+        hl.Parent = holder
+
+        local gui = Instance.new("BillboardGui")
+        gui.Name = "NameGui"
+        gui.Size = UDim2.new(4, 0, 1.2, 0)
+        gui.StudsOffset = Vector3.new(0, 2, 0)
+        gui.AlwaysOnTop = true
+        gui.MaxDistance = 500
+        gui.Adornee = targetPart
+        gui.Parent = holder
+
+        local label = Instance.new("TextLabel")
+        label.Parent = gui
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Text = object.Name
+        label.TextColor3 = itemColor
+        label.TextStrokeTransparency = 0
+        label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        label.TextScaled = true
+        label.Font = Enum.Font.GothamBold
+    end
+end
+
+-- 3. Loop de Varredura Estrito
+task.spawn(function()
+    while _G.ESP_Items_Enabled do
+        pcall(function()
+            -- Referência ao caminho: Workspace > Map > Ingame > Map
+            local mapFolder = workspace:FindFirstChild("Map")
+            local ingameFolder = mapFolder and mapFolder:FindFirstChild("Ingame")
+            local targetMapModel = ingameFolder and ingameFolder:FindFirstChild("Map")
+
+            -- LISTA DE ITENS PARA VERIFICAR
+            local itemsToTrack = {}
+
+            -- Adiciona itens que estão soltos na Workspace (Filhos diretos)
+            for _, obj in pairs(workspace:GetChildren()) do
+                if ItemColors[obj.Name] then
+                    table.insert(itemsToTrack, obj)
+                end
+            end
+
+            -- Adiciona itens que estão dentro do caminho Workspace.Map.Ingame.Map
+            if targetMapModel then
+                for _, obj in pairs(targetMapModel:GetChildren()) do
+                    if ItemColors[obj.Name] then
+                        table.insert(itemsToTrack, obj)
+                    end
+                end
+            end
+
+            -- Aplica o ESP nos itens encontrados
+            for _, item in pairs(itemsToTrack) do
+                applyESP(item)
+            end
+
+            -- Limpeza: Se o item não estiver em um dos dois locais, deleta o ESP
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name == "Item_ESP_Holder" then
+                    local item = obj.Parent
+                    if item then
+                        local isDirectInWorkspace = (item.Parent == workspace)
+                        local isInTargetMap = targetMapModel and (item.Parent == targetMapModel)
+                        
+                        if not (isDirectInWorkspace or isInTargetMap) then
+                            obj:Destroy()
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(1)
+    end
+end)

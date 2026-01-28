@@ -1,0 +1,48 @@
+-- SPEED MULTIPLIER BYPASS (Always Active - 2.167)
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
+
+-- Configuração do valor máximo solicitado
+local MAX_SPRINT_VAL = 2.167
+
+-- Global Toggle Logic
+if _G.AlwaysSprint_Enabled then
+    _G.AlwaysSprint_Enabled = false
+    warn("Always Sprint: DISABLED")
+    return
+else
+    _G.AlwaysSprint_Enabled = true
+    warn("Always Sprint: ENABLED (Always Locked at 2.167)")
+end
+
+-- Loop de persistência absoluta (ignora comandos do jogo)
+task.spawn(function()
+    while _G.AlwaysSprint_Enabled do
+        local char = localPlayer.Character
+        if char then
+            -- Acessa a pasta SpeedMultipliers dentro do Survivor
+            local multipliers = char:FindFirstChild("SpeedMultipliers")
+            
+            if multipliers then
+                -- Foca apenas no valor de Sprinting, ignorando o DirectionalMovement
+                local sp = multipliers:FindFirstChild("Sprinting")
+                
+                if sp and (sp:IsA("NumberValue") or sp:IsA("DoubleConstrainedValue")) then
+                    -- Força o valor continuamente
+                    if sp.Value ~= MAX_SPRINT_VAL then
+                        sp.Value = MAX_SPRINT_VAL
+                    end
+                end
+            end
+        end
+        -- Checagem em tempo real (mínimo delay possível)
+        task.wait()
+    end
+end)
+
+-- Garantia de funcionamento após respawn
+localPlayer.CharacterAdded:Connect(function()
+    if _G.AlwaysSprint_Enabled then
+        warn("Always Sprint: Active and waiting for SpeedMultipliers folder...")
+    end
+end)
