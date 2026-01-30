@@ -5,17 +5,15 @@ local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
-local MINIMUM_VALUE = 100
-local WEBHOOK_URL = ""
-local DISCORD_ID = ""
+local MINIMUM_VALUE = _G.ValorMinimo
+local WEBHOOK_URL = _G.WebhookURL or ""
+local DISCORD_ID = _G.DiscordID or ""
 
 local SKY_HEIGHT = 165 
 local FLY_SPEED = 30.0
 
-_G.VortexFarmValues = function(minValue, webhook, discordId)
-    MINIMUM_VALUE = minValue or 100
-    WEBHOOK_URL = webhook or ""
-    DISCORD_ID = discordId or ""
+if not MINIMUM_VALUE or MINIMUM_VALUE <= 0 then
+    return
 end
 
 if _G.UltimateAutoFarm == nil then
@@ -156,7 +154,8 @@ task.spawn(function()
                 local rarityText = rarityLabel and rarityLabel.Text or "Common"
                 local itemName = brainrot.Name
 
-                if parseCashValue(valueText) >= MINIMUM_VALUE and isAllowedCooldown(brainrot) then
+                local itemValue = parseCashValue(valueText)
+                if itemValue >= MINIMUM_VALUE and isAllowedCooldown(brainrot) then
                     local collectPrompt = brainrot:FindFirstChildWhichIsA("ProximityPrompt", true)
                     local targetPart = brainrot:FindFirstChildWhichIsA("BasePart", true)
                     
