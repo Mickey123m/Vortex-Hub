@@ -4,12 +4,29 @@ local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
-local webhookURL = "https://discord.com/api/webhooks/1466329967892758670/lQWqU5FMImA_0iG4dezbbqhnoUPeGT9QWTS8QFtFAe5XwQd_xhozOI3v5pEV6HF7xu3n"
 
-_G.DiscordID = "SEU_ID_AQUI"
+-- REMOVA ESTAS LINHAS FIXAS:
+-- local webhookURL = "https://discord.com/api/webhooks/1466329967892758670/lQWqU5FMImA_0iG4dezbbqhnoUPeGT9QWTS8QFtFAe5XwQd_xhozOI3v5pEV6HF7xu3n"
+-- _G.DiscordID = "SEU_ID_AQUI"
+-- _G.ValorMinimo = 20
+
+-- VARIÁVEIS QUE SERÃO ATUALIZADAS PELO HUB
+local webhookURL = ""
+_G.DiscordID = ""
 _G.ValorMinimo = 20
 local ALTURA_CEU = 165 
 local VELOCIDADE_CEU = 30.0
+
+-- FUNÇÃO PARA ATUALIZAR OS VALORES DO HUB
+local function updateHubValues(minValue, webhook, discordId)
+    _G.ValorMinimo = minValue or _G.ValorMinimo
+    webhookURL = webhook or webhookURL
+    _G.DiscordID = discordId or _G.DiscordID
+    print("[Vortex Hub] Valores atualizados:", _G.ValorMinimo, webhookURL:sub(1, 30) .. "...")
+end
+
+-- EXPORTA A FUNÇÃO PARA O HUB
+getgenv().VortexUpdateFarmValues = updateHubValues
 
 player:SetAttribute("SlapCooldown", 0)
 
@@ -19,7 +36,12 @@ end
 
 _G.UltimateAutoFarm = not _G.UltimateAutoFarm
 
-if not _G.UltimateAutoFarm then return end
+if not _G.UltimateAutoFarm then 
+    print("[Vortex Hub] Auto Farm desligado")
+    return 
+end
+
+print("[Vortex Hub] Auto Farm iniciado com:", _G.ValorMinimo, "minimo")
 
 local function parseCashValue(text)
     local cleanText = text:lower():gsub("[^%d%.km]", "")
@@ -36,6 +58,11 @@ local function isHoldingValidItem()
 end
 
 local function sendWebhook(itemName, itemValue, itemRarity, deliveryStatus)
+    if webhookURL == "" or not webhookURL:find("discord") then
+        print("[Vortex Hub] Webhook não configurado")
+        return
+    end
+    
     local mention = ""
     if _G.DiscordID ~= "" and _G.DiscordID ~= "SEU_ID_AQUI" then
         mention = "<@" .. _G.DiscordID .. ">"
@@ -206,3 +233,14 @@ task.spawn(function()
         task.wait(0.5)
     end
 end)
+
+-- Função para desligar o farm
+local function stopFarm()
+    _G.UltimateAutoFarm = false
+    print("[Vortex Hub] Farm parado")
+end
+
+-- Exporta função para parar
+getgenv().VortexStopFarm = stopFarm
+
+print("[Vortex Hub] Script carregado. Aguardando configuração do hub...")
