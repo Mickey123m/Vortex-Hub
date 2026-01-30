@@ -1,103 +1,208 @@
--- =============================================
--- FUNÇÃO PARA O AUTO FARM BRAINROT (ATUALIZADA)
--- =============================================
-local brainrotActive = false
-local brainrotThread = nil
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
-local function StartBrainrotFarm()
-    if brainrotActive then return end
+local player = Players.LocalPlayer
+local webhookURL = "https://discord.com/api/webhooks/1466329967892758670/lQWqU5FMImA_0iG4dezbbqhnoUPeGT9QWTS8QFtFAe5XwQd_xhozOI3v5pEV6HF7xu3n"
+
+_G.DiscordID = "SEU_ID_AQUI"
+_G.ValorMinimo = 20000
+local ALTURA_CEU = 165 
+local VELOCIDADE_CEU = 30.0
+
+player:SetAttribute("SlapCooldown", 0)
+
+if _G.UltimateAutoFarm == nil then
+    _G.UltimateAutoFarm = false
+end
+
+_G.UltimateAutoFarm = not _G.UltimateAutoFarm
+
+if not _G.UltimateAutoFarm then return end
+
+local function parseCashValue(text)
+    local cleanText = text:lower():gsub("[^%d%.km]", "")
+    local value = tonumber(cleanText:match("[%d%.]+"))
+    if not value then return 0 end
+    if cleanText:find("k") then return value * 1000
+    elseif cleanText:find("m") then return value * 1000000 end
+    return value
+end
+
+local function isHoldingValidItem()
+    local val = player:GetAttribute("Carrying")
+    return (val ~= nil and tostring(val) ~= "" and tostring(val):lower() ~= "none")
+end
+
+local function sendWebhook(itemName, itemValue, itemRarity, deliveryStatus)
+    local mention = ""
+    if _G.DiscordID ~= "" and _G.DiscordID ~= "SEU_ID_AQUI" then
+        mention = "<@" .. _G.DiscordID .. ">"
+    else
+        mention = "@everyone"
+    end
     
-    -- Ativar visualmente primeiro
-    brainrotActive = true
-    TweenService:Create(BrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = AutoFarmColor}):Play()
-    TweenService:Create(BrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+    local corEmbed = 0x00FF7F 
     
-    -- Obter valores dos campos
-    local minValue = tonumber(BrainrotValueInput.Text) or 100
-    local webhook = BrainrotWebhookInput.Text
-    local discordID = "" -- Você pode adicionar um campo para Discord ID se quiser
+    if deliveryStatus:find("Falhou") then
+        corEmbed = 0x2F3136 
+    else
+        local raridadeBruta = string.lower(itemRarity)
+        if string.find(raridadeBruta, "rare") then corEmbed = 0x00BFFF
+        elseif string.find(raridadeBruta, "epic") then corEmbed = 0x9400D3
+        elseif string.find(raridadeBruta, "legendary") then corEmbed = 0xFFD700
+        elseif string.find(raridadeBruta, "mythic") or string.find(raridadeBruta, "exotic") then corEmbed = 0xFF4500 end
+    end
+
+    local avatarImg = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. player.UserId .. "&width=420&height=420&format=png"
     
-    -- Travar campos
-    BrainrotValueInput.TextEditable = false
-    BrainrotValueInput.TextColor3 = Color3.fromRGB(180, 180, 180)
-    BrainrotWebhookInput.TextEditable = false
-    BrainrotWebhookInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+    local data = {
+        ["content"] = "🚀 **Vortex Hub Update** " .. mention, 
+        ["embeds"] = {{
+            ["title"] = deliveryStatus:find("Sucesso") and "💰 **ITEM ENTREGUE**" or "⚠️ **ERRO NA ENTREGA**",
+            ["color"] = corEmbed,
+            ["thumbnail"] = {["url"] = avatarImg},
+            ["fields"] = {
+                {["name"] = "👤 Jogador", ["value"] = "```" .. player.Name .. "```", ["inline"] = true},
+                {["name"] = "📦 Item", ["value"] = "```" .. itemName .. "```", ["inline"] = true},
+                {["name"] = "💎 Raridade", ["value"] = "```" .. itemRarity .. "```", ["inline"] = true},
+                {["name"] = "💵 Valor", ["value"] = "```" .. tostring(itemValue) .. "```", ["inline"] = true},
+                {["name"] = "📍 Status Real", ["value"] = "```" .. deliveryStatus .. "```", ["inline"] = true},
+                {["name"] = "🕒 Horário", ["value"] = "```Vortex Hub | " .. os.date("%X") .. "```", ["inline"] = false}
+            }
+        }}
+    }
     
-    -- Notificar início
-    ShowNotification("Auto Farm Brainrot", "Iniciando Auto Farm... Valor: " .. minValue, 2)
-    
-    -- URL do script de Auto Farm Brainrot
-    local scriptUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_AutoFarmBrainrot"
-    
-    -- Armazenar para poder parar depois
-    ActiveToggles["BrainrotFarm"] = scriptUrl
-    
-    -- Executar a loadstring em uma thread separada
-    brainrotThread = task.spawn(function()
-        -- Passar valores para o script
-        _G.VortexHubValues = {
-            MinValue = minValue,
-            Webhook = webhook,
-            DiscordID = discordID
-        }
-        
-        local success, result = pcall(function()
-            local scriptContent = game:HttpGet(scriptUrl)
-            local loadedScript = loadstring(scriptContent)
-            if loadedScript then
-                return loadedScript()
-            end
-            return nil
-        end)
-        
-        if not success then
-            ShowNotification("Erro", "Falha ao ativar: " .. tostring(result), 5)
-            -- Reverter
-            brainrotActive = false
-            TweenService:Create(BrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
-            TweenService:Create(BrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
-            BrainrotValueInput.TextEditable = true
-            BrainrotValueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-            BrainrotWebhookInput.TextEditable = true
-            BrainrotWebhookInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-            _G.VortexHubValues = nil
-        else
-            ShowNotification("Auto Farm Brainrot", "Auto Farm ATIVADO com sucesso! Valor: " .. minValue, 3)
+    pcall(function()
+        local json = HttpService:JSONEncode(data)
+        local requestFunc = (syn and syn.request) or (http and http.request) or request
+        if requestFunc then
+            requestFunc({
+                Url = webhookURL, Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = json
+            })
         end
     end)
 end
 
-local function StopBrainrotFarm()
-    if not brainrotActive then return end
-    
-    -- Chamar função de parada do script
-    if _G.StopBrainrotFarm then
-        pcall(_G.StopBrainrotFarm)
+local function isAllowedCooldown(brainrot)
+    local infoGui = brainrot:FindFirstChild("InfoGui", true)
+    if not infoGui then return true end 
+    local countdown = infoGui:FindFirstChild("Countdown", true)
+    if countdown then
+        local textLabel = countdown:FindFirstChild("TextLabel")
+        if textLabel and textLabel.Visible and textLabel.Text ~= "" then
+            local seconds = tonumber(textLabel.Text:match("%d+"))
+            if seconds then return seconds > 3 end
+        end
     end
-    
-    -- Parar a thread do auto farm
-    if brainrotThread then
-        task.cancel(brainrotThread)
-        brainrotThread = nil
-    end
-    
-    -- Limpar variáveis globais
-    _G.VortexHubValues = nil
-    _G.VortexHubBrainrotLoaded = nil
-    
-    -- Remover do ActiveToggles
-    ActiveToggles["BrainrotFarm"] = nil
-    
-    -- Atualizar estado
-    brainrotActive = false
-    TweenService:Create(BrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
-    TweenService:Create(BrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
-    
-    -- Destravar campos
-    BrainrotValueInput.TextEditable = true
-    BrainrotValueInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BrainrotWebhookInput.TextEditable = true
-    BrainrotWebhookInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    
-    ShowNotification("Auto Farm Brainrot", "Auto Farm DESATIVADO", 3)
+    return true 
 end
+
+local function megaForcePrompt(prompt)
+    if prompt and prompt:IsA("ProximityPrompt") then
+        prompt.HoldDuration = 0
+        prompt.Enabled = true
+        if fireproximityprompt then fireproximityprompt(prompt) else
+            prompt:InputHoldBegin()
+            prompt:InputHoldEnd()
+        end
+    end
+end
+
+RunService.Stepped:Connect(function()
+    if _G.UltimateAutoFarm and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
+        end
+        local root = player.Character:FindFirstChild("HumanoidRootPart")
+        if root and isHoldingValidItem() then
+            root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, 0, root.AssemblyLinearVelocity.Z)
+            root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        end
+    end
+end)
+
+task.spawn(function()
+    while _G.UltimateAutoFarm do
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        local brainrotsModel = Workspace:FindFirstChild("Brainrots")
+        local invisWalls = Workspace:FindFirstChild("InvisWalls")
+        local zoneWall = invisWalls and invisWalls:FindFirstChild("ZoneWall")
+        
+        if root and brainrotsModel and not isHoldingValidItem() then
+            for _, brainrot in pairs(brainrotsModel:GetChildren()) do
+                if not _G.UltimateAutoFarm or isHoldingValidItem() then break end
+                
+                local cashLabel = brainrot:FindFirstChild("CharCash", true)
+                local rarityLabel = brainrot:FindFirstChild("CharRarity", true)
+                local valorTexto = cashLabel and cashLabel.Text or "0"
+                local raridadeTexto = rarityLabel and rarityLabel.Text or "Common"
+                local nomeItem = brainrot.Name
+
+                if parseCashValue(valorTexto) >= _G.ValorMinimo and isAllowedCooldown(brainrot) then
+                    local collectPrompt = brainrot:FindFirstChildWhichIsA("ProximityPrompt", true)
+                    local targetPart = brainrot:FindFirstChildWhichIsA("BasePart", true)
+                    
+                    if targetPart and collectPrompt then
+                        root.CFrame = CFrame.new(targetPart.Position)
+                        task.wait(0.1)
+                        
+                        local pickStart = os.clock()
+                        while _G.UltimateAutoFarm and not isHoldingValidItem() and brainrot.Parent == brainrotsModel and os.clock() - pickStart < 3 do
+                            megaForcePrompt(collectPrompt)
+                            task.wait(0.1)
+                        end
+                        
+                        if isHoldingValidItem() and zoneWall then
+                            local wallPos = zoneWall:GetPivot().Position
+                            local passedWall = false
+                            
+                            root.CFrame = CFrame.new(root.Position.X, ALTURA_CEU, root.Position.Z)
+                            
+                            local connection
+                            connection = RunService.Stepped:Connect(function(_, dt)
+                                if not _G.UltimateAutoFarm or passedWall or not root or not root.Parent then
+                                    if connection then connection:Disconnect() end
+                                    return
+                                end
+
+                                local targetPos = Vector3.new(wallPos.X, ALTURA_CEU, wallPos.Z)
+                                local diff = targetPos - root.Position
+                                local distance = Vector2.new(diff.X, diff.Z).Magnitude
+                                
+                                if distance > 2 then
+                                    local direction = diff.Unit
+                                    local moveStep = direction * VELOCIDADE_CEU * dt
+                                    root.CFrame = CFrame.new(root.Position + moveStep) * CFrame.lookAt(Vector3.new(0,0,0), direction)
+                                else
+                                    root.CFrame = root.CFrame * CFrame.new(0, 0, -45)
+                                    passedWall = true
+                                end
+                            end)
+
+                            local timeout = os.clock()
+                            repeat task.wait() until passedWall or not _G.UltimateAutoFarm or (os.clock() - timeout > 10)
+
+                            if passedWall then
+                                task.wait(0.8)
+                                if not isHoldingValidItem() then
+                                    sendWebhook(nomeItem, valorTexto, raridadeTexto, "Sucesso: Item Entregue")
+                                else
+                                    sendWebhook(nomeItem, valorTexto, raridadeTexto, "Falhou: Item preso na mão")
+                                end
+                            elseif os.clock() - timeout > 10 then
+                                sendWebhook(nomeItem, valorTexto, raridadeTexto, "Falhou: Tempo de voo excedido")
+                            end
+                        end
+                        break 
+                    end
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
