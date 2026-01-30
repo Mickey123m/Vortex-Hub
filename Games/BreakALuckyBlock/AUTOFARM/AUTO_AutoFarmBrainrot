@@ -7,7 +7,7 @@ local player = Players.LocalPlayer
 local webhookURL = "https://discord.com/api/webhooks/1466329967892758670/lQWqU5FMImA_0iG4dezbbqhnoUPeGT9QWTS8QFtFAe5XwQd_xhozOI3v5pEV6HF7xu3n"
 
 _G.DiscordID = "SEU_ID_AQUI"
-_G.ValorMinimo = 20000
+_G.ValorMinimo = 20
 local ALTURA_CEU = 165 
 local VELOCIDADE_CEU = 30.0
 
