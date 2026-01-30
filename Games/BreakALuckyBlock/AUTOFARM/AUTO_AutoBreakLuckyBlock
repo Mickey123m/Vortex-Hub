@@ -1,0 +1,92 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+local remote = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("DamageBlockEvent")
+
+if _G.OriginalAttributes == nil then
+    _G.OriginalAttributes = {}
+end
+
+if _G.AutoFarmAura == nil then
+    _G.AutoFarmAura = false
+end
+
+_G.AutoFarmAura = not _G.AutoFarmAura
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Auto Farm LuckyBlocks",
+    Text = _G.AutoFarmAura and "ATIVADO" or "DESATIVADO",
+    Duration = 3
+})
+
+local function saveOriginals(tool)
+    if not _G.OriginalAttributes[tool] then
+        _G.OriginalAttributes[tool] = {
+            SlapCooldown = tool:GetAttribute("SlapCooldown"),
+            MinimumValue = tool:GetAttribute("MinimumValue"),
+            SkySpeed = tool:GetAttribute("SkySpeed")
+        }
+    end
+end
+
+local function restoreOriginals()
+    for tool, values in pairs(_G.OriginalAttributes) do
+        if tool and tool.Parent then
+            tool:SetAttribute("SlapCooldown", values.SlapCooldown)
+            tool:SetAttribute("MinimumValue", values.MinimumValue)
+            tool:SetAttribute("SkySpeed", values.SkySpeed)
+        end
+    end
+    _G.OriginalAttributes = {}
+end
+
+local function applyAttributesToCurrentTool()
+    local character = player.Character
+    if not character then return end
+    
+    local currentTool = character:FindFirstChildOfClass("Tool")
+    if currentTool then
+        saveOriginals(currentTool)
+        
+        currentTool:SetAttribute("SlapCooldown", 0)
+        currentTool:SetAttribute("MinimumValue", 20)
+        currentTool:SetAttribute("SkySpeed", 25)
+    end
+end
+
+if _G.AutoFarmAura then
+    task.spawn(function()
+        while _G.AutoFarmAura do
+            local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            local luckyBlocksModel = Workspace:FindFirstChild("LuckyBlocks")
+            
+            applyAttributesToCurrentTool()
+            
+            if rootPart and luckyBlocksModel then
+                for _, block in pairs(luckyBlocksModel:GetChildren()) do
+                    if block:IsA("Model") or block:IsA("BasePart") then
+                        local targetPart = block:IsA("BasePart") and block or block:FindFirstChildWhichIsA("BasePart")
+                        
+                        if targetPart then
+                            local distance = (rootPart.Position - targetPart.Position).Magnitude
+                            
+                            if distance <= 30 then
+                                pcall(function()
+                                    remote:FireServer(block)
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+            
+            task.wait(0.01)
+        end
+        restoreOriginals()
+    end)
+else
+    restoreOriginals()
+end
