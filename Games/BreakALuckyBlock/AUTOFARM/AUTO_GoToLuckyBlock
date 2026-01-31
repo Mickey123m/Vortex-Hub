@@ -9,12 +9,6 @@ end
 
 _G.LuckyFarmAtivo = not _G.LuckyFarmAtivo
 
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Lucky Block Farm",
-    Text = _G.LuckyFarmAtivo and "ATIVADO" or "DESATIVADO",
-    Duration = 3
-})
-
 if not _G.LuckyFarmAtivo then return end
 
 local function irAteOBloco(block)
@@ -49,6 +43,10 @@ task.spawn(function()
         local character = player.Character
         local root = character and character:FindFirstChild("HumanoidRootPart")
         
+        if character then
+            character:SetAttribute("SlapCooldown", 0)
+        end
+
         if luckyBlocksFolder and root then
             local blocos = luckyBlocksFolder:GetChildren()
             
@@ -70,3 +68,8 @@ task.spawn(function()
         task.wait(0.2)
     end
 end)
+
+if game:GetService("Lighting"):FindFirstChild("Sky") then
+    game:GetService("Lighting").Sky.SunAngularSize = 20
+    game:GetService("Lighting").Sky.MoonAngularSize = 25
+end
