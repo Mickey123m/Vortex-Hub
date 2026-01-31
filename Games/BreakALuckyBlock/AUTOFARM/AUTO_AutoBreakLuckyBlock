@@ -15,12 +15,6 @@ end
 
 _G.AutoFarmAura = not _G.AutoFarmAura
 
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Auto Farm LuckyBlocks",
-    Text = _G.AutoFarmAura and "ATIVADO" or "DESATIVADO",
-    Duration = 3
-})
-
 local function saveOriginals(tool)
     if not _G.OriginalAttributes[tool] then
         _G.OriginalAttributes[tool] = {
