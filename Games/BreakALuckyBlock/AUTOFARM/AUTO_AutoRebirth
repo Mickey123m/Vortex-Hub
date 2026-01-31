@@ -1,0 +1,301 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local RebirthModule = require(ReplicatedStorage:WaitForChild("RebirthModule"))
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local RebirthEvent = Remotes:WaitForChild("RebirthEvent")
+
+if _G.OriginalCashProps == nil then
+    _G.OriginalCashProps = {}
+end
+
+player.CameraMaxZoomDistance = 10
+player.CameraMinZoomDistance = 0.5
+
+_G.AutoRebirth = not _G.AutoRebirth
+_G.AutoCollectCash = _G.AutoRebirth 
+local isDelivering = false 
+
+local function restoreBaseCash()
+    for part, props in pairs(_G.OriginalCashProps) do
+        if part and part.Parent then
+            part.CFrame = props.CFrame
+            part.Transparency = props.Transparency
+            part.CanCollide = props.CanCollide
+        end
+    end
+    _G.OriginalCashProps = {}
+end
+
+if not _G.AutoRebirth then
+    player.CameraMaxZoomDistance = 128 
+    restoreBaseCash()
+    return
+end
+
+local VALOR_MIN_CASH = 5000
+local ALTURA_CEU = 165 
+local VELOCIDADE_CEU = 30.0
+
+local function isHoldingItem()
+    local val = player:GetAttribute("Carrying")
+    return (val ~= nil and tostring(val) ~= "" and tostring(val):lower() ~= "none")
+end
+
+local function getMyBaseFolder()
+    local baseId = player:GetAttribute("Base")
+    local basesFolder = Workspace:FindFirstChild("Bases")
+    if not basesFolder then return nil end
+    if baseId and basesFolder:FindFirstChild(tostring(baseId)) then
+        return basesFolder:FindFirstChild(tostring(baseId))
+    end
+    for _, b in pairs(basesFolder:GetChildren()) do
+        if b.Name == player.Name or b:FindFirstChild(player.Name) then
+            return b
+        end
+    end
+    return nil
+end
+
+local function findAvailablePlatform(base)
+    if not base then return nil end
+    for i = 1, 5 do
+        local floor = base:FindFirstChild("Floor" .. i)
+        if floor then
+            local platforms = floor:FindFirstChild("Platforms")
+            if platforms then
+                for _, model in pairs(platforms:GetChildren()) do
+                    local pPart = model:FindFirstChild("PromptPart")
+                    if pPart then
+                        local prompt = pPart:FindFirstChildWhichIsA("ProximityPrompt") or model:FindFirstChildWhichIsA("ProximityPrompt", true)
+                        if prompt and prompt.Name ~= "SellPrompt" then
+                            return pPart, prompt
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return nil, nil
+end
+
+local function parseNumber(text)
+    if not text then return 0 end
+    local cleanText = text:lower():gsub("[^%d%.km]", "")
+    local value = tonumber(cleanText:match("[%d%.]+"))
+    if not value then return 0 end
+    if cleanText:find("k") then return value * 1000
+    elseif cleanText:find("m") then return value * 1000000 end
+    return value
+end
+
+local function isAllowedCooldown(brainrot)
+    local infoGui = brainrot:FindFirstChild("InfoGui", true)
+    if not infoGui then return true end 
+    local countdown = infoGui:FindFirstChild("Countdown", true)
+    if countdown then
+        local textLabel = countdown:FindFirstChild("TextLabel")
+        if textLabel and textLabel.Visible and textLabel.Text ~= "" then
+            local seconds = tonumber(textLabel.Text:match("%d+"))
+            if seconds then
+                return seconds > 3
+            end
+        end
+    end
+    return true 
+end
+
+local function isTarget(brainrot)
+    if not isAllowedCooldown(brainrot) then return false end
+    local leaderstats = player:FindFirstChild("leaderstats")
+    if not leaderstats then return false end
+    local currentCash = leaderstats.Cash.Value
+    local rebirthVal = leaderstats.Rebirths.Value
+    local nextData = RebirthModule.Rebirths[rebirthVal + 1]
+    if not nextData then return false end
+    if currentCash < nextData.Requirements.Cash then
+        local cashLabel = brainrot:FindFirstChild("CharCash", true)
+        if cashLabel then
+            return parseNumber(cashLabel.Text) >= VALOR_MIN_CASH
+        end
+        return false
+    end
+    local requiredItems = nextData.Requirements.Brainrots or {}
+    for _, reqName in pairs(requiredItems) do
+        if brainrot.Name:lower():find(reqName:lower()) then return true end
+    end
+    return false
+end
+
+local function megaForcePrompt(prompt)
+    if prompt and prompt:IsA("ProximityPrompt") then
+        prompt.HoldDuration = 0
+        prompt.Enabled = true
+        if fireproximityprompt then fireproximityprompt(prompt) else
+            prompt:InputHoldBegin()
+            prompt:InputHoldEnd()
+        end
+    end
+end
+
+local function collectBaseCash()
+    local myBase = getMyBaseFolder()
+    if not myBase then return end
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    for i = 1, 5 do
+        local floor = myBase:FindFirstChild("Floor" .. i)
+        if floor then
+            local platforms = floor:FindFirstChild("Platforms")
+            if platforms then
+                for _, model in pairs(platforms:GetChildren()) do
+                    local collectPart = model:FindFirstChild("Collect")
+                    if collectPart and collectPart:IsA("BasePart") then
+                        if not _G.OriginalCashProps[collectPart] then
+                            _G.OriginalCashProps[collectPart] = {
+                                CFrame = collectPart.CFrame,
+                                Transparency = collectPart.Transparency,
+                                CanCollide = collectPart.CanCollide
+                            }
+                        end
+
+                        collectPart.Transparency = 1
+                        collectPart.CanCollide = false
+                        local originalPos = collectPart.CFrame
+                        collectPart.CFrame = root.CFrame
+
+                        if firetouchinterest then
+                            firetouchinterest(collectPart, root, 0)
+                            task.wait()
+                            firetouchinterest(collectPart, root, 1)
+                        end
+                        
+                        collectPart.CFrame = originalPos
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function deliverSequence()
+    isDelivering = true 
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    local invisWalls = Workspace:FindFirstChild("InvisWalls")
+    local zoneWall = invisWalls and invisWalls:FindFirstChild("ZoneWall")
+    if not root or not zoneWall or not hum then isDelivering = false return end
+    local wallPos = zoneWall:GetPivot().Position
+    local passedWall = false
+    root.CFrame = CFrame.new(root.Position.X, ALTURA_CEU, root.Position.Z)
+    local connection
+    connection = RunService.Stepped:Connect(function(_, dt)
+        if not _G.AutoRebirth or passedWall or not root or not root.Parent or char.Parent == nil then
+            if connection then connection:Disconnect() end
+            return
+        end
+        local targetPos = Vector3.new(wallPos.X, ALTURA_CEU, wallPos.Z)
+        local diff = targetPos - root.Position
+        local distance = Vector2.new(diff.X, diff.Z).Magnitude
+        if distance > 2 then
+            local direction = diff.Unit
+            local moveStep = direction * VELOCIDADE_CEU * dt
+            root.CFrame = CFrame.new(root.Position + moveStep) * CFrame.lookAt(Vector3.new(0,0,0), direction)
+            root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        else
+            root.CFrame = root.CFrame * CFrame.new(0, 0, -45)
+            passedWall = true
+        end
+    end)
+    repeat task.wait() until passedWall or not _G.AutoRebirth
+    if passedWall then
+        local startTime = os.clock()
+        while _G.AutoRebirth and (isHoldingItem() or os.clock() - startTime < 6) do
+            local myBase = getMyBaseFolder()
+            local freePart, freePrompt = findAvailablePlatform(myBase)
+            if freePart then
+                root.CFrame = CFrame.new(freePart.Position.X, freePart.Position.Y + 3.5, freePart.Position.Z)
+                root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                if freePrompt then megaForcePrompt(freePrompt) end
+            end
+            task.wait(0.1)
+            if not isHoldingItem() and os.clock() - startTime > 1.2 then 
+                hum.Health = 0
+                break 
+            end
+        end
+    end
+    isDelivering = false 
+end
+
+task.spawn(function()
+    while _G.AutoRebirth do
+        if RebirthModule.CanRebirth(player) then
+            pcall(function() RebirthEvent:FireServer() end)
+        end
+        task.wait(2)
+    end
+end)
+
+task.spawn(function()
+    while _G.AutoRebirth do
+        pcall(collectBaseCash)
+        task.wait(2)
+    end
+    restoreBaseCash()
+end)
+
+task.spawn(function()
+    while _G.AutoRebirth do
+        if not isDelivering then
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root and not isHoldingItem() then
+                local brainrotsModel = Workspace:FindFirstChild("Brainrots")
+                for _, brainrot in pairs(brainrotsModel:GetChildren()) do
+                    if isDelivering or isHoldingItem() or not _G.AutoRebirth then break end
+                    if isTarget(brainrot) then
+                        local prompt = brainrot:FindFirstChildWhichIsA("ProximityPrompt", true)
+                        local part = brainrot:FindFirstChildWhichIsA("BasePart", true)
+                        if part and prompt then
+                            root.CFrame = CFrame.new(part.Position)
+                            root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            local pickStart = os.clock()
+                            while _G.AutoRebirth and brainrot.Parent == brainrotsModel and not isHoldingItem() and isAllowedCooldown(brainrot) and os.clock() - pickStart < 3 do
+                                megaForcePrompt(prompt)
+                                task.wait(0.1)
+                            end
+                            if isHoldingItem() then 
+                                deliverSequence() 
+                                break 
+                            end
+                        end
+                    end
+                end
+            elseif isHoldingItem() then
+                deliverSequence()
+            end
+        end
+        task.wait(0.2)
+    end
+end)
+
+RunService.Stepped:Connect(function()
+    if _G.AutoRebirth and player.Character then
+        for _, p in pairs(player.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
+        end
+        local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and isDelivering then
+            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+        end
+    end
+end)
