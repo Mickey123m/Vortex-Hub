@@ -1,0 +1,53 @@
+local Workspace = game:GetService("Workspace")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+
+if _G.InstantPromptAtivo == nil then
+    _G.InstantPromptAtivo = false
+end
+
+_G.InstantPromptAtivo = not _G.InstantPromptAtivo
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Instant Prompt",
+    Text = _G.InstantPromptAtivo and "ATIVADO" or "DESATIVADO",
+    Duration = 3
+})
+
+local function applyPromptLogic(prompt)
+    if _G.InstantPromptAtivo then
+        prompt.HoldDuration = 0
+        prompt.MaxActivationDistance = 20
+    else
+        prompt.HoldDuration = 1 
+        prompt.MaxActivationDistance = 10
+    end
+end
+
+for _, prompt in pairs(Workspace:GetDescendants()) do
+    if prompt:IsA("ProximityPrompt") then
+        applyPromptLogic(prompt)
+    end
+end
+
+if _G.PromptConnection then 
+    _G.PromptConnection:Disconnect() 
+    _G.PromptConnection = nil 
+end
+
+if _G.InstantPromptAtivo then
+    _G.PromptConnection = ProximityPromptService.PromptShown:Connect(function(prompt)
+        applyPromptLogic(prompt)
+    end)
+end
+
+task.spawn(function()
+    while _G.InstantPromptAtivo do
+        for _, prompt in pairs(Workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and prompt.HoldDuration ~= 0 then
+                prompt.HoldDuration = 0
+                prompt.MaxActivationDistance = 20
+            end
+        end
+        task.wait(1)
+    end
+end)

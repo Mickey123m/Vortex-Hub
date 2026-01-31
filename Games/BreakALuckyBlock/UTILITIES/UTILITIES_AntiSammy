@@ -1,0 +1,49 @@
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+if _G.BuggerSammy == nil then
+    _G.BuggerSammy = false
+end
+
+_G.BuggerSammy = not _G.BuggerSammy
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Sammy Bugger",
+    Text = _G.BuggerSammy and "DESATIVADO" or "REATIVADO",
+    Duration = 3
+})
+
+if not _G.BuggerSammy then 
+    local sammy = Workspace:FindFirstChild("Sammy")
+    local humanoid = sammy and sammy:FindFirstChildWhichIsA("Humanoid")
+    if humanoid then
+        humanoid.PlatformStand = false
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+    end
+    return 
+end
+
+task.spawn(function()
+    while _G.BuggerSammy do
+        local sammy = Workspace:FindFirstChild("Sammy")
+        if sammy then
+            local humanoid = sammy:FindFirstChildWhichIsA("Humanoid")
+            local root = sammy:FindFirstChild("HumanoidRootPart") or sammy:FindFirstChildWhichIsA("BasePart")
+
+            if humanoid then
+                humanoid.PlatformStand = true
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+                humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+                
+                if root then
+                    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                    root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)

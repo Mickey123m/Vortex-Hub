@@ -1,0 +1,126 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local MIN_VALUE = 20
+local SKY_SPEED = 25
+local GREEN_COLOR = Color3.fromRGB(156, 234, 0)
+
+if _G.VortexAbsoluteFixed == nil then _G.VortexAbsoluteFixed = false end
+_G.VortexAbsoluteFixed = not _G.VortexAbsoluteFixed
+
+local function cleanup()
+    local char = player.Character
+    local head = char and char:FindFirstChild("Head")
+    if head then
+        local old = head:FindFirstChild("VortexAbsoluteUI")
+        if old then old:Destroy() end
+    end
+end
+
+if not _G.VortexAbsoluteFixed then
+    cleanup()
+    return
+end
+
+local function createAbsoluteDisplay(tool, descValue)
+    cleanup()
+    
+    local char = player.Character
+    local head = char and char:FindFirstChild("Head")
+    if not head then return end
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "VortexAbsoluteUI"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 250, 0, 100) 
+    billboard.StudsOffset = Vector3.new(0, 4, 0)
+    billboard.AlwaysOnTop = true
+    billboard.DistanceLowerLimit = 0
+    billboard.DistanceUpperLimit = math.huge
+    billboard.ExtentsOffset = Vector3.new(0, 0, 0)
+    billboard.Parent = head
+
+    local frame = Instance.new("Frame")
+    frame.Name = "MainFrame"
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 1 
+    frame.Parent = billboard
+
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, -8)
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = frame
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "CharName"
+    nameLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = tool:GetAttribute("BaseName") or tool.Name
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextScaled = true 
+    nameLabel.TextStrokeTransparency = 0.5
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.Parent = frame
+
+    local cashLabel = Instance.new("TextLabel")
+    cashLabel.Name = "CharCash"
+    cashLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    cashLabel.BackgroundTransparency = 1
+    cashLabel.Text = tostring(descValue)
+    cashLabel.TextColor3 = GREEN_COLOR
+    cashLabel.Font = Enum.Font.GothamBold
+    cashLabel.TextScaled = true
+    cashLabel.TextStrokeTransparency = 0.5
+    cashLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    cashLabel.Parent = frame
+end
+
+local function handleTool(tool)
+    if not tool:IsA("Tool") then return end
+
+    task.spawn(function()
+        task.wait(0.1)
+        while _G.VortexAbsoluteFixed and tool.Parent == player.Character do
+            local descValue = tool:GetAttribute("Desc")
+            if descValue then
+                createAbsoluteDisplay(tool, descValue)
+                
+                local connection
+                connection = tool:GetAttributeChangedSignal("Desc"):Connect(function()
+                    if tool.Parent == player.Character and _G.VortexAbsoluteFixed then
+                        createAbsoluteDisplay(tool, tool:GetAttribute("Desc"))
+                    else
+                        connection:Disconnect()
+                    end
+                end)
+                break
+            end
+            task.wait(0.3)
+        end
+    end)
+end
+
+local function setup(char)
+    if not char then return end
+    char.ChildAdded:Connect(function(child)
+        if _G.VortexAbsoluteFixed then handleTool(child) end
+    end)
+    char.ChildRemoved:Connect(function(child)
+        if child:IsA("Tool") then cleanup() end
+    end)
+    for _, item in pairs(char:GetChildren()) do
+        if item:IsA("Tool") then handleTool(item) end
+    end
+end
+
+if player.Character then setup(player.Character) end
+player.CharacterAdded:Connect(setup)
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Vortex Engine",
+    Text = _G.VortexAbsoluteFixed and "UI FIXA: ATIVADO" or "UI FIXA: DESATIVADO",
+    Duration = 3
+})

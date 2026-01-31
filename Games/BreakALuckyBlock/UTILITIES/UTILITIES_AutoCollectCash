@@ -1,0 +1,115 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+
+-- Tabela global para salvar as propriedades originais para restauração
+if _G.OriginalProps == nil then
+    _G.OriginalProps = {}
+end
+
+if _G.AutoCollectCash == nil then
+    _G.AutoCollectCash = false
+end
+
+_G.AutoCollectCash = not _G.AutoCollectCash
+
+-- Função para restaurar tudo ao estado original
+local function restoreCollectibles()
+    for part, props in pairs(_G.OriginalProps) do
+        if part and part.Parent then
+            part.CFrame = props.CFrame
+            part.Transparency = props.Transparency
+            part.CanCollide = props.CanCollide
+        end
+    end
+    _G.OriginalProps = {} -- Limpa a tabela
+end
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "V3NENO Auto Collect",
+    Text = _G.AutoCollectCash and "STATUS: ATIVADO" or "STATUS: DESATIVADO",
+    Duration = 3
+})
+
+-- Se desativou, limpa e para
+if not _G.AutoCollectCash then 
+    restoreCollectibles()
+    return 
+end
+
+local function getMyBaseFolder()
+    local baseId = player:GetAttribute("Base")
+    local basesFolder = Workspace:FindFirstChild("Bases")
+    if not basesFolder then return nil end
+    
+    if baseId and basesFolder:FindFirstChild(tostring(baseId)) then
+        return basesFolder:FindFirstChild(tostring(baseId))
+    end
+    
+    for _, b in pairs(basesFolder:GetChildren()) do
+        if b.Name == player.Name or b:FindFirstChild(player.Name) then
+            return b
+        end
+    end
+    return nil
+end
+
+local function collectCash()
+    local myBase = getMyBaseFolder()
+    if not myBase then return end
+    
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    for i = 1, 5 do
+        local floor = myBase:FindFirstChild("Floor" .. i)
+        if floor then
+            local platforms = floor:FindFirstChild("Platforms")
+            if platforms then
+                for _, model in pairs(platforms:GetChildren()) do
+                    local collectPart = model:FindFirstChild("Collect")
+                    if collectPart and collectPart:IsA("BasePart") then
+                        
+                        -- Salva as propriedades se ainda não salvou
+                        if not _G.OriginalProps[collectPart] then
+                            _G.OriginalProps[collectPart] = {
+                                CFrame = collectPart.CFrame,
+                                Transparency = collectPart.Transparency,
+                                CanCollide = collectPart.CanCollide
+                            }
+                        end
+
+                        -- DEIXA INVISÍVEL E SEM COLISÃO ANTES DE TRAZER
+                        collectPart.Transparency = 1
+                        collectPart.CanCollide = false
+                        
+                        -- Traz até você (CFrame)
+                        collectPart.CFrame = root.CFrame
+                        
+                        -- Simula o toque
+                        if firetouchinterest then
+                            firetouchinterest(collectPart, root, 0)
+                            task.wait()
+                            firetouchinterest(collectPart, root, 1)
+                        end
+                        
+                        -- Volta para o lugar original imediatamente
+                        collectPart.CFrame = _G.OriginalProps[collectPart].CFrame
+                        
+                        -- Mantém invisível enquanto o script estiver ligado para não bugar visualmente
+                    end
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.AutoCollectCash do
+        pcall(collectCash)
+        task.wait(1.5)
+    end
+    -- Garante a restauração total quando o loop for quebrado
+    restoreCollectibles()
+end)
