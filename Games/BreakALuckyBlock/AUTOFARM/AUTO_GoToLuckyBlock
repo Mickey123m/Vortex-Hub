@@ -1,0 +1,72 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local player = Players.LocalPlayer
+
+if _G.LuckyFarmAtivo == nil then
+    _G.LuckyFarmAtivo = false
+end
+
+_G.LuckyFarmAtivo = not _G.LuckyFarmAtivo
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Lucky Block Farm",
+    Text = _G.LuckyFarmAtivo and "ATIVADO" or "DESATIVADO",
+    Duration = 3
+})
+
+if not _G.LuckyFarmAtivo then return end
+
+local function irAteOBloco(block)
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character and character:FindFirstChild("Humanoid")
+    
+    if not root or not humanoid then return end
+
+    local targetPos = block:IsA("Model") and block:GetPivot().Position or block.Position
+    local timeout = os.clock()
+
+    while _G.LuckyFarmAtivo and block.Parent == Workspace.LuckyBlocks do
+        local distancia = (root.Position - targetPos).Magnitude
+        
+        if distancia < 3 then 
+            break 
+        end
+
+        if os.clock() - timeout > 12 then 
+            break 
+        end
+
+        humanoid:MoveTo(targetPos)
+        task.wait(0.1)
+    end
+end
+
+task.spawn(function()
+    while _G.LuckyFarmAtivo do
+        local luckyBlocksFolder = Workspace:FindFirstChild("LuckyBlocks")
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        
+        if luckyBlocksFolder and root then
+            local blocos = luckyBlocksFolder:GetChildren()
+            
+            if #blocos > 0 then
+                table.sort(blocos, function(a, b)
+                    local posA = a:IsA("Model") and a:GetPivot().Position or a.Position
+                    local posB = b:IsA("Model") and b:GetPivot().Position or b.Position
+                    return (root.Position - posA).Magnitude < (root.Position - posB).Magnitude
+                end)
+
+                local alvo = blocos[1]
+                if alvo then
+                    irAteOBloco(alvo)
+                end
+            else
+                task.wait(1)
+            end
+        end
+        task.wait(0.2)
+    end
+end)
