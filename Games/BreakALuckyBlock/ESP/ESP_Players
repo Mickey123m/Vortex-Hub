@@ -1,0 +1,58 @@
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local localPlayer = Players.LocalPlayer
+
+if _G.VortexPureOutlineActive == nil then _G.VortexPureOutlineActive = false end
+_G.VortexPureOutlineActive = not _G.VortexPureOutlineActive
+
+local function cleanup()
+    for _, obj in pairs(CoreGui:GetChildren()) do
+        if obj.Name == "VortexPureOutline" then
+            obj:Destroy()
+        end
+    end
+end
+
+if not _G.VortexPureOutlineActive then
+    cleanup()
+    return
+end
+
+local function applyPureOutline(player)
+    if player == localPlayer then return end
+
+    local function onCharacterAdded(char)
+        for _, old in pairs(CoreGui:GetChildren()) do
+            if old.Name == "VortexPureOutline" and old:GetAttribute("Target") == player.Name then
+                old:Destroy()
+            end
+        end
+
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "VortexPureOutline"
+        highlight.Adornee = char
+        highlight.FillTransparency = 1 
+        highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+        highlight.OutlineTransparency = 0 
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = CoreGui
+        highlight:SetAttribute("Target", player.Name)
+    end
+
+    player.CharacterAdded:Connect(onCharacterAdded)
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+    applyPureOutline(p)
+end
+
+Players.PlayerAdded:Connect(applyPureOutline)
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Vortex Engine",
+    Text = _G.VortexPureOutlineActive and "ATIVADO" or "DESATIVADO",
+    Duration = 3
+})
