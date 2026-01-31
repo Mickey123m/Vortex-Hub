@@ -99,9 +99,3 @@ else
     _G.OriginalSettings.Materials = {}
     _G.OriginalSettings.Effects = {}
 end
-
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Performance Booster",
-    Text = _G.MassinhaToggle and "ATIVADO" or "RESTAURADO",
-    Duration = 3
-})
