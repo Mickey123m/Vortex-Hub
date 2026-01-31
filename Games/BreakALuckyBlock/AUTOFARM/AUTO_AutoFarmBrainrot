@@ -11,7 +11,6 @@ local DISCORD_ID = _G.DiscordID or ""
 
 local SKY_HEIGHT = 165 
 local FLY_SPEED = 30.0
-local PRIORITY_CHECK_INTERVAL = 0.1 -- Verifica brainrots a cada 0.1 segundos
 
 if not MINIMUM_VALUE or MINIMUM_VALUE <= 0 then
     return
@@ -28,12 +27,6 @@ if not _G.UltimateAutoFarm then
 end
 
 player:SetAttribute("SlapCooldown", 0)
-
--- Variável de controle para interromper ações atuais
-local currentAction = {
-    active = false,
-    interrupt = false
-}
 
 local function parseCashValue(text)
     local cleanText = text:lower():gsub("[^%d%.km]", "")
@@ -130,47 +123,6 @@ local function megaForcePrompt(prompt)
     end
 end
 
--- Função para verificar se existe brainrot válido disponível
-local function checkForValidBrainrot()
-    local brainrotsModel = Workspace:FindFirstChild("Brainrots")
-    if not brainrotsModel then return nil end
-    
-    for _, brainrot in pairs(brainrotsModel:GetChildren()) do
-        local cashLabel = brainrot:FindFirstChild("CharCash", true)
-        local rarityLabel = brainrot:FindFirstChild("CharRarity", true)
-        local valueText = cashLabel and cashLabel.Text or "0"
-        local rarityText = rarityLabel and rarityLabel.Text or "Common"
-        
-        local itemValue = parseCashValue(valueText)
-        if itemValue >= MINIMUM_VALUE and isAllowedCooldown(brainrot) then
-            return {
-                brainrot = brainrot,
-                name = brainrot.Name,
-                value = itemValue,
-                valueText = valueText,
-                rarity = rarityText
-            }
-        end
-    end
-    return nil
-end
-
--- Sistema de interrupção forçada de qualquer ação
-local function forceInterruptCurrentActions()
-    currentAction.interrupt = true
-    
-    -- Cancela qualquer animação em execução
-    local character = player.Character
-    if character then
-        local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid then
-            for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
-                track:Stop()
-            end
-        end
-    end
-end
-
 RunService.Stepped:Connect(function()
     if _G.UltimateAutoFarm and player.Character then
         for _, part in pairs(player.Character:GetDescendants()) do
@@ -184,50 +136,39 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Thread de monitoramento contínuo com PRIORIDADE MÁXIMA
 task.spawn(function()
     while _G.UltimateAutoFarm do
-        -- Verifica se existe brainrot válido disponível
-        if not isHoldingValidItem() then
-            local validBrainrot = checkForValidBrainrot()
-            
-            if validBrainrot then
-                -- INTERROMPE QUALQUER AÇÃO ATUAL IMEDIATAMENTE
-                forceInterruptCurrentActions()
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        local brainrotsModel = Workspace:FindFirstChild("Brainrots")
+        local invisWalls = Workspace:FindFirstChild("InvisWalls")
+        local zoneWall = invisWalls and invisWalls:FindFirstChild("ZoneWall")
+        
+        if root and brainrotsModel and not isHoldingValidItem() then
+            for _, brainrot in pairs(brainrotsModel:GetChildren()) do
+                if not _G.UltimateAutoFarm or isHoldingValidItem() then break end
                 
-                -- Marca que uma ação prioritária está ativa
-                currentAction.active = true
-                currentAction.interrupt = false
-                
-                -- Executa a coleta do brainrot
-                task.spawn(function()
-                    local character = player.Character
-                    local root = character and character:FindFirstChild("HumanoidRootPart")
-                    local invisWalls = Workspace:FindFirstChild("InvisWalls")
-                    local zoneWall = invisWalls and invisWalls:FindFirstChild("ZoneWall")
-                    
-                    if not root then 
-                        currentAction.active = false
-                        return 
-                    end
-                    
-                    local brainrot = validBrainrot.brainrot
+                local cashLabel = brainrot:FindFirstChild("CharCash", true)
+                local rarityLabel = brainrot:FindFirstChild("CharRarity", true)
+                local valueText = cashLabel and cashLabel.Text or "0"
+                local rarityText = rarityLabel and rarityLabel.Text or "Common"
+                local itemName = brainrot.Name
+
+                local itemValue = parseCashValue(valueText)
+                if itemValue >= MINIMUM_VALUE and isAllowedCooldown(brainrot) then
                     local collectPrompt = brainrot:FindFirstChildWhichIsA("ProximityPrompt", true)
                     local targetPart = brainrot:FindFirstChildWhichIsA("BasePart", true)
                     
                     if targetPart and collectPrompt then
-                        -- Teleporta instantaneamente para o brainrot
                         root.CFrame = CFrame.new(targetPart.Position)
                         task.wait(0.1)
                         
-                        -- Tenta coletar o item
                         local pickStart = os.clock()
-                        while _G.UltimateAutoFarm and not isHoldingValidItem() and brainrot.Parent and os.clock() - pickStart < 3 do
+                        while _G.UltimateAutoFarm and not isHoldingValidItem() and brainrot.Parent == brainrotsModel and os.clock() - pickStart < 3 do
                             megaForcePrompt(collectPrompt)
                             task.wait(0.1)
                         end
                         
-                        -- Se coletou o item, vai entregar
                         if isHoldingValidItem() and zoneWall then
                             local wallPos = zoneWall:GetPivot().Position
                             local passedWall = false
@@ -261,28 +202,23 @@ task.spawn(function()
                             if passedWall then
                                 task.wait(0.8)
                                 if not isHoldingValidItem() then
-                                    sendWebhook(validBrainrot.name, validBrainrot.valueText, validBrainrot.rarity, "Success: Item Delivered")
+                                    sendWebhook(itemName, valueText, rarityText, "Success: Item Delivered")
                                 else
-                                    sendWebhook(validBrainrot.name, validBrainrot.valueText, validBrainrot.rarity, "Failed: Item stuck in hand")
+                                    sendWebhook(itemName, valueText, rarityText, "Failed: Item stuck in hand")
                                 end
                             elseif os.clock() - timeout > 10 then
-                                sendWebhook(validBrainrot.name, validBrainrot.valueText, validBrainrot.rarity, "Failed: Flight time exceeded")
+                                sendWebhook(itemName, valueText, rarityText, "Failed: Flight time exceeded")
                             end
                         end
+                        break 
                     end
-                    
-                    currentAction.active = false
-                end)
+                end
             end
         end
-        
-        -- Intervalo de verificação muito curto para máxima responsividade
-        task.wait(PRIORITY_CHECK_INTERVAL)
+        task.wait(0.5)
     end
 end)
 
 _G.VortexStopFarm = function()
     _G.UltimateAutoFarm = false
-    currentAction.active = false
-    currentAction.interrupt = false
 end
