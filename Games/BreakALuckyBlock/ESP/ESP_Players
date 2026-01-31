@@ -50,9 +50,3 @@ for _, p in pairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(applyPureOutline)
-
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Vortex Engine",
-    Text = _G.VortexPureOutlineActive and "ATIVADO" or "DESATIVADO",
-    Duration = 3
-})
