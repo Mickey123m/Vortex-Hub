@@ -1,0 +1,23 @@
+local HttpService = game:GetService("HttpService")
+
+_G.FPSUnlockerToggle = not _G.FPSUnlockerToggle
+
+local function SetFPS(value)
+    if setfpscap then
+        setfpscap(value)
+        return true
+    end
+    return false
+end
+
+if _G.FPSUnlockerToggle then
+    SetFPS(999)
+else
+    SetFPS(60)
+end
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Vortex Hub",
+    Text = _G.FPSUnlockerToggle and "FPS UNLOCKED (999)" or "FPS LOCKED (60)",
+    Duration = 3
+})

@@ -1,0 +1,70 @@
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local CoreGui = game:GetService("CoreGui")
+local localPlayer = Players.LocalPlayer
+
+if _G.AntiAFK_Enabled then
+    _G.AntiAFK_Enabled = false
+    local oldGui = CoreGui:FindFirstChild("AntiAFK_Timer")
+    if oldGui then oldGui:Destroy() end
+    return
+else
+    _G.AntiAFK_Enabled = true
+end
+
+local screenGui = Instance.new("ScreenGui")
+local timerLabel = Instance.new("TextLabel")
+
+screenGui.Name = "AntiAFK_Timer"
+screenGui.Parent = CoreGui 
+screenGui.ResetOnSpawn = false
+
+timerLabel.Name = "TimerDisplay"
+timerLabel.Parent = screenGui
+timerLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+timerLabel.BackgroundTransparency = 0.5
+timerLabel.AnchorPoint = Vector2.new(1, 1)
+timerLabel.Position = UDim2.new(1, -10, 1, -10)
+timerLabel.Size = UDim2.new(0, 150, 0, 30)
+timerLabel.Font = Enum.Font.SourceSansBold
+timerLabel.Text = "Online: 00:00:00"
+timerLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+timerLabel.TextSize = 16
+timerLabel.BorderSizePixel = 0
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = timerLabel
+
+local function formatTime(seconds)
+    local hours = math.floor(seconds / 3600)
+    local mins = math.floor((seconds % 3600) / 60)
+    local secs = seconds % 60
+    return string.format("Online: %02d:%02d:%02d", hours, mins, secs)
+end
+
+localPlayer.Idled:Connect(function()
+    if _G.AntiAFK_Enabled then
+        VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end
+end)
+
+task.spawn(function()
+    local startTime = tick()
+    while _G.AntiAFK_Enabled do
+        local elapsed = math.floor(tick() - startTime)
+        timerLabel.Text = formatTime(elapsed)
+        
+        if elapsed % 120 == 0 and elapsed > 0 then
+            pcall(function()
+                if localPlayer.Character and localPlayer.Character:FindFirstChild("Humanoid") then
+                    localPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        end
+        
+        task.wait(1)
+    end
+end)

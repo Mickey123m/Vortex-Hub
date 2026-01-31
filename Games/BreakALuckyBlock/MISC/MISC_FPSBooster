@@ -1,0 +1,107 @@
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local Terrain = Workspace:WaitForChild("Terrain")
+local RunService = game:GetService("RunService")
+
+_G.MassinhaToggle = not _G.MassinhaToggle
+
+if not _G.OriginalSettings then
+    _G.OriginalSettings = {
+        Materials = {},
+        Lighting = {
+            GlobalShadows = Lighting.GlobalShadows,
+            Brightness = Lighting.Brightness,
+            FogEnd = Lighting.FogEnd
+        },
+        Effects = {}
+    }
+end
+
+local function setFPS(cap)
+    if setfpscap then
+        setfpscap(cap)
+    end
+end
+
+if _G.MassinhaToggle then
+    setFPS(999)
+    
+    Lighting.GlobalShadows = false
+    Lighting.Brightness = 2
+    
+    for _, effect in pairs(Lighting:GetChildren()) do
+        if effect:IsA("PostEffect") or effect:IsA("BloomEffect") or effect:IsA("BlurEffect") or effect:IsA("SunRaysEffect") or effect:IsA("ColorCorrectionEffect") then
+            _G.OriginalSettings.Effects[effect] = effect.Enabled
+            effect.Enabled = false
+        end
+    end
+
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            if not _G.OriginalSettings.Materials[obj] then
+                _G.OriginalSettings.Materials[obj] = {
+                    Material = obj.Material,
+                    Reflectance = obj.Reflectance
+                }
+            end
+            obj.Material = Enum.Material.SmoothPlastic
+            obj.Reflectance = 0
+        elseif obj:IsA("Texture") or obj:IsA("Decal") then
+            if not _G.OriginalSettings.Materials[obj] then
+                _G.OriginalSettings.Materials[obj] = {Transparency = obj.Transparency}
+            end
+            obj.Transparency = 1
+        elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+            if not _G.OriginalSettings.Materials[obj] then
+                _G.OriginalSettings.Materials[obj] = {Enabled = obj.Enabled}
+            end
+            obj.Enabled = false
+        end
+    end
+
+    if sethiddenproperty then
+        sethiddenproperty(Terrain, "Decoration", false)
+    end
+    Terrain.WaterWaveSize = 0
+    Terrain.WaterWaveSpeed = 0
+
+else
+    setFPS(60)
+    
+    Lighting.GlobalShadows = _G.OriginalSettings.Lighting.GlobalShadows
+    Lighting.Brightness = _G.OriginalSettings.Lighting.Brightness
+    
+    for effect, enabled in pairs(_G.OriginalSettings.Effects) do
+        if effect and effect.Parent then
+            effect.Enabled = enabled
+        end
+    end
+
+    for obj, data in pairs(_G.OriginalSettings.Materials) do
+        if obj and obj.Parent then
+            if obj:IsA("BasePart") then
+                obj.Material = data.Material
+                obj.Reflectance = data.Reflectance
+            elseif obj:IsA("Texture") or obj:IsA("Decal") then
+                obj.Transparency = data.Transparency
+            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+                obj.Enabled = data.Enabled
+            end
+        end
+    end
+
+    if sethiddenproperty then
+        sethiddenproperty(Terrain, "Decoration", true)
+    end
+    Terrain.WaterWaveSize = 0.15
+    Terrain.WaterWaveSpeed = 1
+    
+    _G.OriginalSettings.Materials = {}
+    _G.OriginalSettings.Effects = {}
+end
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Performance Booster",
+    Text = _G.MassinhaToggle and "ATIVADO" or "RESTAURADO",
+    Duration = 3
+})
