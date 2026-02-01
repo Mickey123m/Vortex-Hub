@@ -1,0 +1,25 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local SellRemote = Remotes:WaitForChild("SellAllEvent")
+
+if _G.AutoSellToggle == nil then _G.AutoSellToggle = false end
+_G.AutoSellToggle = not _G.AutoSellToggle
+
+if not _G.AutoSellToggle then
+    return
+end
+
+task.spawn(function()
+    while _G.AutoSellToggle do
+        pcall(function()
+            SellRemote:FireServer()
+        end)
+        task.wait(2) 
+    end
+end)
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Vortex Hub",
+    Text = _G.AutoSellToggle and "AUTO SELL: ATIVADO" or "AUTO SELL: DESATIVADO",
+    Duration = 3
+})

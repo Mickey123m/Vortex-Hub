@@ -1,0 +1,84 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+
+_G.AutoSell = not _G.AutoSell
+
+if not _G.AutoSell then
+    return
+end
+
+local function getMyBaseFolder()
+    local baseId = player:GetAttribute("Base")
+    local basesFolder = Workspace:FindFirstChild("Bases")
+    if not basesFolder then return nil end
+    local base = basesFolder:FindFirstChild(tostring(baseId)) or basesFolder:FindFirstChild(player.Name)
+    if base then return base end
+    for _, b in pairs(basesFolder:GetChildren()) do
+        if b:FindFirstChild(player.Name) then return b end
+    end
+    return nil
+end
+
+local function instantAccept()
+    local pGui = player:FindFirstChild("PlayerGui")
+    local mainGui = pGui and pGui:FindFirstChild("MainGui")
+    local sellFrame = mainGui and mainGui:FindFirstChild("SellFrame")
+    local acceptBtn = sellFrame and sellFrame:FindFirstChild("Accept", true)
+    
+    if acceptBtn then
+        local events = {"MouseButton1Click", "MouseButton1Down", "Activated"}
+        for _, event in pairs(events) do
+            if acceptBtn[event] then
+                for _, connection in pairs(getconnections(acceptBtn[event])) do
+                    connection:Fire()
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while _G.AutoSell do
+        local myBase = getMyBaseFolder()
+        if myBase then
+            local placePromptsAvailable = 0
+            local sellPrompt = nil
+
+            for _, v in pairs(myBase:GetDescendants()) do
+                if v:IsA("ProximityPrompt") and v.Enabled then
+                    local name = v.Name:lower()
+                    local text = v.ActionText:lower()
+                    
+                    if name:find("place") or text:find("place") or text:find("put") then
+                        placePromptsAvailable = placePromptsAvailable + 1
+                    elseif name:find("sell") or text:find("sell") then
+                        sellPrompt = v
+                    end
+                end
+            end
+
+            if placePromptsAvailable == 0 and sellPrompt then
+                if fireproximityprompt then
+                    fireproximityprompt(sellPrompt)
+                end
+                
+                task.spawn(function()
+                    for i = 1, 10 do
+                        instantAccept()
+                        task.wait(0.05)
+                    end
+                end)
+                
+                task.wait(1.5)
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Vortex Hub",
+    Text = _G.AutoSell and "AUTO SELL: ULTRA FAST" or "AUTO SELL: DESATIVADO",
+    Duration = 3
+})
