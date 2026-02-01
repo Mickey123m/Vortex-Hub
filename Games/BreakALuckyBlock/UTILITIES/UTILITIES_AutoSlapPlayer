@@ -1,0 +1,94 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+if _G.AutoSlapEnabled == nil then
+    _G.AutoSlapEnabled = false
+end
+
+local function getSlapHand()
+    return player.Backpack:FindFirstChild("Slap Hand") or (player.Character and player.Character:FindFirstChild("Slap Hand"))
+end
+
+local function resetSlapCooldown()
+    player:SetAttribute("SlapCooldown", 0)
+end
+
+local function slapPlayer(targetPlayer)
+    local tool = getSlapHand()
+    local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    local targetRoot = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    
+    if tool and myRoot and targetRoot then
+        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 3)
+        tool.Parent = player.Character
+        
+        resetSlapCooldown()
+        tool:Activate()
+        
+        local remote = tool:FindFirstChild("Slap") or tool:FindFirstChildOfClass("RemoteEvent")
+        if remote then
+            remote:FireServer(targetRoot)
+        end
+        
+        return true
+    end
+    return false
+end
+
+local function runAutoSlap()
+    while _G.AutoSlapEnabled do
+        local targetName = _G.AutoSlapTarget
+        local interval = _G.AutoSlapInterval or 1
+        
+        if targetName == "All" then
+            for _, targetPlayer in pairs(Players:GetPlayers()) do
+                if targetPlayer ~= player and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    slapPlayer(targetPlayer)
+                    task.wait(0.2)
+                end
+            end
+        else
+            local targetPlayer = Players:FindFirstChild(targetName)
+            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                slapPlayer(targetPlayer)
+            end
+        end
+        
+        task.wait(interval)
+    end
+end
+
+if not _G.AutoSlapEnabled then
+    _G.AutoSlapEnabled = true
+    
+    if game:GetService("StarterGui"):SetCore then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Vortex Hub",
+            Text = "AUTO SLAP: ATIVADO - Target: " .. (_G.AutoSlapTarget or "All"),
+            Duration = 3
+        })
+    end
+    
+    task.spawn(runAutoSlap)
+    
+    RunService.Heartbeat:Connect(function()
+        if _G.AutoSlapEnabled then
+            resetSlapCooldown()
+        end
+    end)
+else
+    _G.AutoSlapEnabled = false
+    
+    if game:GetService("StarterGui"):SetCore then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Vortex Hub",
+            Text = "AUTO SLAP: DESATIVADO",
+            Duration = 3
+        })
+    end
+end
+
+return function()
+    _G.AutoSlapEnabled = false
+end
