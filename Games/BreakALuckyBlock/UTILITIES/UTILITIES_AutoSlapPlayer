@@ -17,19 +17,32 @@ if not _G.SlapTargetName then
     _G.SlapTargetName = ""
 end
 
--- Função para resetar cooldown do slap
-local function resetSlapCooldown()
-    player:SetAttribute("SlapCooldown", 0) 
-end
-
 -- Função para encontrar a Slap Hand
 local function getSlapHand()
-    return player.Backpack:FindFirstChild("Slap Hand") or (player.Character and player.Character:FindFirstChild("Slap Hand"))
+    -- Primeiro tenta encontrar na mochila
+    if player:FindFirstChild("Backpack") then
+        for _, tool in pairs(player.Backpack:GetChildren()) do
+            if tool.Name:lower():find("slap") then
+                return tool
+            end
+        end
+    end
+    
+    -- Depois tenta encontrar no character
+    if player.Character then
+        for _, tool in pairs(player.Character:GetChildren()) do
+            if tool:IsA("Tool") and tool.Name:lower():find("slap") then
+                return tool
+            end
+        end
+    end
+    
+    return nil
 end
 
 -- Função para encontrar o jogador alvo
 local function findTargetPlayer()
-    if _G.SlapTargetName == "" then
+    if _G.SlapTargetName == "" or _G.SlapTargetName == nil then
         return nil
     end
     
@@ -48,79 +61,183 @@ local function findTargetPlayer()
     return nil
 end
 
+-- Função segura para teleportar
+local function safeTeleport(cframe)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = cframe
+        return true
+    end
+    return false
+end
+
+-- Função segura para ativar tool
+local function safeActivateTool(tool, target)
+    if tool and tool:IsA("Tool") then
+        -- Primeiro certifica que a tool está no character
+        if tool.Parent ~= player.Character then
+            tool.Parent = player.Character
+            wait(0.1) -- Pequeno delay para equipar
+        end
+        
+        -- Tenta ativar o slap
+        pcall(function()
+            tool:Activate()
+        end)
+        
+        -- Procura por eventos remotos
+        for _, child in pairs(tool:GetDescendants()) do
+            if child:IsA("RemoteEvent") then
+                pcall(function()
+                    if target and target:FindFirstChild("HumanoidRootPart") then
+                        child:FireServer(target.HumanoidRootPart)
+                    else
+                        child:FireServer()
+                    end
+                end)
+            elseif child:IsA("RemoteFunction") then
+                pcall(function()
+                    if target and target:FindFirstChild("HumanoidRootPart") then
+                        child:InvokeServer(target.HumanoidRootPart)
+                    else
+                        child:InvokeServer()
+                    end
+                end)
+            end
+        end
+        
+        return true
+    end
+    return false
+end
+
 -- Lógica principal do auto slap
 local function runSlapLogic()
-    while _G.AutoSlapPlayer do
+    while _G.AutoSlapPlayer and task.wait(0.5) do
+        -- Verificar se o player ainda está no jogo
+        if not player or not player.Character then
+            continue
+        end
+        
         local tool = getSlapHand()
         local targetPlayer = findTargetPlayer()
+        
+        -- Se não tiver tool, tenta equipar uma
+        if not tool then
+            -- Tenta encontrar uma Slap Hand no workspace
+            for _, potentialTool in pairs(Workspace:GetChildren()) do
+                if potentialTool:IsA("Tool") and potentialTool.Name:lower():find("slap") then
+                    -- Tenta pegar a tool
+                    pcall(function()
+                        potentialTool.Parent = player.Character
+                        tool = potentialTool
+                        break
+                    end)
+                end
+            end
+        end
         
         if tool and targetPlayer and targetPlayer.Character then
             local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
             local targetHumanoid = targetPlayer.Character:FindFirstChild("Humanoid")
             
             if targetRoot and targetHumanoid and targetHumanoid.Health > 0 then
-                local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                local myHumanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+                local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
+                local myHumanoid = player.Character:FindFirstChild("Humanoid")
                 
                 if myRoot and myHumanoid and myHumanoid.Health > 0 then
-                    -- Teleportar próximo ao jogador
-                    myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 3)
+                    -- Teleportar próximo ao jogador (com offset para evitar colisão)
+                    local offset = CFrame.new(0, 0, 3)
+                    local targetCFrame = targetRoot.CFrame * offset
                     
-                    -- Equipar a Slap Hand
-                    tool.Parent = player.Character
+                    safeTeleport(targetCFrame)
                     
-                    -- Resetar cooldown e ativar o slap
-                    resetSlapCooldown()
-                    tool:Activate()
+                    -- Pequeno delay para teleportar
+                    task.wait(0.1)
                     
-                    -- Encontrar e ativar o remote do slap
-                    local remote = tool:FindFirstChild("Slap") or tool:FindFirstChildOfClass("RemoteEvent")
-                    if remote then
-                        remote:FireServer(targetRoot)
-                    end
-                    
-                    -- Feedback visual (opcional)
-                    if _G.VortexNotification then
-                        _G.VortexNotification("Slapping " .. targetPlayer.Name, 1)
+                    -- Ativar o slap
+                    safeActivateTool(tool, targetPlayer.Character)
+                end
+            else
+                -- Se o alvo não tiver HumanoidRootPart ou estiver morto
+                continue
+            end
+        elseif not targetPlayer then
+            -- Se não encontrar o alvo, espera um pouco mais
+            task.wait(1)
+        end
+    end
+end
+
+-- Sistema para remover cooldown (se existir)
+local function setupCooldownRemoval()
+    if _G.AutoSlapPlayer then
+        RunService.Heartbeat:Connect(function()
+            if _G.AutoSlapPlayer and player and player:GetAttribute then
+                pcall(function()
+                    player:SetAttribute("SlapCooldown", 0)
+                end)
+                
+                -- Também tenta remover cooldowns de outras formas
+                if player.Character then
+                    for _, tool in pairs(player.Character:GetChildren()) do
+                        if tool:IsA("Tool") and tool:GetAttribute then
+                            pcall(function()
+                                tool:SetAttribute("Cooldown", 0)
+                                tool:SetAttribute("LastUsed", 0)
+                            end)
+                        end
                     end
                 end
             end
-        end
-        
-        -- Pequeno delay para evitar spam
-        task.wait(0.5)
+        end)
     end
 end
 
--- Loop para resetar cooldown constantemente
-RunService.Heartbeat:Connect(function()
-    if _G.AutoSlapPlayer then
-        resetSlapCooldown()
+-- Função para enviar notificação segura
+local function safeNotification(title, text, duration)
+    duration = duration or 3
+    pcall(function()
+        if game:GetService("StarterGui"):SetCore then
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = title,
+                Text = text,
+                Duration = duration
+            })
+        end
+    end)
+end
+
+-- Configuração inicial
+local function initialize()
+    if not _G.AutoSlapPlayer then
+        _G.AutoSlapPlayer = true
     end
-end)
+    
+    safeNotification("Vortex Hub", "SLAP PLAYER: ATIVADO\nTarget: " .. (_G.SlapTargetName or "None"), 3)
+    
+    -- Configurar remoção de cooldown
+    setupCooldownRemoval()
+    
+    -- Iniciar a lógica principal
+    task.spawn(runSlapLogic)
+end
 
--- Iniciar a lógica
-task.spawn(runSlapLogic)
-
--- Notificação inicial
-if game:GetService("StarterGui"):SetCore then
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Vortex Hub",
-        Text = "SLAP PLAYER: ATIVADO\nTarget: " .. (_G.SlapTargetName or "None"),
-        Duration = 3
-    })
+-- Verificar se já está rodando para evitar duplicação
+if not _G.VortexSlapPlayerRunning then
+    _G.VortexSlapPlayerRunning = true
+    initialize()
+else
+    safeNotification("Vortex Hub", "SLAP PLAYER já está rodando!", 2)
 end
 
 -- Função para desativar o script
-return function()
+local function stopScript()
     _G.AutoSlapPlayer = false
     _G.SlapTargetName = nil
+    _G.VortexSlapPlayerRunning = false
     
-    if game:GetService("StarterGui"):SetCore then
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Vortex Hub",
-            Text = "SLAP PLAYER: DESATIVADO",
-            Duration = 3
-        })
-    end
+    safeNotification("Vortex Hub", "SLAP PLAYER: DESATIVADO", 3)
 end
+
+-- Retornar função de parada para o hub controlar
+return stopScript
