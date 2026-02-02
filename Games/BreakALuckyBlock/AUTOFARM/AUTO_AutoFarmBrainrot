@@ -5,7 +5,7 @@ local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
-local MINIMUM_VALUE = 20
+local MINIMUM_VALUE = _G.ValorMinimo or 20
 local WEBHOOK_URL = _G.WebhookURL or ""
 local DISCORD_ID = _G.DiscordID or ""
 
@@ -112,7 +112,9 @@ local function megaForcePrompt(prompt)
     if prompt and prompt:IsA("ProximityPrompt") then
         prompt.HoldDuration = 0
         prompt.Enabled = true
-        if fireproximityprompt then fireproximityprompt(prompt) else
+        if fireproximityprompt then 
+            fireproximityprompt(prompt) 
+        else
             prompt:InputHoldBegin()
             prompt:InputHoldEnd()
         end
@@ -157,10 +159,9 @@ task.spawn(function()
                     
                     if targetPart and collectPrompt then
                         root.CFrame = CFrame.new(targetPart.Position)
-                        task.wait(0.1)
                         
                         local pickStart = os.clock()
-                        while _G.UltimateAutoFarm and not isHoldingValidItem() and brainrot.Parent == brainrotsModel and os.clock() - pickStart < 3 do
+                        while _G.UltimateAutoFarm and not isHoldingValidItem() and brainrot.Parent == brainrotsModel and os.clock() - pickStart < 2 do
                             megaForcePrompt(collectPrompt)
                             task.wait(0.1)
                         end
@@ -168,20 +169,19 @@ task.spawn(function()
                         if isHoldingValidItem() and zoneWall then
                             local wallPos = zoneWall:GetPivot().Position
                             local passedWall = false
-                            local itemLost = false
+                            local abortFlight = false
                             
                             root.CFrame = CFrame.new(root.Position.X, SKY_HEIGHT, root.Position.Z)
                             
-                            local connection
-                            connection = RunService.Stepped:Connect(function(_, dt)
-                                if not _G.UltimateAutoFarm or passedWall or not root or not root.Parent then
-                                    if connection then connection:Disconnect() end
+                            local flightConn
+                            flightConn = RunService.Stepped:Connect(function(_, dt)
+                                if not _G.UltimateAutoFarm or passedWall or abortFlight or not root or not root.Parent then
+                                    if flightConn then flightConn:Disconnect() end
                                     return
                                 end
 
                                 if not isHoldingValidItem() then
-                                    itemLost = true
-                                    if connection then connection:Disconnect() end
+                                    abortFlight = true
                                     return
                                 end
 
@@ -200,19 +200,17 @@ task.spawn(function()
                             end)
 
                             local timeout = os.clock()
-                            repeat task.wait() until passedWall or itemLost or not _G.UltimateAutoFarm or (os.clock() - timeout > 10)
+                            while _G.UltimateAutoFarm and not passedWall and not abortFlight and (os.clock() - timeout < 12) do
+                                task.wait()
+                            end
 
-                            if itemLost then
-                                if connection then connection:Disconnect() end
-                            elseif passedWall then
-                                task.wait(0.8)
+                            if flightConn then flightConn:Disconnect() end
+
+                            if passedWall and not abortFlight then
+                                task.wait(0.5)
                                 if not isHoldingValidItem() then
                                     sendWebhook(itemName, valueText, rarityText, "Success: Item Delivered")
-                                else
-                                    sendWebhook(itemName, valueText, rarityText, "Failed: Item stuck in hand")
                                 end
-                            elseif os.clock() - timeout > 10 then
-                                sendWebhook(itemName, valueText, rarityText, "Failed: Flight time exceeded")
                             end
                         end
                         break 
@@ -220,7 +218,7 @@ task.spawn(function()
                 end
             end
         end
-        task.wait(0.5)
+        task.wait(0.1)
     end
 end)
 
