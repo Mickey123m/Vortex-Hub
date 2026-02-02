@@ -1,0 +1,2739 @@
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+
+local DefaultTheme = Color3.fromHex("#7B2FDE")
+local DefaultHex = "#7B2FDE"
+local DiscordBlue = Color3.fromRGB(50, 70, 150)
+local DarkBackground = Color3.fromRGB(15, 15, 20)
+local HeaderSidebarColor = Color3.fromRGB(20, 20, 25)
+local CardColor = Color3.fromRGB(25, 25, 35)
+local ServerGreen = Color3.fromRGB(0, 200, 100)
+local FriendsRed = Color3.fromRGB(255, 50, 50)
+local AutoFarmColor = Color3.fromRGB(200, 150, 50)
+local AutoRebirthColor = Color3.fromRGB(150, 200, 255)
+local ESPColor = Color3.fromHex("#2DDBC6")
+local MiscColor = Color3.fromHex("#9B2DDB")
+local UtilitiesColor = Color3.fromHex("#2D6BDB")
+
+local CategoryColors = {
+    Interface = Color3.fromRGB(80, 200, 80),
+    GameSettings = Color3.fromRGB(200, 120, 50),
+    GeneralUtils = Color3.fromRGB(50, 100, 200),
+    Customization = Color3.fromRGB(180, 80, 200),
+    AutoFarm = AutoFarmColor,
+    AutoRebirth = AutoRebirthColor,
+    ESP = ESPColor,
+    Misc = MiscColor,
+    Utilities = UtilitiesColor
+}
+
+local CurrentTheme = DefaultTheme
+local CurrentThemeHex = DefaultHex
+local CurrentBackground = DarkBackground
+local CurrentCardColor = CardColor
+local CurrentHeaderColor = HeaderSidebarColor
+local CurrentTextColor = Color3.fromRGB(255, 255, 255)
+
+local SavedThemeBeforeRainbow = DefaultTheme
+local SavedThemeHexBeforeRainbow = DefaultHex
+local SavedBackgroundBeforeRainbow = DarkBackground
+local SavedCardColorBeforeRainbow = CardColor
+local SavedHeaderColorBeforeRainbow = HeaderSidebarColor
+local SavedTextColorBeforeRainbow = Color3.fromRGB(255, 255, 255)
+local IsRainbowActive = false
+
+-- SISTEMA DE GERENCIAMENTO DE SCRIPTS ATIVOS
+local ActiveScripts = {}
+local ActiveScriptFunctions = {}
+local ActiveToggleStates = {}
+local AutoFarmScripts = {}
+local AutoRebirthScript = nil
+local AutoThiefScript = nil
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VortexHub"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999999999
+ScreenGui.IgnoreGuiInset = true
+
+local modules = {}
+
+function modules.ShowNotification(title, text, duration)
+    duration = duration or 4
+    
+    local NotifFrame = Instance.new("Frame")
+    NotifFrame.Size = UDim2.new(0, 300, 0, 75)
+    NotifFrame.Position = UDim2.new(1, 40, 1, -100)
+    NotifFrame.BackgroundColor3 = CurrentCardColor
+    NotifFrame.BorderSizePixel = 0
+    NotifFrame.Parent = ScreenGui
+    
+    local Corner = Instance.new("UICorner", NotifFrame)
+    Corner.CornerRadius = UDim.new(0, 12)
+    
+    local Stroke = Instance.new("UIStroke", NotifFrame)
+    Stroke.Color = CurrentTheme
+    Stroke.Thickness = 2
+    Stroke.Transparency = 0.3
+
+    local NotifLogo = Instance.new("TextLabel", NotifFrame)
+    NotifLogo.Size = UDim2.new(0, 35, 0, 35)
+    NotifLogo.Position = UDim2.new(0, 12, 0.5, -17)
+    NotifLogo.BackgroundColor3 = CurrentTheme
+    NotifLogo.Text = "V"
+    NotifLogo.TextColor3 = Color3.new(1, 1, 1)
+    NotifLogo.Font = Enum.Font.GothamBold
+    NotifLogo.TextSize = 20
+    Instance.new("UICorner", NotifLogo).CornerRadius = UDim.new(0, 8)
+
+    local TitleLabel = Instance.new("TextLabel", NotifFrame)
+    TitleLabel.Size = UDim2.new(1, -65, 0, 20)
+    TitleLabel.Position = UDim2.new(0, 58, 0, 15)
+    TitleLabel.Text = title:upper()
+    TitleLabel.TextColor3 = CurrentTheme
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.BackgroundTransparency = 1
+
+    local ContentLabel = Instance.new("TextLabel", NotifFrame)
+    ContentLabel.Size = UDim2.new(1, -65, 0, 30)
+    ContentLabel.Position = UDim2.new(0, 58, 0, 33)
+    ContentLabel.Text = text
+    ContentLabel.TextColor3 = CurrentTextColor
+    ContentLabel.Font = Enum.Font.GothamMedium
+    ContentLabel.TextSize = 12
+    ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ContentLabel.TextWrapped = true
+    ContentLabel.BackgroundTransparency = 1
+
+    local ProgressBg = Instance.new("Frame", NotifFrame)
+    ProgressBg.Size = UDim2.new(1, -20, 0, 3)
+    ProgressBg.Position = UDim2.new(0, 10, 1, -8)
+    ProgressBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    ProgressBg.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBg)
+
+    local ProgressBar = Instance.new("Frame", ProgressBg)
+    ProgressBar.Size = UDim2.new(1, 0, 1, 0)
+    ProgressBar.BackgroundColor3 = CurrentTheme
+    ProgressBar.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBar)
+
+    NotifFrame:TweenPosition(UDim2.new(1, -320, 1, -100), "Out", "Back", 0.6, true)
+    TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+    
+    task.wait(duration)
+    NotifFrame:TweenPosition(UDim2.new(1, 40, 1, -100), "In", "Quart", 0.5, true)
+    task.wait(0.5)
+    NotifFrame:Destroy()
+end
+
+-- FUNÇÃO PARA DESATIVAR TODOS OS SCRIPTS
+function modules.DeactivateAllScripts(silent)
+    -- Desativar scripts toggle normais
+    for scriptId, _ in pairs(ActiveScripts) do
+        if ActiveScriptFunctions[scriptId] then
+            local success, err = pcall(function()
+                ActiveScriptFunctions[scriptId]()
+            end)
+            if not success then
+                warn("[Vortex Hub] Error deactivating script:", err)
+            end
+        end
+    end
+    
+    -- Limpar tabelas
+    ActiveScripts = {}
+    ActiveScriptFunctions = {}
+    
+    -- Desativar Auto Farm scripts
+    for _, scriptData in pairs(AutoFarmScripts) do
+        if scriptData.Deactivate then
+            pcall(scriptData.Deactivate)
+        end
+    end
+    AutoFarmScripts = {}
+    
+    -- Desativar Auto Rebirth
+    if AutoRebirthScript and AutoRebirthScript.Deactivate then
+        pcall(AutoRebirthScript.Deactivate)
+        AutoRebirthScript = nil
+    end
+    
+    -- Desativar Auto Thief
+    if AutoThiefScript and AutoThiefScript.Deactivate then
+        pcall(AutoThiefScript.Deactivate)
+        AutoThiefScript = nil
+    end
+    
+    -- Limpar variáveis globais
+    _G.VortexStopFarm = nil
+    _G.ValorMinimo = nil
+    _G.WebhookURL = nil
+    _G.DiscordID = nil
+    _G.AutoRebirth = false
+    _G.UltimateAutoFarm = false
+    _G.BountyHunter = false
+    _G.ValorAlvoBounty = nil
+    
+    -- Notificar usuário apenas se não for modo silencioso
+    if not silent then
+        modules.ShowNotification("System", "All scripts deactivated", 3)
+    end
+end
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 650, 0, 460)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = CurrentBackground
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = CurrentTheme
+MainStroke.Thickness = 2
+MainStroke.Transparency = 0.8
+
+local savedPosition = nil
+local savedAnchorPoint = nil
+local CurrentToggleKey = Enum.KeyCode.Insert
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == CurrentToggleKey then
+        if MainFrame.Visible then
+            savedPosition = MainFrame.Position
+            savedAnchorPoint = MainFrame.AnchorPoint
+            
+            TweenService:Create(MainFrame, TweenInfo.new(0.2), {
+                BackgroundTransparency = 0.5
+            }):Play()
+            
+            task.wait(0.1)
+            MainFrame.Visible = false
+            MainFrame.BackgroundTransparency = 0.05
+        else
+            MainFrame.Visible = true
+            
+            if savedPosition then
+                MainFrame.Position = savedPosition
+                MainFrame.AnchorPoint = savedAnchorPoint
+            else
+                MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+                MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+            end
+            
+            MainFrame.BackgroundTransparency = 0.5
+            TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+                BackgroundTransparency = 0.05
+            }):Play()
+        end
+    end
+end)
+
+function modules.ApplySoftGlow(frame, color)
+    frame.ClipsDescendants = false
+    local Grad = Instance.new("UIGradient", frame)
+    Grad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, color),
+        ColorSequenceKeypoint.new(1, CurrentCardColor)
+    })
+    Grad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.6, 0.8),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    Grad.Rotation = -45
+    
+    local Stroke = Instance.new("UIStroke", frame)
+    Stroke.Color = color
+    Stroke.Thickness = 1.5
+    Stroke.Transparency = 0.4
+    Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
+    Stroke.LineJoinMode = Enum.LineJoinMode.Round
+    
+    local InnerPadding = Instance.new("UIPadding", frame)
+    InnerPadding.PaddingLeft = UDim.new(0, 1)
+    InnerPadding.PaddingRight = UDim.new(0, 1)
+    InnerPadding.PaddingTop = UDim.new(0, 1)
+    InnerPadding.PaddingBottom = UDim.new(0, 1)
+end
+
+local TopBar = Instance.new("Frame", MainFrame)
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundColor3 = CurrentHeaderColor
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
+
+local TopOverlap = Instance.new("Frame", TopBar)
+TopOverlap.Size = UDim2.new(1, 0, 0, 10)
+TopOverlap.Position = UDim2.new(0, 0, 1, -10)
+TopOverlap.BackgroundColor3 = CurrentHeaderColor
+TopOverlap.BorderSizePixel = 0
+
+local TitleContainer = Instance.new("Frame", TopBar)
+TitleContainer.Size = UDim2.new(0.8, 0, 1, 0)
+TitleContainer.Position = UDim2.new(0, 20, 0, 0)
+TitleContainer.BackgroundTransparency = 1
+
+local LogoV = Instance.new("TextLabel", TitleContainer)
+LogoV.Size = UDim2.new(0, 25, 0, 25)
+LogoV.Position = UDim2.new(0, 0, 0.5, -12)
+LogoV.BackgroundColor3 = CurrentTheme
+LogoV.Text = "V"
+LogoV.TextColor3 = Color3.fromRGB(255, 255, 255)
+LogoV.Font = Enum.Font.GothamBold
+LogoV.TextSize = 16
+Instance.new("UICorner", LogoV).CornerRadius = UDim.new(0, 6)
+
+local TitleText = Instance.new("TextLabel", TitleContainer)
+TitleText.Text = "VORTEX HUB"
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextColor3 = CurrentTheme
+TitleText.TextSize = 16
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Position = UDim2.new(0, 35, 0, 0)
+TitleText.Size = UDim2.new(0, 105, 1, 0)
+TitleText.BackgroundTransparency = 1
+
+local SloganText = Instance.new("TextLabel", TitleContainer)
+SloganText.Text = "Best Script Hub"
+SloganText.Font = Enum.Font.GothamMedium
+SloganText.TextColor3 = Color3.fromRGB(150, 150, 150)
+SloganText.TextSize = 13
+SloganText.TextXAlignment = Enum.TextXAlignment.Left
+SloganText.Position = UDim2.new(0, 142, 0, 0)
+SloganText.Size = UDim2.new(0, 200, 1, 0)
+SloganText.BackgroundTransparency = 1
+
+local CloseBtn = Instance.new("TextButton", TopBar)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = CurrentTextColor
+CloseBtn.TextSize = 16
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -10, 0.5, 0)
+CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
+CloseBtn.BackgroundTransparency = 1
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+
+CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2, BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play() end)
+CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play() end)
+
+local Sidebar = Instance.new("Frame", MainFrame)
+Sidebar.Size = UDim2.new(0, 65, 1, -65)
+Sidebar.Position = UDim2.new(0, 15, 0, 55)
+Sidebar.BackgroundColor3 = CurrentHeaderColor
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
+modules.ApplySoftGlow(Sidebar, CurrentTheme)
+
+local Container = Instance.new("Frame", MainFrame)
+Container.Position = UDim2.new(0, 90, 0, 55)
+Container.Size = UDim2.new(1, -105, 1, -70)
+Container.BackgroundTransparency = 1
+
+local Pages = {}
+function CreatePage(name)
+    local Page = Instance.new("ScrollingFrame", Container)
+    Page.Name = name
+    Page.Size = UDim2.new(1, 0, 1, 0)
+    Page.BackgroundTransparency = 1
+    Page.BorderSizePixel = 0
+    Page.Visible = false
+    
+    Page.ScrollBarThickness = 3
+    Page.ScrollBarImageColor3 = CurrentTheme
+    Page.ScrollBarImageTransparency = 0.2
+    Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Page.ElasticBehavior = Enum.ElasticBehavior.Never
+    Page.VerticalScrollBarInset = Enum.ScrollBarInset.None
+    
+    local UIPadding = Instance.new("UIPadding", Page)
+    UIPadding.PaddingRight = UDim.new(0, 12)
+    UIPadding.PaddingLeft = UDim.new(0, 2)
+    UIPadding.PaddingTop = UDim.new(0, 2)
+    UIPadding.PaddingBottom = UDim.new(0, 10)
+    
+    local UIList = Instance.new("UIListLayout", Page)
+    UIList.Padding = UDim.new(0, 12)
+    
+    Pages[name] = Page
+    return Page
+end
+
+local ProfilePage = CreatePage("Profile")
+local MiscPage = CreatePage("Misc")
+local SettingsPage = CreatePage("Settings")
+
+function CreateHorizontalSubCard(parent, title, value, pos, size)
+    local Card = Instance.new("Frame", parent)
+    Card.Size = size
+    Card.Position = pos
+    Card.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
+    Card.BackgroundTransparency = 0.5
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 6)
+    
+    local Label = Instance.new("TextLabel", Card)
+    Label.Size = UDim2.new(1, -20, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.Text = "<b>" .. title .. ":</b> " .. value
+    Label.TextColor3 = CurrentTextColor
+    Label.Font = Enum.Font.GothamMedium
+    Label.RichText = true
+    Label.TextSize = 11
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.BackgroundTransparency = 1
+    
+    return Label, title
+end
+
+function CreateSubCard(parent, title, value, pos, size)
+    local Card = Instance.new("Frame", parent)
+    Card.Size = size
+    Card.Position = pos
+    Card.BackgroundColor3 = Color3.fromRGB(32, 32, 42)
+    Card.BackgroundTransparency = 0.5
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 6)
+    
+    local T = Instance.new("TextLabel", Card)
+    T.Size = UDim2.new(1, 0, 0, 15)
+    T.Position = UDim2.new(0, 10, 0, 6)
+    T.Text = title
+    T.TextColor3 = Color3.fromRGB(180, 180, 180)
+    T.Font = Enum.Font.GothamBold
+    T.TextSize = 10
+    T.TextXAlignment = Enum.TextXAlignment.Left
+    T.BackgroundTransparency = 1
+    
+    local V = Instance.new("TextLabel", Card)
+    V.Size = UDim2.new(1, 0, 0, 15)
+    V.Position = UDim2.new(0, 10, 0, 21)
+    V.Text = value
+    V.TextColor3 = CurrentTextColor
+    V.Font = Enum.Font.GothamMedium
+    V.TextSize = 11
+    V.TextXAlignment = Enum.TextXAlignment.Left
+    V.BackgroundTransparency = 1
+    
+    return V
+end
+
+local AvatarStrokeRef = nil
+local DiscordCardRef = nil
+
+function modules.CreateProfilePage()
+    local ProfileCard = Instance.new("Frame", ProfilePage)
+    ProfileCard.Size = UDim2.new(1, 0, 0, 105)
+    ProfileCard.BackgroundColor3 = CurrentCardColor
+    Instance.new("UICorner", ProfileCard).CornerRadius = UDim.new(0, 12)
+    modules.ApplySoftGlow(ProfileCard, CurrentTheme)
+
+    local AvatarImg = Instance.new("ImageLabel", ProfileCard)
+    AvatarImg.Size = UDim2.new(0, 75, 0, 75)
+    AvatarImg.Position = UDim2.new(0, 15, 0.5, -37)
+    AvatarImg.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    AvatarImg.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Instance.new("UICorner", AvatarImg).CornerRadius = UDim.new(0, 10)
+    AvatarStrokeRef = Instance.new("UIStroke", AvatarImg)
+    AvatarStrokeRef.Color = CurrentTheme
+    AvatarStrokeRef.Thickness = 2
+
+    local WelcomeLabel = Instance.new("TextLabel", ProfileCard)
+    WelcomeLabel.Size = UDim2.new(1, -110, 0, 20)
+    WelcomeLabel.Position = UDim2.new(0, 105, 0, 20)
+    WelcomeLabel.Text = "Good evening, " .. player.DisplayName
+    WelcomeLabel.TextColor3 = CurrentTextColor
+    WelcomeLabel.Font = Enum.Font.GothamBold
+    WelcomeLabel.TextSize = 19
+    WelcomeLabel.TextXAlignment = Enum.TextXAlignment.Left
+    WelcomeLabel.BackgroundTransparency = 1
+
+    local GameLabel = Instance.new("TextLabel", ProfileCard)
+    GameLabel.Size = UDim2.new(1, -110, 0, 20)
+    GameLabel.Position = UDim2.new(0, 105, 0, 42)
+    GameLabel.RichText = true
+    GameLabel.Text = "Identifying Game..."
+    GameLabel.TextColor3 = CurrentTextColor
+    GameLabel.Font = Enum.Font.GothamBold
+    GameLabel.TextSize = 14
+    GameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    GameLabel.BackgroundTransparency = 1
+
+    task.spawn(function()
+        local success, info = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+        local grayHex = "#B4B4B4"
+        if success and info then
+            GameLabel.Text = '<font color="'..CurrentThemeHex..'">'..info.Name..'</font> <font color="'..grayHex..'"> - Vortex Hub</font>'
+        else
+            GameLabel.Text = '<font color="'..CurrentThemeHex..'">SHARP</font> <font color="'..grayHex..'"> - Vortex Hub</font>'
+        end
+    end)
+
+    local DeviceLabel = Instance.new("TextLabel", ProfileCard)
+    DeviceLabel.Size = UDim2.new(1, -110, 0, 20)
+    DeviceLabel.Position = UDim2.new(0, 105, 0, 64)
+    DeviceLabel.RichText = true
+    DeviceLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+    DeviceLabel.Font = Enum.Font.GothamMedium
+    DeviceLabel.TextSize = 12
+    DeviceLabel.TextXAlignment = Enum.TextXAlignment.Left
+    DeviceLabel.BackgroundTransparency = 1
+
+    local function GetDeviceType()
+        if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then return "Mobile"
+        elseif UserInputService.GamepadEnabled then return "Console"
+        else return "Desktop" end
+    end
+    DeviceLabel.Text = 'You are using <font color="'..CurrentThemeHex..'">'..GetDeviceType()..'</font>'
+
+    local ColumnContainer = Instance.new("Frame", ProfilePage)
+    ColumnContainer.Size = UDim2.new(1, 0, 0, 210)
+    ColumnContainer.BackgroundTransparency = 1
+
+    local ServerCard = Instance.new("Frame", ColumnContainer)
+    ServerCard.Size = UDim2.new(0.58, -5, 1, 0)
+    ServerCard.BackgroundColor3 = CurrentCardColor
+    Instance.new("UICorner", ServerCard).CornerRadius = UDim.new(0, 12)
+    modules.ApplySoftGlow(ServerCard, ServerGreen)
+
+    local ServerTitle = Instance.new("TextLabel", ServerCard)
+    ServerTitle.Text = "Server"
+    ServerTitle.Size = UDim2.new(1, -30, 0, 30)
+    ServerTitle.Position = UDim2.new(0, 15, 0, 5)
+    ServerTitle.Font = Enum.Font.GothamBold
+    ServerTitle.TextColor3 = CurrentTextColor
+    ServerTitle.TextSize = 15
+    ServerTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ServerTitle.BackgroundTransparency = 1
+
+    local PlayVal = CreateSubCard(ServerCard, "Players", "0 playing", UDim2.new(0, 12, 0, 45), UDim2.new(0.5, -16, 0, 42))
+    local MaxVal = CreateSubCard(ServerCard, "Maximum Players", "0 max", UDim2.new(0.5, 4, 0, 45), UDim2.new(0.5, -16, 0, 42))
+    local LatVal = CreateSubCard(ServerCard, "Latency", "0ms", UDim2.new(0, 12, 0, 100), UDim2.new(0.35, -12, 0, 42))
+    local RegVal = CreateSubCard(ServerCard, "Server Region", "Unknown", UDim2.new(0.35, 8, 0, 100), UDim2.new(0.65, -20, 0, 42))
+    local TimeVal = CreateSubCard(ServerCard, "In server for", "00:00:00", UDim2.new(0, 12, 0, 155), UDim2.new(1, -24, 0, 42))
+
+    task.spawn(function()
+        local start = os.time()
+        while task.wait(1) do
+            PlayVal.Text = #Players:GetPlayers() .. " playing"
+            MaxVal.Text = Players.MaxPlayers .. " players max"
+            LatVal.Text = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
+            local diff = os.time() - start
+            TimeVal.Text = string.format("%02d:%02d:%02d", math.floor(diff/3600), math.floor((diff%3600)/60), diff%60)
+        end
+    end)
+
+    local RightCol = Instance.new("Frame", ColumnContainer)
+    RightCol.Position = UDim2.new(0.58, 5, 0, 0)
+    RightCol.Size = UDim2.new(0.42, -5, 1, 0)
+    RightCol.BackgroundTransparency = 1
+    Instance.new("UIListLayout", RightCol).Padding = UDim.new(0, 10)
+
+    local ExCard = Instance.new("Frame", RightCol)
+    ExCard.Size = UDim2.new(1, 0, 0, 85)
+    ExCard.BackgroundColor3 = CurrentCardColor
+    Instance.new("UICorner", ExCard).CornerRadius = UDim.new(0, 12)
+    modules.ApplySoftGlow(ExCard, Color3.fromRGB(80, 20, 120))
+
+    local ExName = Instance.new("TextLabel", ExCard)
+    ExName.Text = "Analyzing..."
+    ExName.Position = UDim2.new(0, 15, 0, 15)
+    ExName.Size = UDim2.new(1, -30, 0, 20)
+    ExName.Font = Enum.Font.GothamBold
+    ExName.TextColor3 = CurrentTextColor
+    ExName.TextSize = 16
+    ExName.TextXAlignment = Enum.TextXAlignment.Left
+    ExName.BackgroundTransparency = 1
+
+    local ExDesc = Instance.new("TextLabel", ExCard)
+    ExDesc.Text = "Good Executor. You can use all scripts here."
+    ExDesc.Position = UDim2.new(0, 15, 0, 38)
+    ExDesc.Size = UDim2.new(1, -30, 0, 30)
+    ExDesc.Font = Enum.Font.GothamMedium
+    ExDesc.TextColor3 = Color3.fromRGB(0, 255, 120)
+    ExDesc.TextSize = 11
+    ExDesc.TextWrapped = true
+    ExDesc.TextXAlignment = Enum.TextXAlignment.Left
+    ExDesc.BackgroundTransparency = 1
+
+    task.spawn(function()
+        task.wait(1.5)
+        local name = (identifyexecutor or getexecutorname or function() return "Unknown" end)()
+        ExName.Text = name
+    end)
+
+    local FriendCard = Instance.new("Frame", RightCol)
+    FriendCard.Size = UDim2.new(1, 0, 0, 115)
+    FriendCard.BackgroundColor3 = CurrentCardColor
+    Instance.new("UICorner", FriendCard).CornerRadius = UDim.new(0, 12)
+    modules.ApplySoftGlow(FriendCard, FriendsRed)
+
+    local FTitle = Instance.new("TextLabel", FriendCard)
+    FTitle.Text = "Friends"
+    FTitle.Position = UDim2.new(0, 15, 0, 8)
+    FTitle.Size = UDim2.new(1, 0, 0, 20)
+    FTitle.Font = Enum.Font.GothamBold
+    FTitle.TextColor3 = CurrentTextColor
+    FTitle.TextSize = 14
+    FTitle.TextXAlignment = Enum.TextXAlignment.Left
+    FTitle.BackgroundTransparency = 1
+
+    local FOnlineLabel, FOnlineTitle = CreateHorizontalSubCard(FriendCard, "Online", "0 friends", UDim2.new(0, 12, 0, 35), UDim2.new(1, -24, 0, 32))
+    local FInServerLabel, FInServerTitle = CreateHorizontalSubCard(FriendCard, "In Server", "0 friends", UDim2.new(0, 12, 0, 72), UDim2.new(1, -24, 0, 32))
+
+    local function UpdateFriendsLogic()
+        task.spawn(function()
+            local success, friendsOnline = pcall(function() return player:GetFriendsOnline() end)
+            if not success then return end
+            local inServerCount = 0
+            local onlineCount = #friendsOnline
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= player and p:IsFriendsWith(player.UserId) then inServerCount = inServerCount + 1 end
+            end
+            FInServerLabel.Text = "<b>" .. FInServerTitle .. ":</b> " .. inServerCount .. " friends"
+            FOnlineLabel.Text = "<b>" .. FOnlineTitle .. ":</b> " .. onlineCount .. " friends"
+        end)
+    end
+
+    task.spawn(function() while task.wait(10) do UpdateFriendsLogic() end end)
+    UpdateFriendsLogic()
+
+    local BottomRow = Instance.new("Frame", ProfilePage)
+    BottomRow.Size = UDim2.new(1, 0, 0, 85)
+    BottomRow.BackgroundTransparency = 1
+
+    local DiscordCard = Instance.new("TextButton", BottomRow)
+    DiscordCard.Size = UDim2.new(0.4, -5, 1, 0)
+    DiscordCard.BackgroundColor3 = CurrentCardColor
+    DiscordCard.Text = ""
+    Instance.new("UICorner", DiscordCard).CornerRadius = UDim.new(0, 12)
+    DiscordCardRef = DiscordCard
+    modules.ApplySoftGlow(DiscordCard, DiscordBlue)
+
+    local DiscTitle = Instance.new("TextLabel", DiscordCard)
+    DiscTitle.Text = "Discord"
+    DiscTitle.Position = UDim2.new(0, 15, 0, 15)
+    DiscTitle.Size = UDim2.new(1, -30, 0, 20)
+    DiscTitle.Font = Enum.Font.GothamBold
+    DiscTitle.TextColor3 = CurrentTextColor
+    DiscTitle.TextSize = 16
+    DiscTitle.TextXAlignment = Enum.TextXAlignment.Left
+    DiscTitle.BackgroundTransparency = 1
+
+    local DiscSub = Instance.new("TextLabel", DiscordCard)
+    DiscSub.Text = "Click to join"
+    DiscSub.Position = UDim2.new(0, 15, 0, 38)
+    DiscSub.Size = UDim2.new(1, -30, 0, 15)
+    DiscSub.Font = Enum.Font.GothamMedium
+    DiscSub.TextColor3 = Color3.fromRGB(200, 200, 220)
+    DiscSub.TextSize = 12
+    DiscSub.TextXAlignment = Enum.TextXAlignment.Left
+    DiscSub.BackgroundTransparency = 1
+
+    DiscordCard.MouseButton1Click:Connect(function()
+        if setclipboard then setclipboard("https://discord.gg/AKvDUwk95B") end
+        modules.ShowNotification("Discord", "Link successfully copied to clipboard!", 3)
+    end)
+
+    local StatsCard = Instance.new("Frame", BottomRow)
+    StatsCard.Size = UDim2.new(0.6, -5, 1, 0)
+    StatsCard.Position = UDim2.new(0.4, 5, 0, 0)
+    StatsCard.BackgroundColor3 = CurrentCardColor
+    Instance.new("UICorner", StatsCard).CornerRadius = UDim.new(0, 12)
+    modules.ApplySoftGlow(StatsCard, CurrentTheme)
+
+    local StatsTitle = Instance.new("TextLabel", StatsCard)
+    StatsTitle.Text = "Account Summary"
+    StatsTitle.Position = UDim2.new(0, 15, 0, 10)
+    StatsTitle.Size = UDim2.new(1, 0, 0, 20)
+    StatsTitle.Font = Enum.Font.GothamBold
+    StatsTitle.TextColor3 = CurrentTextColor
+    StatsTitle.TextSize = 14
+    StatsTitle.TextXAlignment = Enum.TextXAlignment.Left
+    StatsTitle.BackgroundTransparency = 1
+
+    local UserIDVal = CreateSubCard(StatsCard, "User ID", tostring(player.UserId), UDim2.new(0, 12, 0, 35), UDim2.new(0.45, -12, 0, 38))
+    local AgeVal = CreateSubCard(StatsCard, "Account Age", player.AccountAge .. " days", UDim2.new(0.45, 8, 0, 35), UDim2.new(0.55, -20, 0, 38))
+end
+
+-- SISTEMA MELHORADO DE TOGGLE COM GERENCIAMENTO
+function modules.CreateToggleInRow(row, name, scriptUrl, isPVP, fullWidth)
+    local ToggleFrame = Instance.new("Frame", row)
+    
+    if fullWidth then
+        ToggleFrame.Size = UDim2.new(1, 0, 1, 0)
+    else
+        ToggleFrame.Size = UDim2.new(0.5, -5, 1, 0)
+    end
+    
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    ToggleFrame.BackgroundTransparency = 0
+    Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 8)
+
+    local Title = Instance.new("TextLabel", ToggleFrame)
+    Title.Size = UDim2.new(1, -60, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Text = name
+    Title.TextColor3 = CurrentTextColor
+    Title.Font = Enum.Font.GothamMedium
+    Title.TextSize = 13
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.BackgroundTransparency = 1
+
+    local SwitchBG = Instance.new("TextButton", ToggleFrame)
+    SwitchBG.Size = UDim2.new(0, 38, 0, 20)
+    SwitchBG.Position = UDim2.new(1, -50, 0.5, -10)
+    SwitchBG.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    SwitchBG.Text = ""
+    Instance.new("UICorner", SwitchBG).CornerRadius = UDim.new(1, 0)
+
+    local Circle = Instance.new("Frame", SwitchBG)
+    Circle.Size = UDim2.new(0, 14, 0, 14)
+    Circle.Position = UDim2.new(0, 3, 0.5, -7)
+    Circle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
+
+    local isActive = ActiveToggleStates[scriptUrl] or false
+    
+    local function UpdateToggleAppearance(active)
+        isActive = active
+        ActiveToggleStates[scriptUrl] = active
+        
+        if active then
+            local toggleColor = isPVP and Color3.fromRGB(255, 80, 80) or CurrentTheme
+            TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = toggleColor}):Play()
+            TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+            Title.TextColor3 = CurrentTextColor
+        else
+            TweenService:Create(SwitchBG, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+            TweenService:Create(Circle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+            Title.TextColor3 = CurrentTextColor
+        end
+    end
+
+    local function ActivateScript()
+        if isActive then return end
+        
+        UpdateToggleAppearance(true)
+        ActiveScripts[scriptUrl] = true
+        
+        task.spawn(function()
+            local success, err = pcall(function()
+                local scriptFunction = loadstring(game:HttpGet(scriptUrl))()
+                if type(scriptFunction) == "function" then
+                    -- Armazenar função de desativação se o script retornar uma
+                    ActiveScriptFunctions[scriptUrl] = function()
+                        -- Tentar executar a função de desativação
+                        pcall(scriptFunction)
+                    end
+                else
+                    -- Se não retornar função, assumir que o script auto-desativa
+                    ActiveScriptFunctions[scriptUrl] = function()
+                        -- Tentar executar novamente para desativar
+                        pcall(function()
+                            loadstring(game:HttpGet(scriptUrl))()
+                        end)
+                    end
+                end
+            end)
+            if not success then
+                warn("[Vortex Hub] Error loading " .. name .. ":", err)
+                UpdateToggleAppearance(false)
+                ActiveScripts[scriptUrl] = nil
+                ActiveScriptFunctions[scriptUrl] = nil
+            end
+        end)
+    end
+
+    local function DeactivateScript()
+        if not isActive then return end
+        
+        UpdateToggleAppearance(false)
+        ActiveScripts[scriptUrl] = nil
+        
+        if ActiveScriptFunctions[scriptUrl] then
+            local success, err = pcall(ActiveScriptFunctions[scriptUrl])
+            if not success then
+                warn("[Vortex Hub] Error deactivating " .. name .. ":", err)
+            end
+            ActiveScriptFunctions[scriptUrl] = nil
+        else
+            -- Fallback: executar o script novamente para desativar
+            task.spawn(function()
+                pcall(function()
+                    loadstring(game:HttpGet(scriptUrl))()
+                end)
+            end)
+        end
+    end
+
+    SwitchBG.MouseButton1Click:Connect(function()
+        if isActive then
+            DeactivateScript()
+        else
+            ActivateScript()
+        end
+    end)
+    
+    -- Aplicar estado salvo
+    UpdateToggleAppearance(isActive)
+    
+    return ToggleFrame
+end
+
+function modules.CreateSettingsPage()
+    local AutoFarmHeader = Instance.new("Frame", SettingsPage)
+    AutoFarmHeader.Size = UDim2.new(1, 0, 0, 45)
+    AutoFarmHeader.BackgroundColor3 = Color3.fromRGB(25, 20, 10)
+    AutoFarmHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", AutoFarmHeader).CornerRadius = UDim.new(0, 10)
+    local AutoFarmHeaderStroke = Instance.new("UIStroke", AutoFarmHeader)
+    AutoFarmHeaderStroke.Color = CategoryColors.AutoFarm
+    AutoFarmHeaderStroke.Thickness = 2
+    local AutoFarmHeaderText = Instance.new("TextLabel", AutoFarmHeader)
+    AutoFarmHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    AutoFarmHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    AutoFarmHeaderText.Text = "AUTO FARM"
+    AutoFarmHeaderText.TextColor3 = CategoryColors.AutoFarm
+    AutoFarmHeaderText.Font = Enum.Font.GothamBold
+    AutoFarmHeaderText.TextSize = 14
+    AutoFarmHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    AutoFarmHeaderText.BackgroundTransparency = 1
+
+    local AutoFarmContainer = Instance.new("Frame", SettingsPage)
+    AutoFarmContainer.Size = UDim2.new(1, 0, 0, 0)
+    AutoFarmContainer.AutomaticSize = Enum.AutomaticSize.Y
+    AutoFarmContainer.BackgroundTransparency = 1
+    local UIListAutoFarm = Instance.new("UIListLayout", AutoFarmContainer)
+    UIListAutoFarm.Padding = UDim.new(0, 10)
+
+    -- AUTO FARM BRAINROT (PRIMEIRO)
+    local BrainrotContainer = Instance.new("Frame", AutoFarmContainer)
+    BrainrotContainer.Size = UDim2.new(1, 0, 0, 170)
+    BrainrotContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    BrainrotContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", BrainrotContainer).CornerRadius = UDim.new(0, 8)
+
+    local BrainrotTitle = Instance.new("TextLabel", BrainrotContainer)
+    BrainrotTitle.Size = UDim2.new(1, -30, 0, 35)
+    BrainrotTitle.Position = UDim2.new(0, 15, 0, 5)
+    BrainrotTitle.Text = "Auto Farm Brainrot"
+    BrainrotTitle.TextColor3 = CurrentTextColor
+    BrainrotTitle.Font = Enum.Font.GothamBold
+    BrainrotTitle.TextSize = 16
+    BrainrotTitle.TextXAlignment = Enum.TextXAlignment.Left
+    BrainrotTitle.BackgroundTransparency = 1
+
+    local BrainrotToggleFrame = Instance.new("Frame", BrainrotContainer)
+    BrainrotToggleFrame.Size = UDim2.new(1, -30, 0, 35)
+    BrainrotToggleFrame.Position = UDim2.new(0, 15, 0, 40)
+    BrainrotToggleFrame.BackgroundTransparency = 1
+
+    local BrainrotToggleLabel = Instance.new("TextLabel", BrainrotToggleFrame)
+    BrainrotToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    BrainrotToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+    BrainrotToggleLabel.Text = "Activate Auto Farm"
+    BrainrotToggleLabel.TextColor3 = CurrentTextColor
+    BrainrotToggleLabel.Font = Enum.Font.GothamMedium
+    BrainrotToggleLabel.TextSize = 14
+    BrainrotToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    BrainrotToggleLabel.BackgroundTransparency = 1
+
+    local BrainrotSwitch = Instance.new("TextButton", BrainrotToggleFrame)
+    BrainrotSwitch.Size = UDim2.new(0, 38, 0, 20)
+    BrainrotSwitch.Position = UDim2.new(1, -38, 0.5, -10)
+    BrainrotSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    BrainrotSwitch.Text = ""
+    Instance.new("UICorner", BrainrotSwitch).CornerRadius = UDim.new(1, 0)
+
+    local BrainrotCircle = Instance.new("Frame", BrainrotSwitch)
+    BrainrotCircle.Size = UDim2.new(0, 14, 0, 14)
+    BrainrotCircle.Position = UDim2.new(0, 3, 0.5, -7)
+    BrainrotCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", BrainrotCircle).CornerRadius = UDim.new(1, 0)
+
+    local BrainrotValueContainer = Instance.new("Frame", BrainrotContainer)
+    BrainrotValueContainer.Size = UDim2.new(1, -30, 0, 35)
+    BrainrotValueContainer.Position = UDim2.new(0, 15, 0, 80)
+    BrainrotValueContainer.BackgroundTransparency = 1
+
+    local BrainrotValueLabel = Instance.new("TextLabel", BrainrotValueContainer)
+    BrainrotValueLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    BrainrotValueLabel.Position = UDim2.new(0, 0, 0, 0)
+    BrainrotValueLabel.Text = "Minimum Value"
+    BrainrotValueLabel.TextColor3 = CurrentTextColor
+    BrainrotValueLabel.Font = Enum.Font.GothamMedium
+    BrainrotValueLabel.TextSize = 14
+    BrainrotValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+    BrainrotValueLabel.BackgroundTransparency = 1
+
+    local BrainrotValueInput = Instance.new("TextBox", BrainrotValueContainer)
+    BrainrotValueInput.Size = UDim2.new(0.45, -15, 0, 28)
+    BrainrotValueInput.Position = UDim2.new(0.55, 0, 0.5, -14)
+    BrainrotValueInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    BrainrotValueInput.TextColor3 = CurrentTextColor
+    BrainrotValueInput.Font = Enum.Font.GothamMedium
+    BrainrotValueInput.TextSize = 13
+    BrainrotValueInput.PlaceholderText = "Ex: 100"
+    BrainrotValueInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    BrainrotValueInput.Text = "100"
+    BrainrotValueInput.ClearTextOnFocus = false
+    Instance.new("UICorner", BrainrotValueInput).CornerRadius = UDim.new(0, 6)
+
+    local ValueInputPadding = Instance.new("UIPadding", BrainrotValueInput)
+    ValueInputPadding.PaddingLeft = UDim.new(0, 8)
+    ValueInputPadding.PaddingRight = UDim.new(0, 8)
+
+    local BrainrotWebhookContainer = Instance.new("Frame", BrainrotContainer)
+    BrainrotWebhookContainer.Size = UDim2.new(1, -30, 0, 35)
+    BrainrotWebhookContainer.Position = UDim2.new(0, 15, 0, 120)
+    BrainrotWebhookContainer.BackgroundTransparency = 1
+
+    local BrainrotWebhookLabel = Instance.new("TextLabel", BrainrotWebhookContainer)
+    BrainrotWebhookLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    BrainrotWebhookLabel.Position = UDim2.new(0, 0, 0, 0)
+    BrainrotWebhookLabel.Text = "Webhook URL (Optional)"
+    BrainrotWebhookLabel.TextColor3 = CurrentTextColor
+    BrainrotWebhookLabel.Font = Enum.Font.GothamMedium
+    BrainrotWebhookLabel.TextSize = 14
+    BrainrotWebhookLabel.TextXAlignment = Enum.TextXAlignment.Left
+    BrainrotWebhookLabel.BackgroundTransparency = 1
+
+    local BrainrotWebhookInput = Instance.new("TextBox", BrainrotWebhookContainer)
+    BrainrotWebhookInput.Size = UDim2.new(0.45, -15, 0, 28)
+    BrainrotWebhookInput.Position = UDim2.new(0.55, 0, 0.5, -14)
+    BrainrotWebhookInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    BrainrotWebhookInput.TextColor3 = CurrentTextColor
+    BrainrotWebhookInput.Font = Enum.Font.GothamMedium
+    BrainrotWebhookInput.TextSize = 12
+    BrainrotWebhookInput.PlaceholderText = "Leave blank if you don't want to."
+    BrainrotWebhookInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    BrainrotWebhookInput.Text = ""
+    BrainrotWebhookInput.ClearTextOnFocus = false
+    BrainrotWebhookInput.TextXAlignment = Enum.TextXAlignment.Left
+    BrainrotWebhookInput.TextTruncate = Enum.TextTruncate.AtEnd
+    Instance.new("UICorner", BrainrotWebhookInput).CornerRadius = UDim.new(0, 6)
+
+    local WebhookInputPadding = Instance.new("UIPadding", BrainrotWebhookInput)
+    WebhookInputPadding.PaddingLeft = UDim.new(0, 8)
+    WebhookInputPadding.PaddingRight = UDim.new(0, 8)
+
+    local brainrotActive = false
+    local currentFarmSettings = {
+        MinValue = 100,
+        WebhookURL = ""
+    }
+
+    local function validateNumberInput(input)
+        local text = input.Text
+        text = text:gsub("%s+", "")
+        
+        if text == "" then
+            input.Text = ""
+            return 0
+        end
+        
+        local value = tonumber(text)
+        if not value then
+            input.Text = ""
+            return 0
+        end
+        
+        if value < 0 then
+            input.Text = ""
+            return 0
+        end
+        
+        input.Text = tostring(math.floor(value))
+        return math.floor(value)
+    end
+
+    local function validateWebhookInput()
+        local text = BrainrotWebhookInput.Text
+        text = text:gsub("%s+", "")
+        
+        if text == "" then
+            currentFarmSettings.WebhookURL = ""
+            return ""
+        end
+        
+        if not (text:find("discord.com/api/webhooks") or text:find("discordapp.com/api/webhooks")) then
+            BrainrotWebhookInput.Text = ""
+            currentFarmSettings.WebhookURL = ""
+            return ""
+        end
+        
+        currentFarmSettings.WebhookURL = text
+        return text
+    end
+
+    BrainrotValueInput.FocusLost:Connect(function()
+        local value = validateNumberInput(BrainrotValueInput)
+        currentFarmSettings.MinValue = value
+    end)
+
+    BrainrotWebhookInput.FocusLost:Connect(function()
+        validateWebhookInput()
+    end)
+
+    local function StartBrainrotFarm()
+        if brainrotActive then return end
+        
+        local minValue = validateNumberInput(BrainrotValueInput)
+        local webhook = validateWebhookInput()
+        
+        if minValue <= 0 then
+            modules.ShowNotification("Error", "Enter a valid minimum value!", 3)
+            return
+        end
+        
+        brainrotActive = true
+        TweenService:Create(BrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = CategoryColors.AutoFarm}):Play()
+        TweenService:Create(BrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        BrainrotValueInput.TextEditable = false
+        BrainrotValueInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+        BrainrotWebhookInput.TextEditable = false
+        BrainrotWebhookInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+        
+        _G.ValorMinimo = minValue
+        _G.WebhookURL = webhook
+        _G.DiscordID = ""
+        
+        -- Registrar script ativo
+        AutoFarmScripts["BrainrotFarm"] = {
+            Deactivate = function()
+                if _G.VortexStopFarm then
+                    pcall(_G.VortexStopFarm)
+                end
+                _G.ValorMinimo = nil
+                _G.WebhookURL = nil
+                _G.DiscordID = nil
+            end
+        }
+        
+        task.spawn(function()
+            local scriptUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_AutoFarmBrainrot"
+            
+            local success, err = pcall(function()
+                loadstring(game:HttpGet(scriptUrl))()
+            end)
+            
+            if not success then
+                modules.ShowNotification("Error", "Failed to load farm script: " .. tostring(err), 4)
+                
+                brainrotActive = false
+                TweenService:Create(BrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                TweenService:Create(BrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+                
+                BrainrotValueInput.TextEditable = true
+                BrainrotValueInput.TextColor3 = CurrentTextColor
+                BrainrotWebhookInput.TextEditable = true
+                BrainrotWebhookInput.TextColor3 = CurrentTextColor
+                
+                AutoFarmScripts["BrainrotFarm"] = nil
+            end
+        end)
+    end
+
+    local function StopBrainrotFarm()
+        if not brainrotActive then return end
+        
+        brainrotActive = false
+        TweenService:Create(BrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(BrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        BrainrotValueInput.TextEditable = true
+        BrainrotValueInput.TextColor3 = CurrentTextColor
+        BrainrotWebhookInput.TextEditable = true
+        BrainrotWebhookInput.TextColor3 = CurrentTextColor
+        
+        -- Desativar script
+        if AutoFarmScripts["BrainrotFarm"] then
+            AutoFarmScripts["BrainrotFarm"].Deactivate()
+            AutoFarmScripts["BrainrotFarm"] = nil
+        end
+        
+        _G.ValorMinimo = nil
+        _G.WebhookURL = nil
+        _G.DiscordID = nil
+    end
+
+    BrainrotSwitch.MouseButton1Click:Connect(function()
+        if brainrotActive then
+            StopBrainrotFarm()
+        else
+            StartBrainrotFarm()
+        end
+    end)
+
+    -- AUTO REBIRTH (SEGUNDO - ABAIXO DO BRAINROT)
+    local RebirthContainer = Instance.new("Frame", AutoFarmContainer)
+    RebirthContainer.Size = UDim2.new(1, 0, 0, 140)
+    RebirthContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    RebirthContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", RebirthContainer).CornerRadius = UDim.new(0, 8)
+
+    local RebirthTitle = Instance.new("TextLabel", RebirthContainer)
+    RebirthTitle.Size = UDim2.new(1, -30, 0, 35)
+    RebirthTitle.Position = UDim2.new(0, 15, 0, 5)
+    RebirthTitle.Text = "Auto Rebirth"
+    RebirthTitle.TextColor3 = CurrentTextColor
+    RebirthTitle.Font = Enum.Font.GothamBold
+    RebirthTitle.TextSize = 16
+    RebirthTitle.TextXAlignment = Enum.TextXAlignment.Left
+    RebirthTitle.BackgroundTransparency = 1
+
+    local RebirthToggleFrame = Instance.new("Frame", RebirthContainer)
+    RebirthToggleFrame.Size = UDim2.new(1, -30, 0, 35)
+    RebirthToggleFrame.Position = UDim2.new(0, 15, 0, 40)
+    RebirthToggleFrame.BackgroundTransparency = 1
+
+    local RebirthToggleLabel = Instance.new("TextLabel", RebirthToggleFrame)
+    RebirthToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    RebirthToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+    RebirthToggleLabel.Text = "Activate Auto Rebirth"
+    RebirthToggleLabel.TextColor3 = CurrentTextColor
+    RebirthToggleLabel.Font = Enum.Font.GothamMedium
+    RebirthToggleLabel.TextSize = 14
+    RebirthToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    RebirthToggleLabel.BackgroundTransparency = 1
+
+    local RebirthSwitch = Instance.new("TextButton", RebirthToggleFrame)
+    RebirthSwitch.Size = UDim2.new(0, 38, 0, 20)
+    RebirthSwitch.Position = UDim2.new(1, -38, 0.5, -10)
+    RebirthSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    RebirthSwitch.Text = ""
+    Instance.new("UICorner", RebirthSwitch).CornerRadius = UDim.new(1, 0)
+
+    local RebirthCircle = Instance.new("Frame", RebirthSwitch)
+    RebirthCircle.Size = UDim2.new(0, 14, 0, 14)
+    RebirthCircle.Position = UDim2.new(0, 3, 0.5, -7)
+    RebirthCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", RebirthCircle).CornerRadius = UDim.new(1, 0)
+
+    local RebirthValueContainer = Instance.new("Frame", RebirthContainer)
+    RebirthValueContainer.Size = UDim2.new(1, -30, 0, 35)
+    RebirthValueContainer.Position = UDim2.new(0, 15, 0, 80)
+    RebirthValueContainer.BackgroundTransparency = 1
+
+    local RebirthValueLabel = Instance.new("TextLabel", RebirthValueContainer)
+    RebirthValueLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    RebirthValueLabel.Position = UDim2.new(0, 0, 0, 0)
+    RebirthValueLabel.Text = "Minimum Cash Value"
+    RebirthValueLabel.TextColor3 = CurrentTextColor
+    RebirthValueLabel.Font = Enum.Font.GothamMedium
+    RebirthValueLabel.TextSize = 14
+    RebirthValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+    RebirthValueLabel.BackgroundTransparency = 1
+
+    local RebirthValueInput = Instance.new("TextBox", RebirthValueContainer)
+    RebirthValueInput.Size = UDim2.new(0.45, -15, 0, 28)
+    RebirthValueInput.Position = UDim2.new(0.55, 0, 0.5, -14)
+    RebirthValueInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    RebirthValueInput.TextColor3 = CurrentTextColor
+    RebirthValueInput.Font = Enum.Font.GothamMedium
+    RebirthValueInput.TextSize = 13
+    RebirthValueInput.PlaceholderText = "Ex: 5000"
+    RebirthValueInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    RebirthValueInput.Text = "5000"
+    RebirthValueInput.ClearTextOnFocus = false
+    Instance.new("UICorner", RebirthValueInput).CornerRadius = UDim.new(0, 6)
+
+    local RebirthInputPadding = Instance.new("UIPadding", RebirthValueInput)
+    RebirthInputPadding.PaddingLeft = UDim.new(0, 8)
+    RebirthInputPadding.PaddingRight = UDim.new(0, 8)
+
+    local rebirthActive = false
+    local currentRebirthSettings = {
+        MinValue = 5000
+    }
+
+    RebirthValueInput.FocusLost:Connect(function()
+        local value = validateNumberInput(RebirthValueInput)
+        currentRebirthSettings.MinValue = value
+    end)
+
+    local function StartAutoRebirth()
+        if rebirthActive then return end
+        
+        local minValue = validateNumberInput(RebirthValueInput)
+        
+        if minValue <= 0 then
+            modules.ShowNotification("Error", "Enter a valid minimum cash value!", 3)
+            return
+        end
+        
+        rebirthActive = true
+        TweenService:Create(RebirthSwitch, TweenInfo.new(0.3), {BackgroundColor3 = CategoryColors.AutoRebirth}):Play()
+        TweenService:Create(RebirthCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        RebirthValueInput.TextEditable = false
+        RebirthValueInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+        
+        -- Configurar as variáveis globais que o script de Auto Rebirth espera
+        _G.ValorMinimo = minValue
+        
+        -- Registrar script ativo
+        AutoRebirthScript = {
+            Deactivate = function()
+                _G.AutoRebirth = false
+                if _G.UltimateAutoFarm then
+                    _G.UltimateAutoFarm = false
+                end
+                _G.ValorMinimo = nil
+            end
+        }
+        
+        task.spawn(function()
+            local scriptUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_AutoRebirth"
+            
+            local success, err = pcall(function()
+                loadstring(game:HttpGet(scriptUrl))()
+            end)
+            
+            if not success then
+                modules.ShowNotification("Error", "Failed to load Auto Rebirth script: " .. tostring(err), 4)
+                
+                rebirthActive = false
+                TweenService:Create(RebirthSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                TweenService:Create(RebirthCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+                
+                RebirthValueInput.TextEditable = true
+                RebirthValueInput.TextColor3 = CurrentTextColor
+                
+                AutoRebirthScript = nil
+            else
+                modules.ShowNotification("Success", "Auto Rebirth started with min value: " .. minValue, 3)
+            end
+        end)
+    end
+
+    local function StopAutoRebirth()
+        if not rebirthActive then return end
+        
+        rebirthActive = false
+        TweenService:Create(RebirthSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(RebirthCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        RebirthValueInput.TextEditable = true
+        RebirthValueInput.TextColor3 = CurrentTextColor
+        
+        -- Parar o script de Auto Rebirth
+        if AutoRebirthScript then
+            AutoRebirthScript.Deactivate()
+            AutoRebirthScript = nil
+        end
+        
+        modules.ShowNotification("Success", "Auto Rebirth stopped", 3)
+    end
+
+    RebirthSwitch.MouseButton1Click:Connect(function()
+        if rebirthActive then
+            StopAutoRebirth()
+        else
+            StartAutoRebirth()
+        end
+    end)
+
+    -- AUTO SLAP TO BRAINROT (TERCEIRO)
+    local ThiefBrainrotContainer = Instance.new("Frame", AutoFarmContainer)
+    ThiefBrainrotContainer.Size = UDim2.new(1, 0, 0, 125)
+    ThiefBrainrotContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    ThiefBrainrotContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", ThiefBrainrotContainer).CornerRadius = UDim.new(0, 8)
+
+    local ThiefBrainrotTitle = Instance.new("TextLabel", ThiefBrainrotContainer)
+    ThiefBrainrotTitle.Size = UDim2.new(1, -30, 0, 35)
+    ThiefBrainrotTitle.Position = UDim2.new(0, 15, 0, 5)
+    ThiefBrainrotTitle.Text = "Auto Slap to Brainrot"
+    ThiefBrainrotTitle.TextColor3 = CurrentTextColor
+    ThiefBrainrotTitle.Font = Enum.Font.GothamBold
+    ThiefBrainrotTitle.TextSize = 16
+    ThiefBrainrotTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ThiefBrainrotTitle.BackgroundTransparency = 1
+
+    local ThiefBrainrotToggleFrame = Instance.new("Frame", ThiefBrainrotContainer)
+    ThiefBrainrotToggleFrame.Size = UDim2.new(1, -30, 0, 35)
+    ThiefBrainrotToggleFrame.Position = UDim2.new(0, 15, 0, 40)
+    ThiefBrainrotToggleFrame.BackgroundTransparency = 1
+
+    local ThiefBrainrotToggleLabel = Instance.new("TextLabel", ThiefBrainrotToggleFrame)
+    ThiefBrainrotToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    ThiefBrainrotToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+    ThiefBrainrotToggleLabel.Text = "Activate Auto Slap to Thief"
+    ThiefBrainrotToggleLabel.TextColor3 = CurrentTextColor
+    ThiefBrainrotToggleLabel.Font = Enum.Font.GothamMedium
+    ThiefBrainrotToggleLabel.TextSize = 14
+    ThiefBrainrotToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ThiefBrainrotToggleLabel.BackgroundTransparency = 1
+
+    local ThiefBrainrotSwitch = Instance.new("TextButton", ThiefBrainrotToggleFrame)
+    ThiefBrainrotSwitch.Size = UDim2.new(0, 38, 0, 20)
+    ThiefBrainrotSwitch.Position = UDim2.new(1, -38, 0.5, -10)
+    ThiefBrainrotSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    ThiefBrainrotSwitch.Text = ""
+    Instance.new("UICorner", ThiefBrainrotSwitch).CornerRadius = UDim.new(1, 0)
+
+    local ThiefBrainrotCircle = Instance.new("Frame", ThiefBrainrotSwitch)
+    ThiefBrainrotCircle.Size = UDim2.new(0, 14, 0, 14)
+    ThiefBrainrotCircle.Position = UDim2.new(0, 3, 0.5, -7)
+    ThiefBrainrotCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", ThiefBrainrotCircle).CornerRadius = UDim.new(1, 0)
+
+    local ThiefBrainrotValueContainer = Instance.new("Frame", ThiefBrainrotContainer)
+    ThiefBrainrotValueContainer.Size = UDim2.new(1, -30, 0, 35)
+    ThiefBrainrotValueContainer.Position = UDim2.new(0, 15, 0, 80)
+    ThiefBrainrotValueContainer.BackgroundTransparency = 1
+
+    local ThiefBrainrotValueLabel = Instance.new("TextLabel", ThiefBrainrotValueContainer)
+    ThiefBrainrotValueLabel.Size = UDim2.new(0.5, 0, 1, 0)
+    ThiefBrainrotValueLabel.Position = UDim2.new(0, 0, 0, 0)
+    ThiefBrainrotValueLabel.Text = "Minimum Value"
+    ThiefBrainrotValueLabel.TextColor3 = CurrentTextColor
+    ThiefBrainrotValueLabel.Font = Enum.Font.GothamMedium
+    ThiefBrainrotValueLabel.TextSize = 14
+    ThiefBrainrotValueLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ThiefBrainrotValueLabel.BackgroundTransparency = 1
+
+    local ThiefBrainrotValueInput = Instance.new("TextBox", ThiefBrainrotValueContainer)
+    ThiefBrainrotValueInput.Size = UDim2.new(0.45, -15, 0, 28)
+    ThiefBrainrotValueInput.Position = UDim2.new(0.55, 0, 0.5, -14)
+    ThiefBrainrotValueInput.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    ThiefBrainrotValueInput.TextColor3 = CurrentTextColor
+    ThiefBrainrotValueInput.Font = Enum.Font.GothamMedium
+    ThiefBrainrotValueInput.TextSize = 13
+    ThiefBrainrotValueInput.PlaceholderText = "Ex: 100"
+    ThiefBrainrotValueInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    ThiefBrainrotValueInput.Text = "100"
+    ThiefBrainrotValueInput.ClearTextOnFocus = false
+    Instance.new("UICorner", ThiefBrainrotValueInput).CornerRadius = UDim.new(0, 6)
+
+    local ThiefValueInputPadding = Instance.new("UIPadding", ThiefBrainrotValueInput)
+    ThiefValueInputPadding.PaddingLeft = UDim.new(0, 8)
+    ThiefValueInputPadding.PaddingRight = UDim.new(0, 8)
+
+    local thiefBrainrotActive = false
+    local currentThiefSettings = {
+        MinValue = 100
+    }
+
+    ThiefBrainrotValueInput.FocusLost:Connect(function()
+        local value = validateNumberInput(ThiefBrainrotValueInput)
+        currentThiefSettings.MinValue = value
+    end)
+
+    local function StartThiefBrainrot()
+        if thiefBrainrotActive then return end
+        
+        local minValue = validateNumberInput(ThiefBrainrotValueInput)
+        
+        if minValue <= 0 then
+            modules.ShowNotification("Error", "Enter a valid minimum value!", 3)
+            return
+        end
+        
+        thiefBrainrotActive = true
+        TweenService:Create(ThiefBrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = CategoryColors.AutoFarm}):Play()
+        TweenService:Create(ThiefBrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        ThiefBrainrotValueInput.TextEditable = false
+        ThiefBrainrotValueInput.TextColor3 = Color3.fromRGB(180, 180, 180)
+        
+        _G.ValorAlvoBounty = minValue
+        
+        -- Registrar script ativo
+        AutoThiefScript = {
+            Deactivate = function()
+                _G.BountyHunter = false
+                _G.ValorAlvoBounty = nil
+            end
+        }
+        
+        task.spawn(function()
+            local scriptUrl = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_BrainrotThief"
+            
+            local success, err = pcall(function()
+                local source = game:HttpGet(scriptUrl)
+                if source then
+                    local func = loadstring(source)
+                    if func then
+                        func()
+                    else
+                        error("Failed to loadstring")
+                    end
+                else
+                    error("Failed to get script source")
+                end
+            end)
+            
+            if not success then
+                modules.ShowNotification("Error", "Failed to load thief script", 4)
+                
+                thiefBrainrotActive = false
+                TweenService:Create(ThiefBrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+                TweenService:Create(ThiefBrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+                
+                ThiefBrainrotValueInput.TextEditable = true
+                ThiefBrainrotValueInput.TextColor3 = CurrentTextColor
+                
+                AutoThiefScript = nil
+            end
+        end)
+    end
+
+    local function StopThiefBrainrot()
+        if not thiefBrainrotActive then return end
+        
+        thiefBrainrotActive = false
+        TweenService:Create(ThiefBrainrotSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(ThiefBrainrotCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        ThiefBrainrotValueInput.TextEditable = true
+        ThiefBrainrotValueInput.TextColor3 = CurrentTextColor
+        
+        -- Desativar script
+        if AutoThiefScript then
+            AutoThiefScript.Deactivate()
+            AutoThiefScript = nil
+        end
+    end
+
+    ThiefBrainrotSwitch.MouseButton1Click:Connect(function()
+        if thiefBrainrotActive then
+            StopThiefBrainrot()
+        else
+            StartThiefBrainrot()
+        end
+    end)
+
+    local AutoFarmRow1 = Instance.new("Frame", AutoFarmContainer)
+    AutoFarmRow1.Size = UDim2.new(1, 0, 0, 45)
+    AutoFarmRow1.BackgroundTransparency = 1
+
+    local LuckyBlockToggle = modules.CreateToggleInRow(AutoFarmRow1, "Auto Break Lucky Block", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_AutoBreakLuckyBlock", false, false)
+    LuckyBlockToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local LuckyBlockFarmToggle = modules.CreateToggleInRow(AutoFarmRow1, "Auto Break Lucky Block [Farm]", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_AutoBreakLuckyBlockBrute", false, false)
+    LuckyBlockFarmToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    local AutoFarmRow2 = Instance.new("Frame", AutoFarmContainer)
+    AutoFarmRow2.Size = UDim2.new(1, 0, 0, 45)
+    AutoFarmRow2.BackgroundTransparency = 1
+
+    local GotoLuckyBlockToggle = modules.CreateToggleInRow(AutoFarmRow2, "Go to Lucky Block", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/AUTOFARM/AUTO_GoToLuckyBlock", false, true)
+    GotoLuckyBlockToggle.Position = UDim2.new(0, 0, 0, 0)
+    GotoLuckyBlockToggle.Size = UDim2.new(1, 0, 1, 0)
+
+    local UtilitiesHeader = Instance.new("Frame", SettingsPage)
+    UtilitiesHeader.Size = UDim2.new(1, 0, 0, 45)
+    UtilitiesHeader.BackgroundColor3 = Color3.fromRGB(10, 15, 25)
+    UtilitiesHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", UtilitiesHeader).CornerRadius = UDim.new(0, 10)
+    local UtilitiesHeaderStroke = Instance.new("UIStroke", UtilitiesHeader)
+    UtilitiesHeaderStroke.Color = CategoryColors.Utilities
+    UtilitiesHeaderStroke.Thickness = 2
+    local UtilitiesHeaderText = Instance.new("TextLabel", UtilitiesHeader)
+    UtilitiesHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    UtilitiesHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    UtilitiesHeaderText.Text = "UTILITIES"
+    UtilitiesHeaderText.TextColor3 = CategoryColors.Utilities
+    UtilitiesHeaderText.Font = Enum.Font.GothamBold
+    UtilitiesHeaderText.TextSize = 14
+    UtilitiesHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    UtilitiesHeaderText.BackgroundTransparency = 1
+
+    local UtilitiesContainer = Instance.new("Frame", SettingsPage)
+    UtilitiesContainer.Size = UDim2.new(1, 0, 0, 0)
+    UtilitiesContainer.AutomaticSize = Enum.AutomaticSize.Y
+    UtilitiesContainer.BackgroundTransparency = 1
+    local UIListUtilities = Instance.new("UIListLayout", UtilitiesContainer)
+    UIListUtilities.Padding = UDim.new(0, 10)
+
+    -- LINHA 1 - Auto Collect Cash e Auto Sell Inventory
+    local UtilitiesRow1 = Instance.new("Frame", UtilitiesContainer)
+    UtilitiesRow1.Size = UDim2.new(1, 0, 0, 45)
+    UtilitiesRow1.BackgroundTransparency = 1
+
+    local AutoCollectCashToggle = modules.CreateToggleInRow(UtilitiesRow1, "Auto Collect Cash", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/UTILITIES/UTILITIES_AutoCollectCash", false, false)
+    AutoCollectCashToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local AutoSellInventoryToggle = modules.CreateToggleInRow(UtilitiesRow1, "Auto Sell Inventory", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/UTILITIES/UTILITIES_AutoSellInventory", false, false)
+    AutoSellInventoryToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    -- LINHA 2 - See Cash Brainrot (BETA) (full width)
+    local UtilitiesRow2 = Instance.new("Frame", UtilitiesContainer)
+    UtilitiesRow2.Size = UDim2.new(1, 0, 0, 45)
+    UtilitiesRow2.BackgroundTransparency = 1
+
+    local SeeCashBrainrotToggle = modules.CreateToggleInRow(UtilitiesRow2, "See Cash Brainrot [BETA]", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/UTILITIES/UTILITIES_SeeCashBrainrot", false, true)
+    SeeCashBrainrotToggle.Position = UDim2.new(0, 0, 0, 0)
+    SeeCashBrainrotToggle.Size = UDim2.new(1, 0, 1, 0)
+
+    local ESPHeader = Instance.new("Frame", SettingsPage)
+    ESPHeader.Size = UDim2.new(1, 0, 0, 45)
+    ESPHeader.BackgroundColor3 = Color3.fromRGB(10, 25, 25)
+    ESPHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", ESPHeader).CornerRadius = UDim.new(0, 10)
+    local ESPHeaderStroke = Instance.new("UIStroke", ESPHeader)
+    ESPHeaderStroke.Color = CategoryColors.ESP
+    ESPHeaderStroke.Thickness = 2
+    local ESPHeaderText = Instance.new("TextLabel", ESPHeader)
+    ESPHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    ESPHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    ESPHeaderText.Text = "ESP VISUALS"
+    ESPHeaderText.TextColor3 = CategoryColors.ESP
+    ESPHeaderText.Font = Enum.Font.GothamBold
+    ESPHeaderText.TextSize = 14
+    ESPHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    ESPHeaderText.BackgroundTransparency = 1
+
+    local ESPContainer = Instance.new("Frame", SettingsPage)
+    ESPContainer.Size = UDim2.new(1, 0, 0, 0)
+    ESPContainer.AutomaticSize = Enum.AutomaticSize.Y
+    ESPContainer.BackgroundTransparency = 1
+    local UIListESP = Instance.new("UIListLayout", ESPContainer)
+    UIListESP.Padding = UDim.new(0, 10)
+
+    local ESPRow1 = Instance.new("Frame", ESPContainer)
+    ESPRow1.Size = UDim2.new(1, 0, 0, 45)
+    ESPRow1.BackgroundTransparency = 1
+
+    local ESPPlayersToggle = modules.CreateToggleInRow(ESPRow1, "ESP Players", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/ESP/ESP_Players", false, false)
+    ESPPlayersToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local ESPBaseToggle = modules.CreateToggleInRow(ESPRow1, "ESP Base", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/ESP/ESP_Base", false, false)
+    ESPBaseToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    local MiscHeader = Instance.new("Frame", SettingsPage)
+    MiscHeader.Size = UDim2.new(1, 0, 0, 45)
+    MiscHeader.BackgroundColor3 = Color3.fromRGB(25, 10, 25)
+    MiscHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", MiscHeader).CornerRadius = UDim.new(0, 10)
+    local MiscHeaderStroke = Instance.new("UIStroke", MiscHeader)
+    MiscHeaderStroke.Color = CategoryColors.Misc
+    MiscHeaderStroke.Thickness = 2
+    local MiscHeaderText = Instance.new("TextLabel", MiscHeader)
+    MiscHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    MiscHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    MiscHeaderText.Text = "MISC"
+    MiscHeaderText.TextColor3 = CategoryColors.Misc
+    MiscHeaderText.Font = Enum.Font.GothamBold
+    MiscHeaderText.TextSize = 14
+    MiscHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    MiscHeaderText.BackgroundTransparency = 1
+
+    local MiscContainer = Instance.new("Frame", SettingsPage)
+    MiscContainer.Size = UDim2.new(1, 0, 0, 0)
+    MiscContainer.AutomaticSize = Enum.AutomaticSize.Y
+    MiscContainer.BackgroundTransparency = 1
+    local UIListMisc = Instance.new("UIListLayout", MiscContainer)
+    UIListMisc.Padding = UDim.new(0, 10)
+
+    local MiscRow1 = Instance.new("Frame", MiscContainer)
+    MiscRow1.Size = UDim2.new(1, 0, 0, 45)
+    MiscRow1.BackgroundTransparency = 1
+
+    local AntiAFKToggle = modules.CreateToggleInRow(MiscRow1, "Anti AFK", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/MISC/MISC_AntiAFK", false, false)
+    AntiAFKToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local FPSBoosterToggle = modules.CreateToggleInRow(MiscRow1, "FPS Booster", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/MISC/MISC_FPSBooster", false, false)
+    FPSBoosterToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    local MiscRow2 = Instance.new("Frame", MiscContainer)
+    MiscRow2.Size = UDim2.new(1, 0, 0, 45)
+    MiscRow2.BackgroundTransparency = 1
+
+    local FPSUnlockerToggle = modules.CreateToggleInRow(MiscRow2, "FPS Unlocker", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BreakALuckyBlock/MISC/MISC_FPSUnlocker", false, true)
+    FPSUnlockerToggle.Position = UDim2.new(0, 0, 0, 0)
+    FPSUnlockerToggle.Size = UDim2.new(1, 0, 1, 0)
+end
+
+local TabButtons = {}
+function CreateTabBtn(iconId, pos, tabName, isBottom)
+    local Btn = Instance.new("TextButton", Sidebar)
+    Btn.Size = UDim2.new(0, 45, 0, 45)
+    if isBottom then Btn.Position = UDim2.new(0.5, -22, 1, -60) else Btn.Position = UDim2.new(0.5, -22, 0, pos) end
+    Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Btn.Text = ""
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 10)
+    
+    local Icon = Instance.new("ImageLabel", Btn)
+    Icon.Size = UDim2.new(0, 24, 0, 24)
+    Icon.Position = UDim2.new(0.5, -12, 0.5, -12)
+    Icon.BackgroundTransparency = 1
+    Icon.Image = "rbxassetid://" .. tostring(iconId)
+    Icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+
+    local Indicator = Instance.new("Frame", Btn)
+    Indicator.Size = UDim2.new(0, 4, 0, 15)
+    Indicator.Position = UDim2.new(0, -8, 0.5, -7.5)
+    Indicator.BackgroundColor3 = CurrentTheme
+    Indicator.BackgroundTransparency = 1
+    Instance.new("UICorner", Indicator).CornerRadius = UDim.new(1, 0)
+
+    local BtnStroke = Instance.new("UIStroke", Btn)
+    BtnStroke.Color = CurrentTheme
+    BtnStroke.Thickness = 1.5
+    BtnStroke.Transparency = 0.6
+
+    local function SetActive(active)
+        TabButtons[tabName].CurrentlyActive = active
+        if active then
+            TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(45, 45, 60)}):Play()
+            TweenService:Create(Icon, TweenInfo.new(0.3), {ImageColor3 = CurrentTheme}):Play()
+            TweenService:Create(Indicator, TweenInfo.new(0.3), {BackgroundTransparency = 0, Size = UDim2.new(0, 4, 0, 20), Position = UDim2.new(0, -8, 0.5, -10)}):Play()
+            TweenService:Create(BtnStroke, TweenInfo.new(0.3), {Transparency = 0}):Play()
+        else
+            TweenService:Create(Btn, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(35, 35, 45)}):Play()
+            TweenService:Create(Icon, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            TweenService:Create(Indicator, TweenInfo.new(0.3), {BackgroundTransparency = 1, Size = UDim2.new(0, 4, 0, 15), Position = UDim2.new(0, -8, 0.5, -7.5)}):Play()
+            TweenService:Create(BtnStroke, TweenInfo.new(0.3), {Transparency = 0.6}):Play()
+        end
+    end
+
+    Btn.MouseButton1Click:Connect(function()
+        for name, btnData in pairs(TabButtons) do 
+            Pages[name].Visible = false 
+            btnData.Update(false) 
+        end
+        Pages[tabName].Visible = true
+        SetActive(true)
+    end)
+    TabButtons[tabName] = {Button = Btn, Update = SetActive, CurrentlyActive = false}
+    return SetActive
+end
+
+local SetProfileActive = CreateTabBtn(10747373176, 15, "Profile", false) 
+local SetSettingsActive = CreateTabBtn(94273763185070, 75, "Settings", false) 
+local SetMiscActive = CreateTabBtn(103394806347580, 0, "Misc", true) 
+
+Pages["Profile"].Visible = true
+SetProfileActive(true)
+
+modules.CreateProfilePage()
+modules.CreateSettingsPage()
+
+-- Função para criar um botão moderno com seta
+function CreateModernButton(parent, text, iconId, arrowIconId)
+    local ButtonContainer = Instance.new("TextButton", parent)
+    ButtonContainer.Size = UDim2.new(1, 0, 0, 45)
+    ButtonContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    ButtonContainer.BackgroundTransparency = 0
+    ButtonContainer.Text = ""
+    Instance.new("UICorner", ButtonContainer).CornerRadius = UDim.new(0, 8)
+    
+    local ButtonStroke = Instance.new("UIStroke", ButtonContainer)
+    ButtonStroke.Color = CategoryColors.GeneralUtils
+    ButtonStroke.Thickness = 1
+    ButtonStroke.Transparency = 0.8
+    
+    local IconFrame = Instance.new("Frame", ButtonContainer)
+    IconFrame.Size = UDim2.new(0, 32, 0, 32)
+    IconFrame.Position = UDim2.new(0, 10, 0.5, -16)
+    IconFrame.BackgroundColor3 = CategoryColors.GeneralUtils
+    IconFrame.BackgroundTransparency = 0.1
+    Instance.new("UICorner", IconFrame).CornerRadius = UDim.new(0, 6)
+    
+    local IconImage = Instance.new("ImageLabel", IconFrame)
+    IconImage.Size = UDim2.new(0, 20, 0, 20)
+    IconImage.Position = UDim2.new(0.5, -10, 0.5, -10)
+    IconImage.Image = "rbxassetid://" .. tostring(iconId)
+    IconImage.ImageColor3 = Color3.new(1, 1, 1)
+    IconImage.BackgroundTransparency = 1
+    
+    local TextLabel = Instance.new("TextLabel", ButtonContainer)
+    TextLabel.Size = UDim2.new(0.7, -50, 1, 0)
+    TextLabel.Position = UDim2.new(0, 52, 0, 0)
+    TextLabel.Text = text
+    TextLabel.TextColor3 = CurrentTextColor
+    TextLabel.Font = Enum.Font.GothamMedium
+    TextLabel.TextSize = 14
+    TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TextLabel.BackgroundTransparency = 1
+    
+    local ArrowContainer = Instance.new("Frame", ButtonContainer)
+    ArrowContainer.Size = UDim2.new(0, 24, 0, 24)
+    ArrowContainer.Position = UDim2.new(1, -30, 0.5, -12)
+    ArrowContainer.BackgroundTransparency = 1
+    
+    local ArrowImage = Instance.new("ImageLabel", ArrowContainer)
+    ArrowImage.Size = UDim2.new(0, 16, 0, 16)
+    ArrowImage.Position = UDim2.new(0.5, -8, 0.5, -8)
+    ArrowImage.Image = "rbxassetid://" .. tostring(arrowIconId)
+    ArrowImage.ImageColor3 = Color3.fromRGB(180, 180, 180)
+    ArrowImage.BackgroundTransparency = 1
+    
+    local HoverFrame = Instance.new("Frame", ButtonContainer)
+    HoverFrame.Size = UDim2.new(1, 0, 1, 0)
+    HoverFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HoverFrame.BackgroundTransparency = 1
+    HoverFrame.ZIndex = 2
+    Instance.new("UICorner", HoverFrame).CornerRadius = UDim.new(0, 8)
+    
+    ButtonContainer.MouseEnter:Connect(function()
+        TweenService:Create(ButtonContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 35, 50)}):Play()
+        TweenService:Create(ButtonStroke, TweenInfo.new(0.2), {Transparency = 0.4}):Play()
+        TweenService:Create(IconFrame, TweenInfo.new(0.2), {BackgroundColor3 = CategoryColors.GeneralUtils}):Play()
+        TweenService:Create(ArrowImage, TweenInfo.new(0.2), {ImageColor3 = Color3.new(1, 1, 1)}):Play()
+        TweenService:Create(HoverFrame, TweenInfo.new(0.2), {BackgroundTransparency = 0.95}):Play()
+    end)
+    
+    ButtonContainer.MouseLeave:Connect(function()
+        TweenService:Create(ButtonContainer, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+        TweenService:Create(ButtonStroke, TweenInfo.new(0.2), {Transparency = 0.8}):Play()
+        TweenService:Create(IconFrame, TweenInfo.new(0.2), {BackgroundColor3 = CategoryColors.GeneralUtils}):Play()
+        TweenService:Create(ArrowImage, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(180, 180, 180)}):Play()
+        TweenService:Create(HoverFrame, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+    end)
+    
+    ButtonContainer.MouseButton1Down:Connect(function()
+        TweenService:Create(ButtonContainer, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(25, 25, 35)}):Play()
+        TweenService:Create(IconFrame, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(40, 120, 220)}):Play()
+    end)
+    
+    ButtonContainer.MouseButton1Up:Connect(function()
+        TweenService:Create(ButtonContainer, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(35, 35, 50)}):Play()
+        TweenService:Create(IconFrame, TweenInfo.new(0.1), {BackgroundColor3 = CategoryColors.GeneralUtils}):Play()
+    end)
+    
+    return ButtonContainer
+end
+
+-- FUNÇÃO MELHORADA PARA CAPTURAR TECLAS
+local function GetKeyNameFromInput(input)
+    if input.KeyCode ~= Enum.KeyCode.Unknown then
+        -- Remover "Enum.KeyCode." do nome
+        local keyName = tostring(input.KeyCode):gsub("Enum.KeyCode.", "")
+        
+        -- Melhorar nomes de algumas teclas
+        local keyNameMap = {
+            ["LeftControl"] = "LControl",
+            ["RightControl"] = "RControl",
+            ["LeftShift"] = "LShift",
+            ["RightShift"] = "RShift",
+            ["LeftAlt"] = "LAlt",
+            ["RightAlt"] = "RAlt",
+            ["PageUp"] = "PgUp",
+            ["PageDown"] = "PgDown",
+            ["Escape"] = "Esc",
+            ["Return"] = "Enter",
+            ["Backquote"] = "`",
+            ["Semicolon"] = ";",
+            ["Quote"] = "'",
+            ["LeftBracket"] = "[",
+            ["RightBracket"] = "]",
+            ["Backslash"] = "\\",
+            ["Comma"] = ",",
+            ["Period"] = ".",
+            ["Slash"] = "/",
+            ["Minus"] = "-",
+            ["Equals"] = "=",
+            ["Insert"] = "Ins",
+            ["Delete"] = "Del",
+            ["Home"] = "Home",
+            ["End"] = "End",
+            ["CapsLock"] = "Caps"
+        }
+        
+        return keyNameMap[keyName] or keyName:upper()
+    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+        return "MB1"
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        return "MB2"
+    elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+        return "MB3"
+    end
+    
+    return "NONE"
+end
+
+function modules.CreateMiscPage()
+    local InterfaceHeader = Instance.new("Frame", MiscPage)
+    InterfaceHeader.Size = UDim2.new(1, 0, 0, 45)
+    InterfaceHeader.BackgroundColor3 = Color3.fromRGB(15, 25, 15)
+    InterfaceHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", InterfaceHeader).CornerRadius = UDim.new(0, 10)
+    local InterfaceHeaderStroke = Instance.new("UIStroke", InterfaceHeader)
+    InterfaceHeaderStroke.Color = CategoryColors.Interface
+    InterfaceHeaderStroke.Thickness = 2
+    local InterfaceHeaderText = Instance.new("TextLabel", InterfaceHeader)
+    InterfaceHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    InterfaceHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    InterfaceHeaderText.Text = "INTERFACE"
+    InterfaceHeaderText.TextColor3 = CategoryColors.Interface
+    InterfaceHeaderText.Font = Enum.Font.GothamBold
+    InterfaceHeaderText.TextSize = 14
+    InterfaceHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    InterfaceHeaderText.BackgroundTransparency = 1
+
+    local InterfaceContainer = Instance.new("Frame", MiscPage)
+    InterfaceContainer.Size = UDim2.new(1, 0, 0, 150)
+    InterfaceContainer.BackgroundTransparency = 1
+    InterfaceContainer.AutomaticSize = Enum.AutomaticSize.Y
+    local InterfaceList = Instance.new("UIListLayout", InterfaceContainer)
+    InterfaceList.Padding = UDim.new(0, 10)
+
+    -- CONTAINER DE KEYBIND MELHORADO
+    local KeybindContainer = Instance.new("Frame", InterfaceContainer)
+    KeybindContainer.Size = UDim2.new(1, 0, 0, 70)
+    KeybindContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    KeybindContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", KeybindContainer).CornerRadius = UDim.new(0, 10)
+    
+    -- Aplicar efeito de glow
+    local KeybindGlow = Instance.new("UIGradient", KeybindContainer)
+    KeybindGlow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CategoryColors.Interface),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+    })
+    KeybindGlow.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.6, 0.8),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    KeybindGlow.Rotation = -45
+    
+    local KeybindStroke = Instance.new("UIStroke", KeybindContainer)
+    KeybindStroke.Color = CategoryColors.Interface
+    KeybindStroke.Thickness = 1.5
+    KeybindStroke.Transparency = 0.3
+
+    local KeybindTitle = Instance.new("TextLabel", KeybindContainer)
+    KeybindTitle.Size = UDim2.new(1, -30, 0, 25)
+    KeybindTitle.Position = UDim2.new(0, 15, 0, 8)
+    KeybindTitle.Text = "TOGGLE KEYBIND"
+    KeybindTitle.TextColor3 = CategoryColors.Interface
+    KeybindTitle.Font = Enum.Font.GothamBold
+    KeybindTitle.TextSize = 14
+    KeybindTitle.TextXAlignment = Enum.TextXAlignment.Left
+    KeybindTitle.BackgroundTransparency = 1
+
+    local CurrentKeyLabel = Instance.new("TextLabel", KeybindContainer)
+    CurrentKeyLabel.Size = UDim2.new(0.6, -10, 0, 25)
+    CurrentKeyLabel.Position = UDim2.new(0, 15, 0, 35)
+    CurrentKeyLabel.Text = "Current: [ INSERT ]"
+    CurrentKeyLabel.TextColor3 = CurrentTextColor
+    CurrentKeyLabel.Font = Enum.Font.GothamMedium
+    CurrentKeyLabel.TextSize = 12
+    CurrentKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+    CurrentKeyLabel.BackgroundTransparency = 1
+
+    -- BOTÃO DE MUDAR KEYBIND MELHORADO
+    local ChangeKeyBtn = Instance.new("TextButton", KeybindContainer)
+    ChangeKeyBtn.Size = UDim2.new(0, 130, 0, 30)
+    ChangeKeyBtn.Position = UDim2.new(1, -145, 0, 32)
+    ChangeKeyBtn.Text = "CHANGE KEY"
+    ChangeKeyBtn.BackgroundColor3 = CategoryColors.Interface
+    ChangeKeyBtn.TextColor3 = Color3.new(1, 1, 1)
+    ChangeKeyBtn.Font = Enum.Font.GothamMedium
+    ChangeKeyBtn.TextSize = 12
+    ChangeKeyBtn.AutoButtonColor = false
+    Instance.new("UICorner", ChangeKeyBtn).CornerRadius = UDim.new(0, 6)
+    
+    local KeyBtnStroke = Instance.new("UIStroke", ChangeKeyBtn)
+    KeyBtnStroke.Color = Color3.fromRGB(255, 255, 255)
+    KeyBtnStroke.Thickness = 1
+    KeyBtnStroke.Transparency = 0.7
+
+    -- Efeitos hover para o botão
+    ChangeKeyBtn.MouseEnter:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.min(CategoryColors.Interface.R * 255 + 20, 255),
+                math.min(CategoryColors.Interface.G * 255 + 20, 255),
+                math.min(CategoryColors.Interface.B * 255 + 20, 255)
+            )
+        }):Play()
+        TweenService:Create(KeyBtnStroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
+    end)
+    
+    ChangeKeyBtn.MouseLeave:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CategoryColors.Interface}):Play()
+        TweenService:Create(KeyBtnStroke, TweenInfo.new(0.2), {Transparency = 0.7}):Play()
+    end)
+    
+    ChangeKeyBtn.MouseButton1Down:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.max(CategoryColors.Interface.R * 255 - 30, 0),
+                math.max(CategoryColors.Interface.G * 255 - 30, 0),
+                math.max(CategoryColors.Interface.B * 255 - 30, 0)
+            )
+        }):Play()
+    end)
+    
+    ChangeKeyBtn.MouseButton1Up:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.1), {BackgroundColor3 = CategoryColors.Interface}):Play()
+    end)
+
+    local waitingForKey = false
+    local keybindConnection
+    
+    local function UpdateKeyLabel()
+        local keyName = GetKeyNameFromInput({KeyCode = CurrentToggleKey})
+        CurrentKeyLabel.Text = "Current: [ " .. keyName .. " ]"
+    end
+    
+    UpdateKeyLabel()
+
+    ChangeKeyBtn.MouseButton1Click:Connect(function()
+        if waitingForKey then return end
+        
+        waitingForKey = true
+        CurrentKeyLabel.Text = "Press any key or click..."
+        ChangeKeyBtn.Text = "PRESS A KEY"
+        ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 50)
+        
+        -- Cancelar conexão anterior se existir
+        if keybindConnection then
+            keybindConnection:Disconnect()
+        end
+        
+        keybindConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if waitingForKey and not gameProcessed then
+                waitingForKey = false
+                
+                -- Capturar teclas do teclado
+                if input.KeyCode ~= Enum.KeyCode.Unknown then
+                    CurrentToggleKey = input.KeyCode
+                    UpdateKeyLabel()
+                    modules.ShowNotification("Keybind", "Hotkey changed to " .. GetKeyNameFromInput(input), 3)
+                
+                -- Capturar botões do mouse também
+                elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    CurrentToggleKey = Enum.KeyCode.Unknown -- Usaremos uma variável especial para mouse
+                    CurrentKeyLabel.Text = "Current: [ MB1 ]"
+                    modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 1", 3)
+                elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                    CurrentToggleKey = Enum.KeyCode.Unknown
+                    CurrentKeyLabel.Text = "Current: [ MB2 ]"
+                    modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 2", 3)
+                elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+                    CurrentToggleKey = Enum.KeyCode.Unknown
+                    CurrentKeyLabel.Text = "Current: [ MB3 ]"
+                    modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 3", 3)
+                end
+                
+                ChangeKeyBtn.Text = "CHANGE KEY"
+                ChangeKeyBtn.BackgroundColor3 = CategoryColors.Interface
+                
+                if keybindConnection then
+                    keybindConnection:Disconnect()
+                    keybindConnection = nil
+                end
+            end
+        end)
+    end)
+
+    -- SEÇÃO DE THEME COLOR APRIMORADA
+    local ThemeContainer = Instance.new("Frame", InterfaceContainer)
+    ThemeContainer.Size = UDim2.new(1, 0, 0, 110)
+    ThemeContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    ThemeContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", ThemeContainer).CornerRadius = UDim.new(0, 10)
+    
+    -- Adicionar glow para tema também
+    local ThemeGlow = Instance.new("UIGradient", ThemeContainer)
+    ThemeGlow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CategoryColors.Interface),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+    })
+    ThemeGlow.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.6, 0.8),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    ThemeGlow.Rotation = -45
+    
+    local ThemeStroke = Instance.new("UIStroke", ThemeContainer)
+    ThemeStroke.Color = CategoryColors.Interface
+    ThemeStroke.Thickness = 1.5
+    ThemeStroke.Transparency = 0.3
+
+    local ThemeTitle = Instance.new("TextLabel", ThemeContainer)
+    ThemeTitle.Size = UDim2.new(1, -30, 0, 25)
+    ThemeTitle.Position = UDim2.new(0, 15, 0, 8)
+    ThemeTitle.Text = "THEME COLOR"
+    ThemeTitle.TextColor3 = CategoryColors.Interface
+    ThemeTitle.Font = Enum.Font.GothamBold
+    ThemeTitle.TextSize = 14
+    ThemeTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ThemeTitle.BackgroundTransparency = 1
+
+    local ThemeButtons = Instance.new("Frame", ThemeContainer)
+    ThemeButtons.Size = UDim2.new(1, -30, 0, 70)
+    ThemeButtons.Position = UDim2.new(0, 15, 0, 35)
+    ThemeButtons.BackgroundTransparency = 1
+
+    -- ADICIONAR PADDING NO CONTAINER DOS TEMAS PARA DAR ESPAÇO NO BOTTOM
+    local ThemePadding = Instance.new("UIPadding", ThemeButtons)
+    ThemePadding.PaddingBottom = UDim.new(0, 8)  -- Adiciona 8 pixels de espaço no bottom
+    ThemePadding.PaddingLeft = UDim.new(0, 2)    -- Pequeno ajuste lateral
+    ThemePadding.PaddingRight = UDim.new(0, 2)
+
+    local themes = {
+        {Name = "Purple (V)", Color = DefaultTheme, Hex = DefaultHex, Background = DarkBackground, Card = CardColor, Header = HeaderSidebarColor, Text = Color3.fromRGB(255, 255, 255), IsDefault = true},
+        {Name = "Blue", Color = Color3.fromHex("#2D9BDB"), Hex = "#2D9BDB", Background = DarkBackground, Card = CardColor, Header = HeaderSidebarColor, Text = Color3.fromRGB(255, 255, 255), IsDefault = false},
+        {Name = "Red", Color = Color3.fromHex("#DB2D2D"), Hex = "#DB2D2D", Background = DarkBackground, Card = CardColor, Header = HeaderSidebarColor, Text = Color3.fromRGB(255, 255, 255), IsDefault = false},
+        {Name = "Green", Color = Color3.fromHex("#2DDB5D"), Hex = "#2DDB5D", Background = DarkBackground, Card = CardColor, Header = HeaderSidebarColor, Text = Color3.fromRGB(255, 255, 255), IsDefault = false},
+        {Name = "Orange", Color = Color3.fromHex("#DB8B2D"), Hex = "#DB8B2D", Background = DarkBackground, Card = CardColor, Header = HeaderSidebarColor, Text = Color3.fromRGB(255, 255, 255), IsDefault = false},
+        {Name = "Cyan", Color = Color3.fromHex("#2DDBC6"), Hex = "#2DDBC6", Background = DarkBackground, Card = CardColor, Header = HeaderSidebarColor, Text = Color3.fromRGB(255, 255, 255), IsDefault = false}
+    }
+
+    function UpdateTheme(newThemeData, skipNotification)
+        SavedThemeBeforeRainbow = CurrentTheme
+        SavedThemeHexBeforeRainbow = CurrentThemeHex
+        SavedBackgroundBeforeRainbow = CurrentBackground
+        SavedCardColorBeforeRainbow = CurrentCardColor
+        SavedHeaderColorBeforeRainbow = CurrentHeaderColor
+        SavedTextColorBeforeRainbow = CurrentTextColor
+        
+        CurrentTheme = newThemeData.Color
+        CurrentThemeHex = newThemeData.Hex
+        CurrentBackground = newThemeData.Background
+        CurrentCardColor = newThemeData.Card
+        CurrentHeaderColor = newThemeData.Header
+        CurrentTextColor = newThemeData.Text
+        
+        MainFrame.BackgroundColor3 = CurrentBackground
+        MainStroke.Color = CurrentTheme
+        
+        TopBar.BackgroundColor3 = CurrentHeaderColor
+        TopOverlap.BackgroundColor3 = CurrentHeaderColor
+        
+        Sidebar.BackgroundColor3 = CurrentHeaderColor
+        local sidebarStroke = Sidebar:FindFirstChildWhichIsA("UIStroke")
+        if sidebarStroke then
+            sidebarStroke.Color = CurrentTheme
+        end
+        
+        local sidebarGradient = Sidebar:FindFirstChildWhichIsA("UIGradient")
+        if sidebarGradient then
+            sidebarGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, CurrentTheme),
+                ColorSequenceKeypoint.new(1, CurrentCardColor)
+            })
+        end
+        
+        LogoV.BackgroundColor3 = CurrentTheme
+        LogoV.TextColor3 = Color3.new(1, 1, 1)
+        TitleText.TextColor3 = CurrentTheme
+        
+        for _, page in pairs(Pages) do
+            page.ScrollBarImageColor3 = CurrentTheme
+        end
+        
+        CloseBtn.TextColor3 = CurrentTextColor
+        SloganText.TextColor3 = Color3.fromRGB(150, 150, 150)
+        
+        if AvatarStrokeRef then
+            AvatarStrokeRef.Color = CurrentTheme
+        end
+        
+        if DiscordCardRef then
+            local discordStroke = DiscordCardRef:FindFirstChildWhichIsA("UIStroke")
+            if discordStroke then
+                discordStroke.Color = DiscordBlue
+            end
+            
+            local discordGradient = DiscordCardRef:FindFirstChildWhichIsA("UIGradient")
+            if discordGradient then
+                discordGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, DiscordBlue),
+                    ColorSequenceKeypoint.new(1, CurrentCardColor)
+                })
+            end
+        end
+        
+        if not skipNotification then
+            modules.ShowNotification("Interface", "Theme changed to " .. newThemeData.Name .. "!", 3)
+        end
+    end
+
+    -- Criar grade 2x3 para os botões de tema
+    local ThemeGrid = Instance.new("UIGridLayout", ThemeButtons)
+    ThemeGrid.CellPadding = UDim2.new(0, 8, 0, 8)
+    ThemeGrid.CellSize = UDim2.new(0.33, -8, 0.45, 0)
+    ThemeGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    ThemeGrid.SortOrder = Enum.SortOrder.LayoutOrder
+
+    for i, theme in ipairs(themes) do
+        local ThemeBtn = Instance.new("TextButton", ThemeButtons)
+        ThemeBtn.Size = UDim2.new(0, 40, 0, 40)
+        ThemeBtn.BackgroundColor3 = theme.Color
+        ThemeBtn.Text = ""
+        ThemeBtn.LayoutOrder = i
+        Instance.new("UICorner", ThemeBtn).CornerRadius = UDim.new(0, 8)
+        
+        -- Adicionar stroke para destacar
+        local ThemeBtnStroke = Instance.new("UIStroke", ThemeBtn)
+        ThemeBtnStroke.Color = Color3.fromRGB(255, 255, 255)
+        ThemeBtnStroke.Thickness = 1
+        ThemeBtnStroke.Transparency = 0.8
+        
+        -- Adicionar nome do tema como tooltip
+        if theme.Name == "Purple (V)" then
+            local VLabel = Instance.new("TextLabel", ThemeBtn)
+            VLabel.Size = UDim2.new(1, 0, 1, 0)
+            VLabel.BackgroundTransparency = 1
+            VLabel.Text = "V"
+            VLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            VLabel.Font = Enum.Font.GothamBold
+            VLabel.TextSize = 14
+        end
+        
+        -- Efeitos hover melhorados
+        ThemeBtn.MouseEnter:Connect(function()
+            TweenService:Create(ThemeBtn, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 44, 0, 44),
+                BackgroundColor3 = Color3.fromRGB(
+                    math.min(theme.Color.R * 255 + 30, 255),
+                    math.min(theme.Color.G * 255 + 30, 255),
+                    math.min(theme.Color.B * 255 + 30, 255)
+                )
+            }):Play()
+            TweenService:Create(ThemeBtnStroke, TweenInfo.new(0.2), {
+                Thickness = 1.5,
+                Transparency = 0.3
+            }):Play()
+        end)
+        
+        ThemeBtn.MouseLeave:Connect(function()
+            TweenService:Create(ThemeBtn, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 40, 0, 40),
+                BackgroundColor3 = theme.Color
+            }):Play()
+            TweenService:Create(ThemeBtnStroke, TweenInfo.new(0.2), {
+                Thickness = 1,
+                Transparency = 0.8
+            }):Play()
+        end)
+        
+        ThemeBtn.MouseButton1Down:Connect(function()
+            TweenService:Create(ThemeBtn, TweenInfo.new(0.1), {
+                Size = UDim2.new(0, 38, 0, 38),
+                BackgroundColor3 = Color3.fromRGB(
+                    math.max(theme.Color.R * 255 - 40, 0),
+                    math.max(theme.Color.G * 255 - 40, 0),
+                    math.max(theme.Color.B * 255 - 40, 0)
+                )
+            }):Play()
+        end)
+        
+        ThemeBtn.MouseButton1Up:Connect(function()
+            TweenService:Create(ThemeBtn, TweenInfo.new(0.1), {
+                Size = UDim2.new(0, 44, 0, 44),
+                BackgroundColor3 = Color3.fromRGB(
+                    math.min(theme.Color.R * 255 + 30, 255),
+                    math.min(theme.Color.G * 255 + 30, 255),
+                    math.min(theme.Color.B * 255 + 30, 255)
+                )
+            }):Play()
+        end)
+        
+        ThemeBtn.MouseButton1Click:Connect(function()
+            UpdateTheme(theme)
+        end)
+    end
+
+    local GameHeader = Instance.new("Frame", MiscPage)
+    GameHeader.Size = UDim2.new(1, 0, 0, 45)
+    GameHeader.BackgroundColor3 = Color3.fromRGB(25, 20, 15)
+    GameHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", GameHeader).CornerRadius = UDim.new(0, 10)
+    local GameHeaderStroke = Instance.new("UIStroke", GameHeader)
+    GameHeaderStroke.Color = CategoryColors.GameSettings
+    GameHeaderStroke.Thickness = 2
+    local GameHeaderText = Instance.new("TextLabel", GameHeader)
+    GameHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    GameHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    GameHeaderText.Text = "GAME SETTINGS"
+    GameHeaderText.TextColor3 = CategoryColors.GameSettings
+    GameHeaderText.Font = Enum.Font.GothamBold
+    GameHeaderText.TextSize = 14
+    GameHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    GameHeaderText.BackgroundTransparency = 1
+
+    local GameContainer = Instance.new("Frame", MiscPage)
+    GameContainer.Size = UDim2.new(1, 0, 0, 45)
+    GameContainer.BackgroundTransparency = 1
+    GameContainer.AutomaticSize = Enum.AutomaticSize.Y
+    local GameList = Instance.new("UIListLayout", GameContainer)
+    GameList.Padding = UDim.new(0, 10)
+
+    local FOVContainer = Instance.new("Frame", GameContainer)
+    FOVContainer.Size = UDim2.new(1, 0, 0, 45)
+    FOVContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    FOVContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", FOVContainer).CornerRadius = UDim.new(0, 8)
+
+    local FOVLabel = Instance.new("TextLabel", FOVContainer)
+    FOVLabel.Size = UDim2.new(0.4, -10, 1, 0)
+    FOVLabel.Position = UDim2.new(0, 15, 0, 0)
+    FOVLabel.Text = "FOV: 70"
+    FOVLabel.TextColor3 = CurrentTextColor
+    FOVLabel.Font = Enum.Font.GothamMedium
+    FOVLabel.TextSize = 13
+    FOVLabel.TextXAlignment = Enum.TextXAlignment.Left
+    FOVLabel.BackgroundTransparency = 1
+
+    local FOVSliderContainer = Instance.new("Frame", FOVContainer)
+    FOVSliderContainer.Size = UDim2.new(0.6, -20, 1, 0)
+    FOVSliderContainer.Position = UDim2.new(0.4, 0, 0, 0)
+    FOVSliderContainer.BackgroundTransparency = 1
+
+    local FOVSlider = Instance.new("Frame", FOVSliderContainer)
+    FOVSlider.Size = UDim2.new(1, -10, 0, 20)
+    FOVSlider.Position = UDim2.new(0, 0, 0.5, -10)
+    FOVSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    FOVSlider.BorderSizePixel = 0
+    Instance.new("UICorner", FOVSlider).CornerRadius = UDim.new(1, 0)
+
+    local FOVFill = Instance.new("Frame", FOVSlider)
+    FOVFill.Size = UDim2.new(0.5, 0, 1, 0)
+    FOVFill.BackgroundColor3 = CategoryColors.GameSettings
+    FOVFill.BorderSizePixel = 0
+    Instance.new("UICorner", FOVFill).CornerRadius = UDim.new(1, 0)
+
+    local FOVBtn = Instance.new("TextButton", FOVSlider)
+    FOVBtn.Size = UDim2.new(0, 20, 0, 20)
+    FOVBtn.Position = UDim2.new(0.5, -10, 0, 0)
+    FOVBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    FOVBtn.Text = ""
+    Instance.new("UICorner", FOVBtn).CornerRadius = UDim.new(1, 0)
+
+    local draggingFOV = false
+    local MinFOV = 70
+    local MaxFOV = 120
+    local TargetFOV = 70
+
+    workspace.CurrentCamera.FieldOfView = TargetFOV
+
+    local cameraFOVConnection = RunService.RenderStepped:Connect(function()
+        if workspace.CurrentCamera.FieldOfView ~= TargetFOV then
+            workspace.CurrentCamera.FieldOfView = TargetFOV
+        end
+    end)
+
+    local function UpdateFOV(value)
+        TargetFOV = math.clamp(math.floor(value), MinFOV, MaxFOV)
+        FOVLabel.Text = "FOV: " .. TargetFOV
+        local fillPercent = (TargetFOV - MinFOV) / (MaxFOV - MinFOV)
+        FOVFill.Size = UDim2.new(fillPercent, 0, 1, 0)
+        FOVBtn.Position = UDim2.new(fillPercent, -10, 0, 0)
+        
+        workspace.CurrentCamera.FieldOfView = TargetFOV
+    end
+
+    UpdateFOV(TargetFOV)
+
+    FOVBtn.MouseButton1Down:Connect(function()
+        draggingFOV = true
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if draggingFOV and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = UserInputService:GetMouseLocation()
+            local sliderAbsPos = FOVSlider.AbsolutePosition
+            local sliderSize = FOVSlider.AbsoluteSize
+            local relativeX = math.clamp((mousePos.X - sliderAbsPos.X) / sliderSize.X, 0, 1)
+            local newValue = MinFOV + math.floor(relativeX * (MaxFOV - MinFOV))
+            UpdateFOV(newValue)
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingFOV = false
+        end
+    end)
+
+    local GeneralHeader = Instance.new("Frame", MiscPage)
+    GeneralHeader.Size = UDim2.new(1, 0, 0, 45)
+    GeneralHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    GeneralHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", GeneralHeader).CornerRadius = UDim.new(0, 10)
+    local GeneralHeaderStroke = Instance.new("UIStroke", GeneralHeader)
+    GeneralHeaderStroke.Color = CategoryColors.GeneralUtils
+    GeneralHeaderStroke.Thickness = 2
+    local GeneralHeaderText = Instance.new("TextLabel", GeneralHeader)
+    GeneralHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    GeneralHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    GeneralHeaderText.Text = "GENERAL UTILITIES"
+    GeneralHeaderText.TextColor3 = CategoryColors.GeneralUtils
+    GeneralHeaderText.Font = Enum.Font.GothamBold
+    GeneralHeaderText.TextSize = 14
+    GeneralHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    GeneralHeaderText.BackgroundTransparency = 1
+
+    local GeneralContainer = Instance.new("Frame", MiscPage)
+    GeneralContainer.Size = UDim2.new(1, 0, 0, 0)
+    GeneralContainer.BackgroundTransparency = 1
+    GeneralContainer.AutomaticSize = Enum.AutomaticSize.Y
+    local GeneralList = Instance.new("UIListLayout", GeneralContainer)
+    GeneralList.Padding = UDim.new(0, 10)
+
+    -- BOTÃO REJOIN SERVER MODERNO
+    local RejoinButton = CreateModernButton(GeneralContainer, "Rejoin Server", 118779487828816, 138707159604637)
+    
+    RejoinButton.MouseButton1Click:Connect(function()
+        local currentPlaceId = game.PlaceId
+        local currentJobId = game.JobId
+        TeleportService:TeleportToPlaceInstance(currentPlaceId, currentJobId, player)
+        modules.ShowNotification("Utilities", "Rejoining server...", 3)
+    end)
+
+    -- BOTÃO SERVER HOP MODERNO
+    local ServerHopButton = CreateModernButton(GeneralContainer, "Server Hop", 118779487828816, 138707159604637)
+    
+    ServerHopButton.MouseButton1Click:Connect(function()
+        modules.ShowNotification("Utilities", "Searching for server with 2+ players...", 2)
+        task.spawn(function()
+            local success, response = pcall(function()
+                return game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
+            end)
+            
+            if success then
+                local data = game:GetService("HttpService"):JSONDecode(response)
+                local servers = data.data
+                local availableServers = {}
+                
+                -- Procura servidores com 2 ou mais jogadores
+                for _, server in ipairs(servers) do
+                    if server.id ~= game.JobId and server.playing >= 2 then
+                        table.insert(availableServers, server)
+                    end
+                end
+                
+                if #availableServers > 0 then
+                    local randomServer = availableServers[math.random(1, #availableServers)]
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id, player)
+                    modules.ShowNotification("Utilities", "Found server with " .. randomServer.playing .. " players", 3)
+                else
+                    modules.ShowNotification("Error", "No servers with 2+ players found", 3)
+                end
+            else
+                modules.ShowNotification("Error", "Failed to get server list", 3)
+            end
+        end)
+    end)
+
+    -- BOTÃO EMPTY SERVER MODERNO
+    local EmptyServerButton = CreateModernButton(GeneralContainer, "Empty Server", 118779487828816, 138707159604637)
+    
+    EmptyServerButton.MouseButton1Click:Connect(function()
+        modules.ShowNotification("Utilities", "Searching for empty/low player server...", 2)
+        task.spawn(function()
+            local success, response = pcall(function()
+                return game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
+            end)
+            
+            if success then
+                local data = game:GetService("HttpService"):JSONDecode(response)
+                local servers = data.data
+                local bestEmptyServer = nil
+                local minPlayers = 999
+                
+                -- Procura o servidor com menos jogadores (exceto o atual)
+                for _, server in ipairs(servers) do
+                    if server.id ~= game.JobId then
+                        if server.playing < minPlayers then
+                            minPlayers = server.playing
+                            bestEmptyServer = server
+                        end
+                    end
+                end
+                
+                if bestEmptyServer then
+                    if minPlayers == 0 then
+                        modules.ShowNotification("Utilities", "Found empty server! Teleporting...", 3)
+                    elseif minPlayers == 1 then
+                        modules.ShowNotification("Utilities", "Found server with 1 player! Teleporting...", 3)
+                    else
+                        modules.ShowNotification("Utilities", "Found server with " .. minPlayers .. " players (lowest available)", 3)
+                    end
+                    
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, bestEmptyServer.id, player)
+                else
+                    modules.ShowNotification("Error", "No available servers found", 3)
+                end
+            else
+                modules.ShowNotification("Error", "Failed to get server list", 3)
+            end
+        end)
+    end)
+
+    local CustomHeader = Instance.new("Frame", MiscPage)
+    CustomHeader.Size = UDim2.new(1, 0, 0, 45)
+    CustomHeader.BackgroundColor3 = Color3.fromRGB(25, 15, 25)
+    CustomHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", CustomHeader).CornerRadius = UDim.new(0, 10)
+    local CustomHeaderStroke = Instance.new("UIStroke", CustomHeader)
+    CustomHeaderStroke.Color = CategoryColors.Customization
+    CustomHeaderStroke.Thickness = 2
+    local CustomHeaderText = Instance.new("TextLabel", CustomHeader)
+    CustomHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    CustomHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    CustomHeaderText.Text = "CUSTOMIZATION"
+    CustomHeaderText.TextColor3 = CategoryColors.Customization
+    CustomHeaderText.Font = Enum.Font.GothamBold
+    CustomHeaderText.TextSize = 14
+    CustomHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    CustomHeaderText.BackgroundTransparency = 1
+
+    local CustomContainer = Instance.new("Frame", MiscPage)
+    CustomContainer.Size = UDim2.new(1, 0, 0, 100)
+    CustomContainer.BackgroundTransparency = 1
+    CustomContainer.AutomaticSize = Enum.AutomaticSize.Y
+    local CustomList = Instance.new("UIListLayout", CustomContainer)
+    CustomList.Padding = UDim.new(0, 10)
+
+    local RainbowContainer = Instance.new("Frame", CustomContainer)
+    RainbowContainer.Size = UDim2.new(1, 0, 0, 45)
+    RainbowContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    RainbowContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", RainbowContainer).CornerRadius = UDim.new(0, 8)
+
+    local RainbowLabel = Instance.new("TextLabel", RainbowContainer)
+    RainbowLabel.Size = UDim2.new(0.6, -60, 1, 0)
+    RainbowLabel.Position = UDim2.new(0, 15, 0, 0)
+    RainbowLabel.Text = "Rainbow UI"
+    RainbowLabel.TextColor3 = CurrentTextColor
+    RainbowLabel.Font = Enum.Font.GothamMedium
+    RainbowLabel.TextSize = 13
+    RainbowLabel.TextXAlignment = Enum.TextXAlignment.Left
+    RainbowLabel.BackgroundTransparency = 1
+
+    local RainbowSwitch = Instance.new("TextButton", RainbowContainer)
+    RainbowSwitch.Size = UDim2.new(0, 38, 0, 20)
+    RainbowSwitch.Position = UDim2.new(1, -50, 0.5, -10)
+    RainbowSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    RainbowSwitch.Text = ""
+    Instance.new("UICorner", RainbowSwitch).CornerRadius = UDim.new(1, 0)
+
+    local RainbowCircle = Instance.new("Frame", RainbowSwitch)
+    RainbowCircle.Size = UDim2.new(0, 14, 0, 14)
+    RainbowCircle.Position = UDim2.new(0, 3, 0.5, -7)
+    RainbowCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", RainbowCircle).CornerRadius = UDim.new(1, 0)
+
+    local rainbowActive = false
+    local rainbowConnection
+
+    local function StartRainbow()
+        IsRainbowActive = true
+        rainbowActive = true
+        
+        TweenService:Create(RainbowSwitch, TweenInfo.new(0.3), {BackgroundColor3 = CategoryColors.Customization}):Play()
+        TweenService:Create(RainbowCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+        
+        local hue = 0
+        rainbowConnection = RunService.Heartbeat:Connect(function(delta)
+            hue = (hue + delta * 60) % 360
+            local rainbowColor = Color3.fromHSV(hue/360, 0.8, 1)
+            
+            CurrentTheme = rainbowColor
+            CurrentThemeHex = "#" .. tostring(rainbowColor):sub(8)
+            
+            MainStroke.Color = rainbowColor
+            LogoV.BackgroundColor3 = rainbowColor
+            TitleText.TextColor3 = rainbowColor
+            
+            for _, page in pairs(Pages) do
+                page.ScrollBarImageColor3 = rainbowColor
+            end
+            
+            local sidebarStroke = Sidebar:FindFirstChildWhichIsA("UIStroke")
+            if sidebarStroke then
+                sidebarStroke.Color = rainbowColor
+            end
+            
+            local sidebarGradient = Sidebar:FindFirstChildWhichIsA("UIGradient")
+            if sidebarGradient then
+                sidebarGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, rainbowColor),
+                    ColorSequenceKeypoint.new(1, CurrentCardColor)
+                })
+            end
+            
+            if AvatarStrokeRef then
+                AvatarStrokeRef.Color = rainbowColor
+            end
+        end)
+    end
+
+    local function StopRainbow()
+        IsRainbowActive = false
+        rainbowActive = false
+        
+        TweenService:Create(RainbowSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+        TweenService:Create(RainbowCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        
+        if rainbowConnection then
+            rainbowConnection:Disconnect()
+            rainbowConnection = nil
+        end
+        
+        CurrentTheme = SavedThemeBeforeRainbow
+        CurrentThemeHex = SavedThemeHexBeforeRainbow
+        CurrentBackground = SavedBackgroundBeforeRainbow
+        CurrentCardColor = SavedCardColorBeforeRainbow
+        CurrentHeaderColor = SavedHeaderColorBeforeRainbow
+        CurrentTextColor = SavedTextColorBeforeRainbow
+        
+        MainFrame.BackgroundColor3 = CurrentBackground
+        MainStroke.Color = CurrentTheme
+        TopBar.BackgroundColor3 = CurrentHeaderColor
+        TopOverlap.BackgroundColor3 = CurrentHeaderColor
+        Sidebar.BackgroundColor3 = CurrentHeaderColor
+        LogoV.BackgroundColor3 = CurrentTheme
+        TitleText.TextColor3 = CurrentTheme
+        CloseBtn.TextColor3 = CurrentTextColor
+        
+        local sidebarStroke = Sidebar:FindFirstChildWhichIsA("UIStroke")
+        if sidebarStroke then
+            sidebarStroke.Color = CurrentTheme
+        end
+        
+        local sidebarGradient = Sidebar:FindFirstChildWhichIsA("UIGradient")
+        if sidebarGradient then
+            sidebarGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, CurrentTheme),
+                ColorSequenceKeypoint.new(1, CurrentCardColor)
+            })
+        end
+        
+        if AvatarStrokeRef then
+            AvatarStrokeRef.Color = CurrentTheme
+        end
+        
+        for _, page in pairs(Pages) do
+            page.ScrollBarImageColor3 = CurrentTheme
+        end
+        
+        modules.ShowNotification("Interface", "Rainbow UI disabled. Theme restored.", 3)
+    end
+
+    RainbowSwitch.MouseButton1Click:Connect(function()
+        if rainbowActive then
+            StopRainbow()
+        else
+            StartRainbow()
+        end
+    end)
+
+    local CursorContainer = Instance.new("Frame", CustomContainer)
+    CursorContainer.Size = UDim2.new(1, 0, 0, 45)
+    CursorContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    CursorContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", CursorContainer).CornerRadius = UDim.new(0, 8)
+
+    local CursorLabel = Instance.new("TextLabel", CursorContainer)
+    CursorLabel.Size = UDim2.new(0.6, -60, 1, 0)
+    CursorLabel.Position = UDim2.new(0, 15, 0, 0)
+    CursorLabel.Text = "Precision Cursor"
+    CursorLabel.TextColor3 = CurrentTextColor
+    CursorLabel.Font = Enum.Font.GothamMedium
+    CursorLabel.TextSize = 13
+    CursorLabel.TextXAlignment = Enum.TextXAlignment.Left
+    CursorLabel.BackgroundTransparency = 1
+
+    local CursorSwitch = Instance.new("TextButton", CursorContainer)
+    CursorSwitch.Size = UDim2.new(0, 38, 0, 20)
+    CursorSwitch.Position = UDim2.new(1, -50, 0.5, -10)
+    CursorSwitch.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    CursorSwitch.Text = ""
+    Instance.new("UICorner", CursorSwitch).CornerRadius = UDim.new(1, 0)
+
+    local CursorCircle = Instance.new("Frame", CursorSwitch)
+    CursorCircle.Size = UDim2.new(0, 14, 0, 14)
+    CursorCircle.Position = UDim2.new(0, 3, 0.5, -7)
+    CursorCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    Instance.new("UICorner", CursorCircle).CornerRadius = UDim.new(1, 0)
+
+    local cursorActive = false
+    local cursorGui = nil
+    local cursorLoop = nil
+
+    CursorSwitch.MouseButton1Click:Connect(function()
+        cursorActive = not cursorActive
+        
+        if cursorActive then
+            TweenService:Create(CursorSwitch, TweenInfo.new(0.3), {BackgroundColor3 = CategoryColors.Customization}):Play()
+            TweenService:Create(CursorCircle, TweenInfo.new(0.3), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.new(1, 1, 1)}):Play()
+            
+            cursorGui = Instance.new("ScreenGui")
+            cursorGui.Name = "VortexPriorityCursor"
+            cursorGui.Parent = game.CoreGui
+            cursorGui.IgnoreGuiInset = true
+            cursorGui.DisplayOrder = 2147483647
+            
+            local CursorColor = Color3.fromRGB(255, 255, 255)
+            local Size = 7
+            local Thickness = 1
+            
+            local function CreatePart(name, isVertical)
+                local f = Instance.new("Frame")
+                f.Name = name
+                f.Parent = cursorGui
+                f.BackgroundColor3 = CursorColor
+                f.BorderSizePixel = 0
+                f.ZIndex = 1000000
+                
+                if isVertical then
+                    f.Size = UDim2.new(0, Thickness, 0, Size)
+                else
+                    f.Size = UDim2.new(0, Size, 0, Thickness)
+                end
+                
+                f.AnchorPoint = Vector2.new(0.5, 0.5)
+                
+                local stroke = Instance.new("UIStroke")
+                stroke.Thickness = 0.5
+                stroke.Color = Color3.fromRGB(0, 0, 0)
+                stroke.Transparency = 0.3
+                stroke.Parent = f
+                
+                return f
+            end
+            
+            local Vertical = CreatePart("V", true)
+            local Horizontal = CreatePart("H", false)
+            
+            UserInputService.MouseIconEnabled = false
+            
+            cursorLoop = RunService.RenderStepped:Connect(function()
+                if cursorGui then
+                    local mPos = UserInputService:GetMouseLocation()
+                    local pos = UDim2.new(0, mPos.X, 0, mPos.Y)
+                    
+                    Vertical.Position = pos
+                    Horizontal.Position = pos
+                end
+            end)
+        else
+            TweenService:Create(CursorSwitch, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}):Play()
+            TweenService:Create(CursorCircle, TweenInfo.new(0.3), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+            
+            if cursorLoop then
+                cursorLoop:Disconnect()
+                cursorLoop = nil
+            end
+            
+            if cursorGui then
+                cursorGui:Destroy()
+                cursorGui = nil
+            end
+            
+            UserInputService.MouseIconEnabled = true
+        end
+    end)
+end
+
+modules.CreateMiscPage()
+
+-- SISTEMA DE ARRASTAR SIMPLES
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    if not dragging then return end
+    
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(
+        startPos.X.Scale, 
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale, 
+        startPos.Y.Offset + delta.Y
+    )
+end
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        local connection
+        connection = input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+                if connection then
+                    connection:Disconnect()
+                end
+            end
+        end)
+    end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- FUNÇÃO DE FECHAMENTO COMPLETA NO BOTÃO "X"
+local function CloseHub()
+    -- Primeiro desativar todos os scripts em modo silencioso
+    modules.DeactivateAllScripts(true)
+    
+    -- Desconectar conexões
+    if cameraFOVConnection then
+        cameraFOVConnection:Disconnect()
+    end
+    
+    if rainbowConnection then
+        rainbowConnection:Disconnect()
+    end
+    
+    if cursorLoop then
+        cursorLoop:Disconnect()
+    end
+    
+    -- Limpar cursor personalizado
+    if cursorGui then
+        cursorGui:Destroy()
+        UserInputService.MouseIconEnabled = true
+    end
+    
+    -- Destruir interface
+    ScreenGui:Destroy()
+    
+    -- Notificar no console (apenas no console, sem notificação visual)
+    warn("[Vortex Hub] Closed. All scripts have been deactivated.")
+end
+
+CloseBtn.MouseButton1Click:Connect(CloseHub)
+
+-- CONEXÃO PARA DESATIVAR SCRIPTS SE A INTERFACE FOR DESTRUÍDA
+game:GetService("CoreGui").ChildRemoved:Connect(function(child)
+    if child.Name == "VortexHub" then
+        -- Garantir que todos os scripts sejam desativados em modo silencioso
+        task.wait(0.1)
+        modules.DeactivateAllScripts(true)
+    end
+end)
+
+task.spawn(function()
+    modules.ShowNotification("Vortex Hub", "Welcome back, " .. player.DisplayName .. "! Press [ INSERT ] to toggle the hub menu.", 6)
+end)
