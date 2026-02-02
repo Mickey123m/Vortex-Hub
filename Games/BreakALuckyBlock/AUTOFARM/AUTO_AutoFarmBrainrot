@@ -5,16 +5,12 @@ local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
-local MINIMUM_VALUE = _G.ValorMinimo
+local MINIMUM_VALUE = 20
 local WEBHOOK_URL = _G.WebhookURL or ""
 local DISCORD_ID = _G.DiscordID or ""
 
 local SKY_HEIGHT = 165 
-local FLY_SPEED = 30.0
-
-if not MINIMUM_VALUE or MINIMUM_VALUE <= 0 then
-    return
-end
+local FLY_SPEED = 25.0
 
 if _G.UltimateAutoFarm == nil then
     _G.UltimateAutoFarm = false
@@ -172,12 +168,19 @@ task.spawn(function()
                         if isHoldingValidItem() and zoneWall then
                             local wallPos = zoneWall:GetPivot().Position
                             local passedWall = false
+                            local itemLost = false
                             
                             root.CFrame = CFrame.new(root.Position.X, SKY_HEIGHT, root.Position.Z)
                             
                             local connection
                             connection = RunService.Stepped:Connect(function(_, dt)
                                 if not _G.UltimateAutoFarm or passedWall or not root or not root.Parent then
+                                    if connection then connection:Disconnect() end
+                                    return
+                                end
+
+                                if not isHoldingValidItem() then
+                                    itemLost = true
                                     if connection then connection:Disconnect() end
                                     return
                                 end
@@ -197,9 +200,11 @@ task.spawn(function()
                             end)
 
                             local timeout = os.clock()
-                            repeat task.wait() until passedWall or not _G.UltimateAutoFarm or (os.clock() - timeout > 10)
+                            repeat task.wait() until passedWall or itemLost or not _G.UltimateAutoFarm or (os.clock() - timeout > 10)
 
-                            if passedWall then
+                            if itemLost then
+                                if connection then connection:Disconnect() end
+                            elseif passedWall then
                                 task.wait(0.8)
                                 if not isHoldingValidItem() then
                                     sendWebhook(itemName, valueText, rarityText, "Success: Item Delivered")
