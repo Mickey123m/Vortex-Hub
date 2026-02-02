@@ -160,11 +160,6 @@ task.spawn(function()
                     local targetPart = brainrot:FindFirstChildWhichIsA("BasePart", true)
                     
                     if targetPart and collectPrompt then
-                        local luckyBlockWasActive = _G.AutoGoToLuckyBlock
-                        if luckyBlockWasActive then
-                            _G.AutoGoToLuckyBlock = false
-                        end
-                        
                         root.CFrame = CFrame.new(targetPart.Position)
                         task.wait(0.1)
                         
@@ -211,20 +206,8 @@ task.spawn(function()
                                 else
                                     sendWebhook(itemName, valueText, rarityText, "Failed: Item stuck in hand")
                                 end
-                                
-                                if luckyBlockWasActive then
-                                    _G.AutoGoToLuckyBlock = true
-                                end
                             elseif os.clock() - timeout > 10 then
                                 sendWebhook(itemName, valueText, rarityText, "Failed: Flight time exceeded")
-                                
-                                if luckyBlockWasActive then
-                                    _G.AutoGoToLuckyBlock = true
-                                end
-                            end
-                        else
-                            if luckyBlockWasActive then
-                                _G.AutoGoToLuckyBlock = true
                             end
                         end
                         break 

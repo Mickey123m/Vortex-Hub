@@ -118,9 +118,3 @@ end
 
 if player.Character then setup(player.Character) end
 player.CharacterAdded:Connect(setup)
-
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Vortex Engine",
-    Text = _G.VortexAbsoluteFixed and "UI FIXA: ATIVADO" or "UI FIXA: DESATIVADO",
-    Duration = 3
-})

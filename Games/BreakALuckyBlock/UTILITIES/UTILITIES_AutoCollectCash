@@ -2,7 +2,6 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 
--- Tabela global para salvar as propriedades originais para restauração
 if _G.OriginalProps == nil then
     _G.OriginalProps = {}
 end
@@ -13,7 +12,6 @@ end
 
 _G.AutoCollectCash = not _G.AutoCollectCash
 
--- Função para restaurar tudo ao estado original
 local function restoreCollectibles()
     for part, props in pairs(_G.OriginalProps) do
         if part and part.Parent then
@@ -22,16 +20,9 @@ local function restoreCollectibles()
             part.CanCollide = props.CanCollide
         end
     end
-    _G.OriginalProps = {} -- Limpa a tabela
+    _G.OriginalProps = {}
 end
 
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "V3NENO Auto Collect",
-    Text = _G.AutoCollectCash and "STATUS: ATIVADO" or "STATUS: DESATIVADO",
-    Duration = 3
-})
-
--- Se desativou, limpa e para
 if not _G.AutoCollectCash then 
     restoreCollectibles()
     return 
@@ -71,7 +62,6 @@ local function collectCash()
                     local collectPart = model:FindFirstChild("Collect")
                     if collectPart and collectPart:IsA("BasePart") then
                         
-                        -- Salva as propriedades se ainda não salvou
                         if not _G.OriginalProps[collectPart] then
                             _G.OriginalProps[collectPart] = {
                                 CFrame = collectPart.CFrame,
@@ -80,24 +70,18 @@ local function collectCash()
                             }
                         end
 
-                        -- DEIXA INVISÍVEL E SEM COLISÃO ANTES DE TRAZER
-                        collectPart.Transparency = 1
                         collectPart.CanCollide = false
+                        collectPart.Transparency = 1
                         
-                        -- Traz até você (CFrame)
+                        local originalCFrame = _G.OriginalProps[collectPart].CFrame
                         collectPart.CFrame = root.CFrame
                         
-                        -- Simula o toque
                         if firetouchinterest then
                             firetouchinterest(collectPart, root, 0)
-                            task.wait()
                             firetouchinterest(collectPart, root, 1)
                         end
                         
-                        -- Volta para o lugar original imediatamente
-                        collectPart.CFrame = _G.OriginalProps[collectPart].CFrame
-                        
-                        -- Mantém invisível enquanto o script estiver ligado para não bugar visualmente
+                        collectPart.CFrame = originalCFrame
                     end
                 end
             end
@@ -110,6 +94,5 @@ task.spawn(function()
         pcall(collectCash)
         task.wait(1.5)
     end
-    -- Garante a restauração total quando o loop for quebrado
     restoreCollectibles()
 end)

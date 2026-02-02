@@ -7,12 +7,6 @@ end
 
 _G.InstantPromptAtivo = not _G.InstantPromptAtivo
 
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Instant Prompt",
-    Text = _G.InstantPromptAtivo and "ATIVADO" or "DESATIVADO",
-    Duration = 3
-})
-
 local function applyPromptLogic(prompt)
     if _G.InstantPromptAtivo then
         prompt.HoldDuration = 0

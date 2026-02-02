@@ -22,6 +22,27 @@ local function irAteOBloco(block)
     local timeout = os.clock()
 
     while _G.LuckyFarmAtivo and block.Parent == Workspace.LuckyBlocks do
+        if _G.UltimateAutoFarm then
+            local brainrotsModel = Workspace:FindFirstChild("Brainrots")
+            local hasTargetInBrainrot = false
+            
+            if brainrotsModel then
+                for _, br in pairs(brainrotsModel:GetChildren()) do
+                    local cashLabel = br:FindFirstChild("CharCash", true)
+                    local value = cashLabel and tonumber(cashLabel.Text:gsub("[^%d%.]", "")) or 0
+                    if value >= (_G.ValorMinimo or 0) then
+                        hasTargetInBrainrot = true
+                        break
+                    end
+                end
+            end
+            
+            if hasTargetInBrainrot then
+                task.wait(0.5)
+                continue
+            end
+        end
+
         local distancia = (root.Position - targetPos).Magnitude
         
         if distancia < 3 then 
