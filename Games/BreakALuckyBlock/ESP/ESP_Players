@@ -5,12 +5,20 @@ local localPlayer = Players.LocalPlayer
 if _G.VortexPureOutlineActive == nil then _G.VortexPureOutlineActive = false end
 _G.VortexPureOutlineActive = not _G.VortexPureOutlineActive
 
+if _G.VortexConnections == nil then _G.VortexConnections = {} end
+
 local function cleanup()
     for _, obj in pairs(CoreGui:GetChildren()) do
         if obj.Name == "VortexPureOutline" then
             obj:Destroy()
         end
     end
+    for _, conn in pairs(_G.VortexConnections) do
+        if conn then
+            conn:Disconnect()
+        end
+    end
+    _G.VortexConnections = {}
 end
 
 if not _G.VortexPureOutlineActive then
@@ -39,14 +47,19 @@ local function applyPureOutline(player)
         highlight:SetAttribute("Target", player.Name)
     end
 
-    player.CharacterAdded:Connect(onCharacterAdded)
+    local charConn = player.CharacterAdded:Connect(onCharacterAdded)
+    table.insert(_G.VortexConnections, charConn)
+
     if player.Character then
         onCharacterAdded(player.Character)
     end
 end
 
+cleanup()
+
+local playerAddedConn = Players.PlayerAdded:Connect(applyPureOutline)
+table.insert(_G.VortexConnections, playerAddedConn)
+
 for _, p in pairs(Players:GetPlayers()) do
     applyPureOutline(p)
 end
-
-Players.PlayerAdded:Connect(applyPureOutline)
