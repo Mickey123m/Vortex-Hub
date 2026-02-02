@@ -9,7 +9,7 @@ local MINIMUM_VALUE = _G.ValorMinimo or 1
 local WEBHOOK_URL = _G.WebhookURL or ""
 local DISCORD_ID = _G.DiscordID or ""
 
-local SKY_HEIGHT = 165 
+local SKY_HEIGHT = 150
 local FLY_SPEED = 25.0
 
 if _G.UltimateAutoFarm == nil then
