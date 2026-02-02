@@ -15,85 +15,77 @@ local function parseCashValue(text)
 end
 
 local function resetSlapCooldown()
-    player:SetAttribute("SlapCooldown", 0) 
+    pcall(function()
+        player:SetAttribute("SlapCooldown", 0) 
+    end)
 end
 
 local function getSlapHand()
-    return player.Backpack:FindFirstChild("Slap Hand") or (player.Character and player.Character:FindFirstChild("Slap Hand"))
+    local char = player.Character
+    return (char and char:FindFirstChild("Slap Hand")) or player.Backpack:FindFirstChild("Slap Hand")
 end
 
-if _G.BountyHunter == nil then 
-    _G.BountyHunter = false 
-end
-
-if not _G.ValorAlvoBounty then
-    _G.ValorAlvoBounty = 100
-end
-
-if not _G.BountyHunter then
-    _G.BountyHunter = true
-end
+_G.BountyHunter = true
+_G.ValorAlvoBounty = _G.ValorAlvoBounty or 100
 
 local function runThiefLogic()
     while _G.BountyHunter do
         local tool = getSlapHand()
         local brainrotsModel = Workspace:FindFirstChild("Brainrots")
-        
-        if tool and brainrotsModel then
-            for _, brainrot in pairs(brainrotsModel:GetChildren()) do
+        local myChar = player.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+        if tool and brainrotsModel and myRoot then
+            for _, otherPlayer in pairs(Players:GetPlayers()) do
                 if not _G.BountyHunter then break end
                 
-                local cashLabel = brainrot:FindFirstChild("CharCash", true)
-                local valorTexto = cashLabel and cashLabel.Text or "0"
+                local targetChar = otherPlayer.Character
+                local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
                 
-                if parseCashValue(valorTexto) >= _G.ValorAlvoBounty then
-                    for _, otherPlayer in pairs(Players:GetPlayers()) do
-                        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            local targetRoot = otherPlayer.Character.HumanoidRootPart
-                            local dist = (targetRoot.Position - brainrot:GetPivot().Position).Magnitude
-                            
-                            if dist < 8 then
-                                local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                                if myRoot then
-                                    myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 3)
-                                    tool.Parent = player.Character
-                                    
-                                    resetSlapCooldown()
-                                    tool:Activate()
-                                    
-                                    local remote = tool:FindFirstChild("Slap") or tool:FindFirstChildOfClass("RemoteEvent")
-                                    if remote then
-                                        remote:FireServer(targetRoot)
-                                    end
-                                    
-                                    task.wait(0.5)
+                if otherPlayer ~= player and targetRoot then
+                    local targetHasBounty = false
+                    
+                    for _, brainrot in pairs(brainrotsModel:GetChildren()) do
+                        local cashLabel = brainrot:FindFirstChild("CharCash", true)
+                        if cashLabel then
+                            local valor = parseCashValue(cashLabel.Text)
+                            if valor >= _G.ValorAlvoBounty then
+                                if (targetRoot.Position - brainrot:GetPivot().Position).Magnitude < 10 then
+                                    targetHasBounty = true
+                                    break
                                 end
                             end
                         end
                     end
+
+                    if targetHasBounty then
+                        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 3)
+                        
+                        if tool.Parent ~= myChar then
+                            tool.Parent = myChar
+                        end
+                        
+                        resetSlapCooldown()
+                        tool:Activate()
+                        
+                        local remote = tool:FindFirstChild("Slap") or tool:FindFirstChildOfClass("RemoteEvent")
+                        if remote then
+                            remote:FireServer(targetRoot)
+                        end
+                        task.wait(0.3)
+                    end
                 end
             end
         end
-        task.wait(0.2)
+        task.wait(0.1)
     end
 end
 
-RunService.Heartbeat:Connect(function()
-    if _G.BountyHunter then
+task.spawn(function()
+    while _G.BountyHunter do
         resetSlapCooldown()
+        RunService.Heartbeat:Wait()
     end
 end)
 
 task.spawn(runThiefLogic)
-
-if game:GetService("StarterGui"):SetCore then
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Vortex Hub",
-        Text = "AUTO THIEF: ATIVADO",
-        Duration = 3
-    })
-end
-
-return function()
-    _G.BountyHunter = false
-end
