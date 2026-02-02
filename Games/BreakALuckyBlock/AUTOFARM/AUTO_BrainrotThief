@@ -25,6 +25,11 @@ local function getSlapHand()
     return (char and char:FindFirstChild("Slap Hand")) or player.Backpack:FindFirstChild("Slap Hand")
 end
 
+local function isHoldingValidItem()
+    local val = player:GetAttribute("Carrying")
+    return (val ~= nil and tostring(val) ~= "" and tostring(val):lower() ~= "none")
+end
+
 _G.BountyHunter = true
 _G.ValorAlvoBounty = _G.ValorAlvoBounty or 100
 
@@ -35,22 +40,23 @@ local function runThiefLogic()
         local myChar = player.Character
         local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
 
-        local isCarrying = myChar and myChar:GetAttribute("Carrying")
-        local isFarming = false
-        
-        if _G.UltimateFarmAtivo and brainrotsModel then
-            for _, item in pairs(brainrotsModel:GetChildren()) do
-                local label = item:FindFirstChild("CharCash", true)
-                if label and parseCashValue(label.Text) >= (_G.ValorMinimoFarm or 20) then
-                    isFarming = true
-                    break
+        local hasPrimaryFarmTarget = false
+        if brainrotsModel and _G.UltimateAutoFarm then
+            for _, br in pairs(brainrotsModel:GetChildren()) do
+                local cashLabel = br:FindFirstChild("CharCash", true)
+                if cashLabel then
+                    local value = parseCashValue(cashLabel.Text)
+                    if value >= (_G.ValorMinimo or 20) then
+                        hasPrimaryFarmTarget = true
+                        break
+                    end
                 end
             end
         end
 
-        if not isFarming and not isCarrying and tool and brainrotsModel and myRoot then
+        if not hasPrimaryFarmTarget and not isHoldingValidItem() and tool and brainrotsModel and myRoot then
             for _, otherPlayer in pairs(Players:GetPlayers()) do
-                if not _G.BountyHunter or isFarming or isCarrying then break end
+                if not _G.BountyHunter or isHoldingValidItem() then break end
                 
                 local targetChar = otherPlayer.Character
                 local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
