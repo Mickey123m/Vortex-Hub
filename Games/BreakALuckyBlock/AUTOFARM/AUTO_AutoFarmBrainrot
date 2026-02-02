@@ -5,7 +5,7 @@ local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 
-local MINIMUM_VALUE = _G.ValorMinimo or 20
+local MINIMUM_VALUE = _G.ValorMinimo or 1
 local WEBHOOK_URL = _G.WebhookURL or ""
 local DISCORD_ID = _G.DiscordID or ""
 
