@@ -1,0 +1,100 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+
+local SCRIPT_ID = "Immersive_SlowTap_Combat"
+
+if _G[SCRIPT_ID] then
+    _G[SCRIPT_ID].Janitor()
+    _G[SCRIPT_ID] = nil
+    return
+end
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local CharFolder = Workspace:FindFirstChild("Characters")
+
+local State = {
+    Enabled = true,
+    TargetPart = "Head",
+    Firing = false,
+    LastFire = 0,
+    TapDelay = 0.1
+}
+
+local function isVisible(part, character)
+    local origin = Camera.CFrame.Position
+    local destination = part.Position
+    local direction = destination - origin
+    local rayParams = RaycastParams.new()
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, character, Camera}
+    rayParams.IgnoreWater = true
+    local result = Workspace:Raycast(origin, direction, rayParams)
+    return result == nil
+end
+
+local function getEnemyTarget()
+    if not CharFolder then return nil end
+    local ct = CharFolder:FindFirstChild("Counter-Terrorists")
+    local tr = CharFolder:FindFirstChild("Terrorists")
+    local myTeamFolder = (ct and ct:FindFirstChild(LocalPlayer.Name)) and ct or tr
+    local enemyFolder = (myTeamFolder == ct) and tr or ct
+    if not enemyFolder then return nil end
+    
+    local closestTarget = nil
+    local shortestDistance = math.huge
+
+    for _, enemy in pairs(enemyFolder:GetChildren()) do
+        local part = enemy:FindFirstChild(State.TargetPart)
+        local hum = enemy:FindFirstChildOfClass("Humanoid")
+        if part and hum and hum.Health > 0 then
+            local _, onScreen = Camera:WorldToViewportPoint(part.Position)
+            if onScreen then
+                local dist = (part.Position - Camera.CFrame.Position).Magnitude
+                if dist < shortestDistance then
+                    if isVisible(part, enemy) then
+                        shortestDistance = dist
+                        closestTarget = {Part = part, Character = enemy}
+                    end
+                end
+            end
+        end
+    end
+    return closestTarget
+end
+
+local function performSlowTap(targetChar)
+    if State.Firing or (tick() - State.LastFire) < State.TapDelay then return end
+    
+    local mouse = LocalPlayer:GetMouse()
+    if mouse.Target and mouse.Target:IsDescendantOf(targetChar) then
+        State.Firing = true
+        if mouse1press then
+            mouse1press()
+            task.wait(0.05)
+            mouse1release()
+        end
+        State.LastFire = tick()
+        State.Firing = false
+    end
+end
+
+local loop = RunService.RenderStepped:Connect(function()
+    if not State.Enabled then return end
+    local targetData = getEnemyTarget()
+    if targetData then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetData.Part.Position)
+        task.spawn(function()
+            performSlowTap(targetData.Character)
+        end)
+    end
+end)
+
+_G[SCRIPT_ID] = {
+    Janitor = function()
+        State.Enabled = false
+        loop:Disconnect()
+    end
+}
