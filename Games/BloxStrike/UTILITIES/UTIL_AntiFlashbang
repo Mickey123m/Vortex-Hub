@@ -1,0 +1,21 @@
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+
+local function AntiFlash()
+    for _, child in ipairs(PlayerGui:GetChildren()) do
+        if child:IsA("ScreenGui") and (child.Name:find("Flash") or child.Name:find("Screenshot")) then
+            child:Destroy()
+        end
+    end
+
+    local colorCorrection = Lighting:FindFirstChild("FlashbangColorCorrection") or Lighting:FindFirstChildOfClass("ColorCorrectionEffect")
+    if colorCorrection then
+        colorCorrection.Brightness = 0
+        colorCorrection.Saturation = 0
+        colorCorrection.Contrast = 0
+        colorCorrection.Enabled = false
+    end
+end
+
+RunService.Heartbeat:Connect(AntiFlash)
