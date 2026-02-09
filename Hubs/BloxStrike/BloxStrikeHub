@@ -19,6 +19,7 @@ local FriendsRed = Color3.fromRGB(255, 50, 50)
 local AutoFarmColor = Color3.fromRGB(200, 150, 50)
 local AutoRebirthColor = Color3.fromRGB(150, 200, 255)
 local ESPColor = Color3.fromHex("#2DDBC6")
+local AimColor = Color3.fromHex("#FF5555")
 local MiscColor = Color3.fromHex("#9B2DDB")
 local UtilitiesColor = Color3.fromHex("#2D6BDB")
 
@@ -30,6 +31,7 @@ local CategoryColors = {
     AutoFarm = AutoFarmColor,
     AutoRebirth = AutoRebirthColor,
     ESP = ESPColor,
+    Aim = AimColor,
     Misc = MiscColor,
     Utilities = UtilitiesColor
 }
@@ -793,56 +795,145 @@ function modules.CreateToggleInRow(row, name, scriptUrl, isPVP, fullWidth)
 end
 
 function modules.CreateSettingsPage()
-    -- Página Settings completamente limpa e pronta para reutilização
-    -- Você pode adicionar seus próprios scripts aqui
-end
+    -- CATEGORIA ESP VISUALS
+    local ESPHeader = Instance.new("Frame", SettingsPage)
+    ESPHeader.Size = UDim2.new(1, 0, 0, 45)
+    ESPHeader.BackgroundColor3 = Color3.fromRGB(10, 25, 25)
+    ESPHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", ESPHeader).CornerRadius = UDim.new(0, 10)
+    local ESPHeaderStroke = Instance.new("UIStroke", ESPHeader)
+    ESPHeaderStroke.Color = CategoryColors.ESP
+    ESPHeaderStroke.Thickness = 2
+    local ESPHeaderText = Instance.new("TextLabel", ESPHeader)
+    ESPHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    ESPHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    ESPHeaderText.Text = "ESP VISUALS"
+    ESPHeaderText.TextColor3 = CategoryColors.ESP
+    ESPHeaderText.Font = Enum.Font.GothamBold
+    ESPHeaderText.TextSize = 14
+    ESPHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    ESPHeaderText.BackgroundTransparency = 1
 
--- FUNÇÃO MELHORADA PARA CAPTURAR TECLAS
-local function GetKeyNameFromInput(input)
-    if input.KeyCode ~= Enum.KeyCode.Unknown then
-        -- Remover "Enum.KeyCode." do nome
-        local keyName = tostring(input.KeyCode):gsub("Enum.KeyCode.", "")
-        
-        -- Melhorar nomes de algumas teclas
-        local keyNameMap = {
-            ["LeftControl"] = "LControl",
-            ["RightControl"] = "RControl",
-            ["LeftShift"] = "LShift",
-            ["RightShift"] = "RShift",
-            ["LeftAlt"] = "LAlt",
-            ["RightAlt"] = "RAlt",
-            ["PageUp"] = "PgUp",
-            ["PageDown"] = "PgDown",
-            ["Escape"] = "Esc",
-            ["Return"] = "Enter",
-            ["Backquote"] = "`",
-            ["Semicolon"] = ";",
-            ["Quote"] = "'",
-            ["LeftBracket"] = "[",
-            ["RightBracket"] = "]",
-            ["Backslash"] = "\\",
-            ["Comma"] = ",",
-            ["Period"] = ".",
-            ["Slash"] = "/",
-            ["Minus"] = "-",
-            ["Equals"] = "=",
-            ["Insert"] = "Ins",
-            ["Delete"] = "Del",
-            ["Home"] = "Home",
-            ["End"] = "End",
-            ["CapsLock"] = "Caps"
-        }
-        
-        return keyNameMap[keyName] or keyName:upper()
-    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-        return "MB1"
-    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-        return "MB2"
-    elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
-        return "MB3"
-    end
-    
-    return "NONE"
+    local ESPContainer = Instance.new("Frame", SettingsPage)
+    ESPContainer.Size = UDim2.new(1, 0, 0, 0)
+    ESPContainer.AutomaticSize = Enum.AutomaticSize.Y
+    ESPContainer.BackgroundTransparency = 1
+    local UIListESP = Instance.new("UIListLayout", ESPContainer)
+    UIListESP.Padding = UDim.new(0, 10)
+
+    -- LINHA 1: ESP Ally e ESP Appearance
+    local ESPRow1 = Instance.new("Frame", ESPContainer)
+    ESPRow1.Size = UDim2.new(1, 0, 0, 45)
+    ESPRow1.BackgroundTransparency = 1
+
+    local ESPAllyToggle = modules.CreateToggleInRow(ESPRow1, "ESP Ally", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Ally", false, false)
+    ESPAllyToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local ESPAppearanceToggle = modules.CreateToggleInRow(ESPRow1, "ESP Appearance", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Appearance", false, false)
+    ESPAppearanceToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    -- LINHA 2: ESP Enemies e ESP Guns
+    local ESPRow2 = Instance.new("Frame", ESPContainer)
+    ESPRow2.Size = UDim2.new(1, 0, 0, 45)
+    ESPRow2.BackgroundTransparency = 1
+
+    local ESPEnemiesToggle = modules.CreateToggleInRow(ESPRow2, "ESP Enemies", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Enemies", false, false)
+    ESPEnemiesToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local ESPGunsToggle = modules.CreateToggleInRow(ESPRow2, "ESP Guns", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Guns", false, false)
+    ESPGunsToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    -- LINHA 3: ESP Health e ESP Name (lado a lado)
+    local ESPRow3 = Instance.new("Frame", ESPContainer)
+    ESPRow3.Size = UDim2.new(1, 0, 0, 45)
+    ESPRow3.BackgroundTransparency = 1
+
+    local ESPHealthToggle = modules.CreateToggleInRow(ESPRow3, "ESP Health", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Health", false, false)
+    ESPHealthToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local ESPNameToggle = modules.CreateToggleInRow(ESPRow3, "ESP Name", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Name", false, false)
+    ESPNameToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    -- CATEGORIA AIMBOT
+    local AimHeader = Instance.new("Frame", SettingsPage)
+    AimHeader.Size = UDim2.new(1, 0, 0, 45)
+    AimHeader.BackgroundColor3 = Color3.fromRGB(25, 10, 10)
+    AimHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", AimHeader).CornerRadius = UDim.new(0, 10)
+    local AimHeaderStroke = Instance.new("UIStroke", AimHeader)
+    AimHeaderStroke.Color = CategoryColors.Aim
+    AimHeaderStroke.Thickness = 2
+    local AimHeaderText = Instance.new("TextLabel", AimHeader)
+    AimHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    AimHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    AimHeaderText.Text = "AIMBOT"
+    AimHeaderText.TextColor3 = CategoryColors.Aim
+    AimHeaderText.Font = Enum.Font.GothamBold
+    AimHeaderText.TextSize = 14
+    AimHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    AimHeaderText.BackgroundTransparency = 1
+
+    local AimContainer = Instance.new("Frame", SettingsPage)
+    AimContainer.Size = UDim2.new(1, 0, 0, 0)
+    AimContainer.AutomaticSize = Enum.AutomaticSize.Y
+    AimContainer.BackgroundTransparency = 1
+    local UIListAim = Instance.new("UIListLayout", AimContainer)
+    UIListAim.Padding = UDim.new(0, 10)
+
+    -- LINHA 1: Aimbot e Aimbot [Wall Check]
+    local AimRow1 = Instance.new("Frame", AimContainer)
+    AimRow1.Size = UDim2.new(1, 0, 0, 45)
+    AimRow1.BackgroundTransparency = 1
+
+    local AimbotToggle = modules.CreateToggleInRow(AimRow1, "Aimbot", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/AIMBOT/AIM_Aimbot", true, false)
+    AimbotToggle.Position = UDim2.new(0, 0, 0, 0)
+
+    local AimbotWallCheckToggle = modules.CreateToggleInRow(AimRow1, "Aimbot [Wall Check]", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/AIMBOT/AIM_AimbotWallCheck", true, false)
+    AimbotWallCheckToggle.Position = UDim2.new(0.5, 5, 0, 0)
+
+    -- LINHA 2: Auto Trigger [BETA] (full width)
+    local AimRow2 = Instance.new("Frame", AimContainer)
+    AimRow2.Size = UDim2.new(1, 0, 0, 45)
+    AimRow2.BackgroundTransparency = 1
+
+    local AutoTriggerToggle = modules.CreateToggleInRow(AimRow2, "Auto Trigger [BETA]", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/AIMBOT/AIM_AutoTrigger", true, true)
+    AutoTriggerToggle.Position = UDim2.new(0, 0, 0, 0)
+    AutoTriggerToggle.Size = UDim2.new(1, 0, 1, 0)
+
+    -- CATEGORIA UTILITIES
+    local UtilitiesHeader = Instance.new("Frame", SettingsPage)
+    UtilitiesHeader.Size = UDim2.new(1, 0, 0, 45)
+    UtilitiesHeader.BackgroundColor3 = Color3.fromRGB(15, 20, 25)
+    UtilitiesHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", UtilitiesHeader).CornerRadius = UDim.new(0, 10)
+    local UtilitiesHeaderStroke = Instance.new("UIStroke", UtilitiesHeader)
+    UtilitiesHeaderStroke.Color = CategoryColors.Utilities
+    UtilitiesHeaderStroke.Thickness = 2
+    local UtilitiesHeaderText = Instance.new("TextLabel", UtilitiesHeader)
+    UtilitiesHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    UtilitiesHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    UtilitiesHeaderText.Text = "UTILITIES"
+    UtilitiesHeaderText.TextColor3 = CategoryColors.Utilities
+    UtilitiesHeaderText.Font = Enum.Font.GothamBold
+    UtilitiesHeaderText.TextSize = 14
+    UtilitiesHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    UtilitiesHeaderText.BackgroundTransparency = 1
+
+    local UtilitiesContainer = Instance.new("Frame", SettingsPage)
+    UtilitiesContainer.Size = UDim2.new(1, 0, 0, 0)
+    UtilitiesContainer.AutomaticSize = Enum.AutomaticSize.Y
+    UtilitiesContainer.BackgroundTransparency = 1
+    local UIListUtilities = Instance.new("UIListLayout", UtilitiesContainer)
+    UIListUtilities.Padding = UDim.new(0, 10)
+
+    -- LINHA 1: Anti Flashbang
+    local UtilitiesRow1 = Instance.new("Frame", UtilitiesContainer)
+    UtilitiesRow1.Size = UDim2.new(1, 0, 0, 45)
+    UtilitiesRow1.BackgroundTransparency = 1
+
+    local AntiFlashbangToggle = modules.CreateToggleInRow(UtilitiesRow1, "Anti Flashbang", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/UTILITIES/UTIL_AntiFlashbang", false, true)
+    AntiFlashbangToggle.Position = UDim2.new(0, 0, 0, 0)
+    AntiFlashbangToggle.Size = UDim2.new(1, 0, 1, 0)
 end
 
 -- Função para criar um botão moderno com seta
@@ -1053,6 +1144,51 @@ function modules.CreateMiscPage()
     local waitingForKey = false
     local keybindConnection
     
+    local function GetKeyNameFromInput(input)
+        if input.KeyCode ~= Enum.KeyCode.Unknown then
+            local keyName = tostring(input.KeyCode):gsub("Enum.KeyCode.", "")
+            
+            local keyNameMap = {
+                ["LeftControl"] = "LControl",
+                ["RightControl"] = "RControl",
+                ["LeftShift"] = "LShift",
+                ["RightShift"] = "RShift",
+                ["LeftAlt"] = "LAlt",
+                ["RightAlt"] = "RAlt",
+                ["PageUp"] = "PgUp",
+                ["PageDown"] = "PgDown",
+                ["Escape"] = "Esc",
+                ["Return"] = "Enter",
+                ["Backquote"] = "`",
+                ["Semicolon"] = ";",
+                ["Quote"] = "'",
+                ["LeftBracket"] = "[",
+                ["RightBracket"] = "]",
+                ["Backslash"] = "\\",
+                ["Comma"] = ",",
+                ["Period"] = ".",
+                ["Slash"] = "/",
+                ["Minus"] = "-",
+                ["Equals"] = "=",
+                ["Insert"] = "Ins",
+                ["Delete"] = "Del",
+                ["Home"] = "Home",
+                ["End"] = "End",
+                ["CapsLock"] = "Caps"
+            }
+            
+            return keyNameMap[keyName] or keyName:upper()
+        elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+            return "MB1"
+        elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+            return "MB2"
+        elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+            return "MB3"
+        end
+        
+        return "NONE"
+    end
+
     local function UpdateKeyLabel()
         local keyName = GetKeyNameFromInput({KeyCode = CurrentToggleKey})
         CurrentKeyLabel.Text = "Current: [ " .. keyName .. " ]"
@@ -1077,15 +1213,13 @@ function modules.CreateMiscPage()
             if waitingForKey and not gameProcessed then
                 waitingForKey = false
                 
-                -- Capturar teclas do teclado
                 if input.KeyCode ~= Enum.KeyCode.Unknown then
                     CurrentToggleKey = input.KeyCode
                     UpdateKeyLabel()
                     modules.ShowNotification("Keybind", "Hotkey changed to " .. GetKeyNameFromInput(input), 3)
                 
-                -- Capturar botões do mouse também
                 elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    CurrentToggleKey = Enum.KeyCode.Unknown -- Usaremos uma variável especial para mouse
+                    CurrentToggleKey = Enum.KeyCode.Unknown
                     CurrentKeyLabel.Text = "Current: [ MB1 ]"
                     modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 1", 3)
                 elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -1151,8 +1285,8 @@ function modules.CreateMiscPage()
 
     -- ADICIONAR PADDING NO CONTAINER DOS TEMAS PARA DAR ESPAÇO NO BOTTOM
     local ThemePadding = Instance.new("UIPadding", ThemeButtons)
-    ThemePadding.PaddingBottom = UDim.new(0, 8)  -- Adiciona 8 pixels de espaço no bottom
-    ThemePadding.PaddingLeft = UDim.new(0, 2)    -- Pequeno ajuste lateral
+    ThemePadding.PaddingBottom = UDim.new(0, 8)
+    ThemePadding.PaddingLeft = UDim.new(0, 2)
     ThemePadding.PaddingRight = UDim.new(0, 2)
 
     local themes = {
@@ -1482,7 +1616,6 @@ function modules.CreateMiscPage()
                 local servers = data.data
                 local availableServers = {}
                 
-                -- Procura servidores com 2 ou mais jogadores
                 for _, server in ipairs(servers) do
                     if server.id ~= game.JobId and server.playing >= 2 then
                         table.insert(availableServers, server)
@@ -1518,7 +1651,6 @@ function modules.CreateMiscPage()
                 local bestEmptyServer = nil
                 local minPlayers = 999
                 
-                -- Procura o servidor com menos jogadores (exceto o atual)
                 for _, server in ipairs(servers) do
                     if server.id ~= game.JobId then
                         if server.playing < minPlayers then

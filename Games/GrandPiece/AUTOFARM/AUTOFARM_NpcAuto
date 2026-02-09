@@ -1,0 +1,124 @@
+-- Configurações de Controle
+_G.AutoFarm = not _G.AutoFarm -- Toggle
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Configurações
+local moveSpeed = 20     
+local hitHeight = 7.4    
+local targetNPCName = "Bandit"
+local meleeName = "Melee"
+
+local lastGroundTouch = tick()
+local targetNPC = nil
+local lockRotation = nil -- Para travar a rotação e evitar giros/crash
+
+-- Limpeza total de forças físicas para evitar o crash
+local function removePhysics()
+    for _, v in pairs(rootPart:GetChildren()) do
+        if v:IsA("BodyVelocity") or v:IsA("BodyGyro") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") then
+            v:Destroy()
+        end
+    end
+end
+
+removePhysics()
+
+-- Função para localizar alvo
+local function getTarget()
+    local closest = nil
+    local dist = math.huge
+    local npcs = workspace:FindFirstChild("NPCs")
+    if npcs then
+        for _, v in pairs(npcs:GetChildren()) do
+            if v.Name == targetNPCName and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+                local d = (rootPart.Position - v.HumanoidRootPart.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    closest = v
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- LOOP 1: POSICIONAMENTO (CFRAME PURO - SEM FÍSICA)
+task.spawn(function()
+    print("AutoFarm Status: " .. tostring(_G.AutoFarm))
+    
+    -- Desativa interferências do Humanoid
+    humanoid.AutoRotate = false
+    lockRotation = rootPart.CFrame.Rotation -- Salva a rotação atual pra sempre
+    
+    while _G.AutoFarm do
+        targetNPC = getTarget()
+        
+        -- Garante que o boneco não caia nem entre em ragdoll sem usar estados pesados
+        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+        rootPart.Velocity = Vector3.new(0,0,0)
+        rootPart.RotVelocity = Vector3.new(0,0,0)
+
+        if targetNPC and targetNPC:FindFirstChild("HumanoidRootPart") then
+            local npcRoot = targetNPC.HumanoidRootPart
+            local distance = (rootPart.Position - npcRoot.Position).Magnitude
+
+            if distance > 5 then
+                -- ESTADO: VIAJANDO
+                local targetY = npcRoot.Position.Y + hitHeight
+                
+                -- Lógica de solo APENAS viajando
+                if tick() - lastGroundTouch > 5 then
+                    targetY = npcRoot.Position.Y
+                    if math.abs(rootPart.Position.Y - npcRoot.Position.Y) < 1.5 then
+                        lastGroundTouch = tick()
+                    end
+                end
+
+                local direction = (Vector3.new(npcRoot.Position.X, targetY, npcRoot.Position.Z) - rootPart.Position).Unit
+                -- Move mantendo a rotação travada (evita o giro "pião")
+                rootPart.CFrame = CFrame.new(rootPart.Position + (direction * moveSpeed * 0.015)) * lockRotation
+            else
+                -- ESTADO: FARMANDO (TOTALMENTE ESTÁTICO)
+                lastGroundTouch = tick() -- Reseta timer de solo no farm
+                rootPart.CFrame = CFrame.new(npcRoot.Position.X, npcRoot.Position.Y + hitHeight, npcRoot.Position.Z) * lockRotation
+            end
+        else
+            lastGroundTouch = tick()
+            -- Se não tem NPC, flutua no lugar
+            rootPart.CFrame = CFrame.new(rootPart.Position) * lockRotation
+        end
+        
+        -- Heartbeat é mais seguro contra crashes que o RenderStepped para CFrame
+        RunService.Heartbeat:Wait()
+    end
+    
+    -- Restaura o boneco ao desligar
+    humanoid.AutoRotate = true
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+    print("AutoFarm Desativado.")
+end)
+
+-- LOOP 2: ATAQUE (INDEPENDENTE)
+task.spawn(function()
+    while _G.AutoFarm do
+        if targetNPC and targetNPC:FindFirstChild("Humanoid") and (rootPart.Position - targetNPC.HumanoidRootPart.Position).Magnitude <= 12 then
+            local tool = character:FindFirstChild(meleeName) or player.Backpack:FindFirstChild(meleeName)
+            if tool then
+                if tool.Parent ~= character then
+                    humanoid:EquipTool(tool)
+                    task.wait(0.1)
+                end
+                tool:Activate()
+            end
+            task.wait(0.6 + (math.random() * 0.2))
+        else
+            task.wait(0.5)
+        end
+    end
+end)

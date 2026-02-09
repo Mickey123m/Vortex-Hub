@@ -1,0 +1,135 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+_G.MinPerSec = 10000000
+
+local function executeAutoFarm()
+	local player = Players.LocalPlayer
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	
+	if not root then return end
+
+	local upgrades = player:FindFirstChild("Upgrades")
+	local carryLimit = upgrades and upgrades:FindFirstChild("Carry") and upgrades.Carry.Value or 1
+	
+	local gameFolder = Workspace:FindFirstChild("GameFolder")
+	local brainrots = gameFolder and gameFolder:FindFirstChild("Brainrots")
+	local plotsFolder = gameFolder and gameFolder:FindFirstChild("Plots")
+	
+	local collectedCount = 0
+	local ignoredItems = {}
+
+	local function isLavaInDangerZone()
+		local overlapParams = OverlapParams.new()
+		overlapParams.FilterDescendantsInstances = {character}
+		overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+		
+		local checkVolume = Vector3.new(16, 16, 16)
+		local parts = Workspace:GetPartBoundsInBox(root.CFrame * CFrame.new(0, -6, 0), checkVolume, overlapParams)
+		
+		for _, part in ipairs(parts) do
+			local n = part.Name:lower()
+			if n:find("lava") or part:GetAttribute("Damage") or part.Material == Enum.Material.Neon or part.Color == Color3.new(1, 0, 0) then
+				return true
+			end
+		end
+		return false
+	end
+
+	local function getBestAvailableItem()
+		local bestItem = nil
+		local highestVal = -1
+		local closestDist = math.huge
+		if not brainrots then return nil end
+		
+		for _, folder in ipairs(brainrots:GetChildren()) do
+			for _, model in ipairs(folder:GetChildren()) do
+				if not ignoredItems[model] and model.Parent then
+					local val = tonumber(model:GetAttribute("PerSec")) or 0
+					local part = model:IsA("BasePart") and model or model:FindFirstChildWhichIsA("BasePart", true)
+					
+					if part then
+						local dist = (root.Position - part.Position).Magnitude
+						if val >= tonumber(_G.MinPerSec) then
+							if dist < closestDist then
+								closestDist = dist
+								bestItem = model
+							end
+						elseif val > highestVal and val > 0 then
+							highestVal = val
+							bestItem = model
+						end
+					end
+				end
+			end
+		end
+		return bestItem
+	end
+
+	while collectedCount < carryLimit do
+		local targetModel = getBestAvailableItem()
+		if not targetModel then break end
+
+		local targetPart = targetModel:IsA("BasePart") and targetModel or targetModel:FindFirstChildWhichIsA("BasePart", true)
+		if targetPart then
+			local currentHeight = 60
+			
+			while targetModel.Parent do
+				root.Velocity = Vector3.new(0, 0, 0)
+				
+				if isLavaInDangerZone() then
+					currentHeight = currentHeight + 8
+					if currentHeight > 120 then currentHeight = 120 end
+					root.CFrame = targetPart.CFrame * CFrame.new(0, currentHeight, 0)
+					task.wait(0.01)
+				elseif currentHeight > 3.5 then
+					currentHeight = currentHeight - 1.5
+					root.CFrame = targetPart.CFrame * CFrame.new(0, currentHeight, 0)
+					task.wait(0.01)
+				else
+					local prompt = targetModel:FindFirstChildOfClass("ProximityPrompt") or targetModel:FindFirstChildWhichIsA("ProximityPrompt", true)
+					
+					if prompt then
+						prompt:InputHoldBegin()
+						local holdTime = 0
+						local aborted = false
+						
+						while holdTime < (prompt.HoldDuration + 0.1) do
+							if isLavaInDangerZone() then
+								prompt:InputHoldEnd()
+								aborted = true
+								currentHeight = 40
+								break
+							end
+							task.wait(0.05)
+							holdTime = holdTime + 0.05
+							root.CFrame = targetPart.CFrame * CFrame.new(0, 3.5, 0)
+						end
+						
+						if not aborted then
+							prompt:InputHoldEnd()
+							collectedCount = collectedCount + 1
+							break
+						end
+					else
+						task.wait(0.1)
+					end
+				end
+			end
+		end
+		ignoredItems[targetModel] = true
+		task.wait(0.1)
+	end
+
+	local playerPlotAttr = player:GetAttribute("Plot")
+	if plotsFolder and playerPlotAttr then
+		local myPlot = plotsFolder:FindFirstChild(tostring(playerPlotAttr))
+		local plotPart = myPlot and (myPlot:IsA("BasePart") and myPlot or myPlot:FindFirstChildWhichIsA("BasePart", true))
+		if plotPart then
+			root.CFrame = plotPart.CFrame * CFrame.new(0, 5, 0)
+		end
+	end
+end
+
+executeAutoFarm()

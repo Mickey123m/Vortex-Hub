@@ -1,0 +1,43 @@
+-- SCRIPT DE AUTO STAT (STRENGTH)
+local statName = "Strength" -- Nome do atributo conforme a imagem
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Localização do Botão conforme sua imagem: Statistics -> Main -> Stats -> Strength -> Add
+local statsPath = playerGui:WaitForChild("Statistics").Main.Stats:WaitForChild(statName)
+local addButton = statsPath:WaitForChild("Add")
+
+_G.AutoStatActive = true -- Defina como false para parar
+
+task.spawn(function()
+    print("Auto Stat em Strength ATIVADO")
+    while _G.AutoStatActive do
+        -- Verifica se o botão está visível (geralmente só aparece quando tem pontos)
+        -- Ou simplesmente tenta clicar se houver pontos disponíveis
+        pcall(function()
+            -- Tenta simular o clique no botão da UI
+            if addButton:IsA("TextButton") or addButton:IsA("ImageButton") then
+                -- Dispara o sinal de clique do botão
+                for _, connection in pairs(getconnections(addButton.MouseButton1Click)) do
+                    connection:Fire()
+                end
+                -- Alternativa caso o de cima não funcione no seu executor:
+                -- addButton:Activate() 
+            end
+
+            -- Busca o RemoteEvent de Stats para ser mais garantido (Bypass de UI)
+            local remote = game:GetService("ReplicatedStorage"):FindFirstChild("Events") and 
+                           game:GetService("ReplicatedStorage").Events:FindFirstChild("Stats") or
+                           game:GetService("ReplicatedStorage"):FindFirstChild("StatUpdate")
+            
+            if remote and remote:IsA("RemoteEvent") then
+                remote:FireServer(statName)
+            elseif remote and remote:IsA("RemoteFunction") then
+                remote:InvokeServer(statName)
+            end
+        end)
+        
+        task.wait(0.5) -- Velocidade para colocar os pontos
+    end
+    print("Auto Stat DESATIVADO")
+end)

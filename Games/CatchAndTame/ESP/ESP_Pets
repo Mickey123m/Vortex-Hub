@@ -1,0 +1,94 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+local function ClearAllESP()
+	local PetFolder = Workspace:FindFirstChild("RoamingPets") and Workspace.RoamingPets:FindFirstChild("Pets")
+	if PetFolder then
+		for _, pet in ipairs(PetFolder:GetChildren()) do
+			local esp = pet:FindFirstChild("PetESP")
+			local highlight = pet:FindFirstChild("PetHighlight")
+			if esp then esp:Destroy() end
+			if highlight then highlight:Destroy() end
+		end
+	end
+end
+
+if _G.PetESPActive then
+	_G.PetESPActive = false
+	if _G.PetConnection then
+		_G.PetConnection:Disconnect()
+		_G.PetConnection = nil
+	end
+	ClearAllESP()
+	return
+end
+
+_G.PetESPActive = true
+
+local PetFolder = Workspace:WaitForChild("RoamingPets"):WaitForChild("Pets")
+
+local RarityColors = {
+	Common = Color3.fromRGB(164, 164, 164),
+	Rare = Color3.fromRGB(85, 255, 127),
+	Epic = Color3.fromRGB(0, 170, 255),
+	Legendary = Color3.fromRGB(255, 170, 0),
+	Mythical = Color3.fromRGB(255, 0, 255),
+	Exclusive = Color3.fromRGB(0, 255, 255),
+	Secret = Color3.fromRGB(255, 0, 0)
+}
+
+local function CreateESP(pet)
+	if not pet:IsA("Model") or pet:FindFirstChild("PetESP") then return end
+
+	local rarity = pet:GetAttribute("Rarity") or "Common"
+	local strength = pet:GetAttribute("Strength") or 0
+	local color = RarityColors[rarity] or Color3.new(1, 1, 1)
+
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "PetESP"
+	billboard.Adornee = pet
+	billboard.Size = UDim2.new(0, 40, 0, 20)
+	billboard.StudsOffset = Vector3.new(0, 2, 0)
+	billboard.AlwaysOnTop = true
+	billboard.ResetOnSpawn = false
+	billboard.Parent = pet
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Size = UDim2.new(1, 0, 1, 0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.TextColor3 = color
+	textLabel.TextStrokeTransparency = 0.5
+	textLabel.TextSize = 10
+	textLabel.Text = string.format("%s\n%s", rarity, tostring(strength))
+	textLabel.Parent = billboard
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "PetHighlight"
+	highlight.Adornee = pet
+	highlight.FillColor = color
+	highlight.FillTransparency = 0.7
+	highlight.OutlineTransparency = 0.3
+	highlight.Parent = pet
+end
+
+for _, pet in ipairs(PetFolder:GetChildren()) do
+	CreateESP(pet)
+end
+
+_G.PetConnection = PetFolder.ChildAdded:Connect(function(child)
+	task.wait(0.1)
+	if _G.PetESPActive then
+		CreateESP(child)
+	end
+end)
+
+task.spawn(function()
+	while _G.PetESPActive do
+		for _, pet in ipairs(PetFolder:GetChildren()) do
+			if not pet:FindFirstChild("PetESP") then
+				CreateESP(pet)
+			end
+		end
+		task.wait(3)
+	end
+end)

@@ -1,0 +1,826 @@
+-- Verificar se o hub já está ABERTO no momento
+if _G.VORTEX_HUB_ABERTO then
+    return -- Não permite abrir se já está aberto
+end
+
+_G.VORTEX_HUB_ABERTO = true -- Marca como aberto
+
+-- Função para marcar como fechado (será chamada quando fechar)
+local function marcarComoFechado()
+    _G.VORTEX_HUB_ABERTO = false
+end
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Cores do tema
+local PurpleTheme = Color3.fromHex("#8639F1")
+local DarkBackground = Color3.fromRGB(15, 15, 20)
+local HeaderSidebarColor = Color3.fromRGB(20, 20, 25)
+local CardColor = Color3.fromRGB(25, 25, 35)
+local TextWhite = Color3.new(1, 1, 1)
+local TextGray = Color3.fromRGB(180, 180, 180)
+
+local CurrentTheme = PurpleTheme
+local CurrentThemeHex = "#8639F1"
+
+-- Lista de IDs de jogos suportados
+local SUPPORTED_GAME_IDS = {
+    -- SHARP --
+    113506071094099,
+    93853815957083,
+    105834187369271,
+    102085041605973,
+
+    -- VIOLENCE DISTRICT --
+
+    93978595733734,
+
+    -- Flick --
+
+    136801880565837,
+
+    -- Forsaken --
+
+    83645629621104
+}
+
+-- Função para verificar se o jogo atual é suportado
+local function isGameSupported()
+    local currentPlaceId = game.PlaceId
+    for _, supportedId in ipairs(SUPPORTED_GAME_IDS) do
+        if currentPlaceId == supportedId then
+            return true
+        end
+    end
+    return false
+end
+
+-- VERIFICAÇÃO DE JOGO SUPORTADO NO INÍCIO
+if not isGameSupported() then
+    -- Mostrar notificação imediatamente
+    local NotifScreenGui = Instance.new("ScreenGui")
+    NotifScreenGui.Name = "VortexUnsupportedGame"
+    NotifScreenGui.Parent = game.CoreGui
+    NotifScreenGui.ResetOnSpawn = false
+    NotifScreenGui.DisplayOrder = 999999999
+    NotifScreenGui.IgnoreGuiInset = true
+    
+    local NotifFrame = Instance.new("Frame")
+    NotifFrame.Size = UDim2.new(0, 300, 0, 75)
+    NotifFrame.Position = UDim2.new(1, 40, 1, -100)
+    NotifFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    NotifFrame.BorderSizePixel = 0
+    NotifFrame.Parent = NotifScreenGui
+    
+    Instance.new("UICorner", NotifFrame).CornerRadius = UDim.new(0, 12)
+    
+    local Stroke = Instance.new("UIStroke", NotifFrame)
+    Stroke.Color = PurpleTheme
+    Stroke.Thickness = 2
+    Stroke.Transparency = 0.3
+
+    local NotifLogo = Instance.new("TextLabel", NotifFrame)
+    NotifLogo.Size = UDim2.new(0, 35, 0, 35)
+    NotifLogo.Position = UDim2.new(0, 12, 0.5, -17)
+    NotifLogo.BackgroundColor3 = PurpleTheme
+    NotifLogo.Text = "V"
+    NotifLogo.TextColor3 = TextWhite
+    NotifLogo.Font = Enum.Font.GothamBold
+    NotifLogo.TextSize = 20
+    Instance.new("UICorner", NotifLogo).CornerRadius = UDim.new(0, 8)
+
+    local TitleLabel = Instance.new("TextLabel", NotifFrame)
+    TitleLabel.Size = UDim2.new(1, -65, 0, 20)
+    TitleLabel.Position = UDim2.new(0, 58, 0, 15)
+    TitleLabel.Text = "UNSUPPORTED GAME"
+    TitleLabel.TextColor3 = PurpleTheme
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.BackgroundTransparency = 1
+
+    local ContentLabel = Instance.new("TextLabel", NotifFrame)
+    ContentLabel.Size = UDim2.new(1, -65, 0, 30)
+    ContentLabel.Position = UDim2.new(0, 58, 0, 33)
+    ContentLabel.Text = "This game is not supported by Vortex Hub"
+    ContentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+    ContentLabel.Font = Enum.Font.GothamMedium
+    ContentLabel.TextSize = 12
+    ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ContentLabel.TextWrapped = true
+    ContentLabel.BackgroundTransparency = 1
+
+    local ProgressBg = Instance.new("Frame", NotifFrame)
+    ProgressBg.Size = UDim2.new(1, -20, 0, 3)
+    ProgressBg.Position = UDim2.new(0, 10, 1, -8)
+    ProgressBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    ProgressBg.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBg)
+
+    local ProgressBar = Instance.new("Frame", ProgressBg)
+    ProgressBar.Size = UDim2.new(1, 0, 1, 0)
+    ProgressBar.BackgroundColor3 = PurpleTheme
+    ProgressBar.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBar)
+
+    NotifFrame:TweenPosition(UDim2.new(1, -320, 1, -100), "Out", "Back", 0.6, true)
+    TweenService:Create(ProgressBar, TweenInfo.new(6, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+    
+    warn("Jogo não suportado: " .. game.PlaceId)
+    _G.VORTEX_HUB_ABERTO = false
+    task.wait(6)
+    NotifFrame:TweenPosition(UDim2.new(1, 40, 1, -100), "In", "Quart", 0.5, true)
+    task.wait(0.5)
+    NotifScreenGui:Destroy()
+    return -- Encerra o script completamente
+end
+
+-- Carregando a SDK correta conforme o exemplo fornecido
+local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
+Junkie.service = "Vortex-Hub-Key-linkvertise"
+Junkie.identifier = "1007820"
+Junkie.provider = "Vortex-Hub-Key-linkvertise"
+
+-- Configurar variáveis globais
+getgenv().SCRIPT_KEY = nil
+getgenv().UI_CLOSED = false
+
+-- Função para aplicar glow (simplificada sem gradiente)
+local function ApplyGlow(frame, color)
+    local Stroke = Instance.new("UIStroke", frame)
+    Stroke.Color = color
+    Stroke.Thickness = 2
+    Stroke.Transparency = 0.3
+    Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    Stroke.LineJoinMode = Enum.LineJoinMode.Round
+    
+    return Stroke
+end
+
+-- Função para exibir notificação personalizada
+local function ShowNotification(title, text, duration)
+    duration = duration or 4
+    
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "VortexKeyNotifications"
+    screenGui.Parent = game.CoreGui
+    screenGui.ResetOnSpawn = false
+    screenGui.DisplayOrder = 999999999
+    screenGui.IgnoreGuiInset = true
+    
+    local NotifFrame = Instance.new("Frame")
+    NotifFrame.Size = UDim2.new(0, 300, 0, 75)
+    NotifFrame.Position = UDim2.new(1, 40, 1, -100)
+    NotifFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+    NotifFrame.BorderSizePixel = 0
+    NotifFrame.Parent = screenGui
+    
+    local Corner = Instance.new("UICorner", NotifFrame)
+    Corner.CornerRadius = UDim.new(0, 12)
+    
+    local Stroke = Instance.new("UIStroke", NotifFrame)
+    Stroke.Color = CurrentTheme
+    Stroke.Thickness = 2
+    Stroke.Transparency = 0.3
+
+    local NotifLogo = Instance.new("TextLabel", NotifFrame)
+    NotifLogo.Size = UDim2.new(0, 35, 0, 35)
+    NotifLogo.Position = UDim2.new(0, 12, 0.5, -17)
+    NotifLogo.BackgroundColor3 = CurrentTheme
+    NotifLogo.Text = "V"
+    NotifLogo.TextColor3 = TextWhite
+    NotifLogo.Font = Enum.Font.GothamBold
+    NotifLogo.TextSize = 20
+    Instance.new("UICorner", NotifLogo).CornerRadius = UDim.new(0, 8)
+
+    local TitleLabel = Instance.new("TextLabel", NotifFrame)
+    TitleLabel.Size = UDim2.new(1, -65, 0, 20)
+    TitleLabel.Position = UDim2.new(0, 58, 0, 15)
+    TitleLabel.Text = title:upper()
+    TitleLabel.TextColor3 = CurrentTheme
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextSize = 14
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.BackgroundTransparency = 1
+
+    local ContentLabel = Instance.new("TextLabel", NotifFrame)
+    ContentLabel.Size = UDim2.new(1, -65, 0, 30)
+    ContentLabel.Position = UDim2.new(0, 58, 0, 33)
+    ContentLabel.Text = text
+    ContentLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+    ContentLabel.Font = Enum.Font.GothamMedium
+    ContentLabel.TextSize = 12
+    ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ContentLabel.TextWrapped = true
+    ContentLabel.BackgroundTransparency = 1
+
+    local ProgressBg = Instance.new("Frame", NotifFrame)
+    ProgressBg.Size = UDim2.new(1, -20, 0, 3)
+    ProgressBg.Position = UDim2.new(0, 10, 1, -8)
+    ProgressBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    ProgressBg.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBg)
+
+    local ProgressBar = Instance.new("Frame", ProgressBg)
+    ProgressBar.Size = UDim2.new(1, 0, 1, 0)
+    ProgressBar.BackgroundColor3 = CurrentTheme
+    ProgressBar.BorderSizePixel = 0
+    Instance.new("UICorner", ProgressBar)
+
+    NotifFrame:TweenPosition(UDim2.new(1, -320, 1, -100), "Out", "Back", 0.6, true)
+    TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+    
+    task.wait(duration)
+    NotifFrame:TweenPosition(UDim2.new(1, 40, 1, -100), "In", "Quart", 0.5, true)
+    task.wait(0.5)
+    screenGui:Destroy()
+end
+
+-- Função para carregar o hub principal específico para cada jogo
+local function loadMainHub()
+    local currentPlaceId = game.PlaceId
+    
+    -- Mapeamento de IDs para links
+    local gameLoadstrings = {
+        -- SHARP --
+        [113506071094099] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/NewHubVortex",
+        [93853815957083] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/NewHubVortex",
+        [105834187369271] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/NewHubVortex",
+        [102085041605973] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/NewHubVortex",
+
+        -- VIOLENCE DISTRICT --
+
+        [93978595733734] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Hubs/ViolenceDistrict/ViolenceDistrictHub",
+
+        -- Flick --
+
+        [136801880565837] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Hubs/Flick/FlickHub",
+
+        -- Forsaken --
+
+        [83645629621104] = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Hubs/Forsaken/ForsakenHub"
+    }
+    
+    local scriptUrl = gameLoadstrings[currentPlaceId]
+    
+    if scriptUrl and scriptUrl ~= "" then
+        local success, err = pcall(function()
+            loadstring(game:HttpGet(scriptUrl))()
+        end)
+        
+        if not success then
+            warn("Erro ao carregar o hub principal para o jogo " .. currentPlaceId .. ":", err)
+            ShowNotification("Error", "Failed to load hub for this game", 3)
+        else
+            ShowNotification("Vortex Hub", "Successfully loaded!", 3)
+        end
+    else
+        warn("Jogo " .. currentPlaceId .. " é suportado mas não tem loadstring configurada.")
+    end
+end
+
+-- Função principal do script
+local function main()
+    loadMainHub()
+end
+
+-- Funções de Persistência de Chave e Timer
+local function hasFileSystemSupport()
+    local hasWritefile = pcall(function() return type(writefile) == "function" end)
+    local hasReadfile = pcall(function() return type(readfile) == "function" end)
+    local hasIsfile = pcall(function() return type(isfile) == "function" end)
+    return hasWritefile and hasReadfile and hasIsfile
+end
+
+local fileSystemSupported = hasFileSystemSupport()
+
+local function saveVerifiedKey(key)
+    if not fileSystemSupported then return false end
+    pcall(function() writefile("vortex_key.txt", key) end)
+end
+
+local function loadVerifiedKey()
+    if not fileSystemSupported then return nil end
+    local ok, content = pcall(function()
+        if isfile("vortex_key.txt") then return readfile("vortex_key.txt") end
+    end)
+    return ok and content or nil
+end
+
+local function clearSavedKey()
+    if fileSystemSupported and isfile("vortex_key.txt") then
+        pcall(function() delfile("vortex_key.txt") end)
+    end
+end
+
+-- Funções do Timer Persistente
+local function saveTimer()
+    if not fileSystemSupported then return end
+    pcall(function() writefile("vortex_timer.txt", tostring(os.time())) end)
+end
+
+local function getRemainingCooldown()
+    if not fileSystemSupported or not isfile("vortex_timer.txt") then return 0 end
+    local ok, lastTime = pcall(function() return tonumber(readfile("vortex_timer.txt")) end)
+    if ok and lastTime then
+        local diff = os.time() - lastTime
+        local remaining = 300 - diff
+        return remaining > 0 and remaining or 0
+    end
+    return 0
+end
+
+-- Vortex Hub Key System GUI
+local KeySystem = {
+    Validated = false,
+    Key = nil,
+    Version = "v2.8.0"
+}
+
+-- Função de shake
+local function ShakeFrame(frame)
+    local originalPos = frame.Position
+    local shakeTime = 0.05
+    local intensity = 5
+    task.spawn(function()
+        for i = 1, 6 do
+            local targetPos = originalPos + UDim2.new(0, (i % 2 == 0 and intensity or -intensity), 0, 0)
+            TweenService:Create(frame, TweenInfo.new(shakeTime, Enum.EasingStyle.Sine), {Position = targetPos}):Play()
+            task.wait(shakeTime)
+        end
+        TweenService:Create(frame, TweenInfo.new(shakeTime, Enum.EasingStyle.Quad), {Position = originalPos}):Play()
+    end)
+end
+
+-- GUI Creation
+function KeySystem:CreateKeyGUI()
+    -- Verificar se já existe uma GUI de key ativa
+    local existingGui = game.CoreGui:FindFirstChild("VortexKeySystem") or LocalPlayer.PlayerGui:FindFirstChild("VortexKeySystem")
+    if existingGui then
+        existingGui:Destroy()
+    end
+    
+    -- Criar a GUI principal
+    local KeyScreenGui = Instance.new("ScreenGui")
+    KeyScreenGui.Name = "VortexKeySystem"
+    KeyScreenGui.ResetOnSpawn = false
+    KeyScreenGui.DisplayOrder = 999999998
+    KeyScreenGui.IgnoreGuiInset = true
+    KeyScreenGui.Parent = game.CoreGui
+    
+    -- Background overlay
+    local BackgroundOverlay = Instance.new("Frame")
+    BackgroundOverlay.Name = "Overlay"
+    BackgroundOverlay.Size = UDim2.new(1, 0, 1, 0)
+    BackgroundOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    BackgroundOverlay.BackgroundTransparency = 0.8
+    BackgroundOverlay.BorderSizePixel = 0
+    BackgroundOverlay.Parent = KeyScreenGui
+    
+    -- Main Frame
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 450, 0, 500)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.BackgroundColor3 = DarkBackground
+    MainFrame.BackgroundTransparency = 0.05
+    MainFrame.Parent = KeyScreenGui
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 16)
+
+    local MainStroke = ApplyGlow(MainFrame, CurrentTheme)
+
+    -- Top Bar
+    local TopBar = Instance.new("Frame", MainFrame)
+    TopBar.Size = UDim2.new(1, 0, 0, 45)
+    TopBar.BackgroundColor3 = HeaderSidebarColor
+    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 16)
+
+    local TopOverlap = Instance.new("Frame", TopBar)
+    TopOverlap.Size = UDim2.new(1, 0, 0, 10)
+    TopOverlap.Position = UDim2.new(0, 0, 1, -10)
+    TopOverlap.BackgroundColor3 = HeaderSidebarColor
+    TopOverlap.BorderSizePixel = 0
+
+    local TitleContainer = Instance.new("Frame", TopBar)
+    TitleContainer.Size = UDim2.new(0.8, 0, 1, 0)
+    TitleContainer.Position = UDim2.new(0, 20, 0, 0)
+    TitleContainer.BackgroundTransparency = 1
+
+    local LogoV = Instance.new("TextLabel", TitleContainer)
+    LogoV.Size = UDim2.new(0, 25, 0, 25)
+    LogoV.Position = UDim2.new(0, 0, 0.5, -12)
+    LogoV.BackgroundColor3 = CurrentTheme
+    LogoV.Text = "V"
+    LogoV.TextColor3 = TextWhite
+    LogoV.Font = Enum.Font.GothamBold
+    LogoV.TextSize = 16
+    Instance.new("UICorner", LogoV).CornerRadius = UDim.new(0, 6)
+
+    local TitleText = Instance.new("TextLabel", TitleContainer)
+    TitleText.Text = "VORTEX HUB"
+    TitleText.Font = Enum.Font.GothamBold
+    TitleText.TextColor3 = CurrentTheme
+    TitleText.TextSize = 16
+    TitleText.TextXAlignment = Enum.TextXAlignment.Left
+    TitleText.Position = UDim2.new(0, 35, 0, 0)
+    TitleText.Size = UDim2.new(0, 105, 1, 0)
+    TitleText.BackgroundTransparency = 1
+
+    local SloganText = Instance.new("TextLabel", TitleContainer)
+    SloganText.Text = "Key System"
+    SloganText.Font = Enum.Font.GothamMedium
+    SloganText.TextColor3 = TextGray
+    SloganText.TextSize = 13
+    SloganText.TextXAlignment = Enum.TextXAlignment.Left
+    SloganText.Position = UDim2.new(0, 142, 0, 0)
+    SloganText.Size = UDim2.new(0, 200, 1, 0)
+    SloganText.BackgroundTransparency = 1
+
+    -- Close Button
+    local CloseBtn = Instance.new("TextButton", TopBar)
+    CloseBtn.Text = "X"
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextColor3 = TextWhite
+    CloseBtn.TextSize = 18
+    CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+    CloseBtn.Position = UDim2.new(1, -10, 0.5, 0)
+    CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
+    CloseBtn.BackgroundTransparency = 1
+    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
+
+    CloseBtn.MouseEnter:Connect(function() 
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.2, 
+            BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        }):Play() 
+    end)
+    
+    CloseBtn.MouseLeave:Connect(function() 
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2), {
+            BackgroundTransparency = 1
+        }):Play() 
+    end)
+
+    -- Content Area
+    local Content = Instance.new("Frame", MainFrame)
+    Content.Size = UDim2.new(1, -40, 1, -85)
+    Content.Position = UDim2.new(0, 20, 0, 65)
+    Content.BackgroundTransparency = 1
+    
+    local ContentLayout = Instance.new("UIListLayout", Content)
+    ContentLayout.Padding = UDim.new(0, 20)
+    ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    -- Icon Frame com imagem de chave do Roblox
+    local IconFrame = Instance.new("Frame", Content)
+    IconFrame.Size = UDim2.new(0, 100, 0, 100)
+    IconFrame.BackgroundColor3 = CardColor
+    Instance.new("UICorner", IconFrame).CornerRadius = UDim.new(0, 20)
+    ApplyGlow(IconFrame, CurrentTheme)
+
+    -- Usando um AssetId de imagem de chave do Roblox
+    local KeyImage = Instance.new("ImageLabel", IconFrame)
+    KeyImage.Size = UDim2.new(0.7, 0, 0.7, 0)
+    KeyImage.Position = UDim2.new(0.15, 0, 0.15, 0)
+    KeyImage.BackgroundTransparency = 1
+    KeyImage.Image = "rbxassetid://114361034513688" -- AssetId de uma imagem de chave
+    KeyImage.ImageColor3 = CurrentTheme
+
+    -- Welcome Text
+    local WelcomeText = Instance.new("TextLabel", Content)
+    WelcomeText.Text = "VORTEX HUB ACCESS"
+    WelcomeText.Size = UDim2.new(1, 0, 0, 30)
+    WelcomeText.Font = Enum.Font.GothamBold
+    WelcomeText.TextSize = 22
+    WelcomeText.TextColor3 = TextWhite
+    WelcomeText.BackgroundTransparency = 1
+    WelcomeText.TextXAlignment = Enum.TextXAlignment.Center
+
+    local SubText = Instance.new("TextLabel", Content)
+    SubText.Text = "Enter your license key to continue"
+    SubText.Size = UDim2.new(1, 0, 0, 20)
+    SubText.Font = Enum.Font.GothamMedium
+    SubText.TextSize = 14
+    SubText.TextColor3 = TextGray
+    SubText.BackgroundTransparency = 1
+    SubText.TextXAlignment = Enum.TextXAlignment.Center
+
+    -- Input Frame
+    local InputContainer = Instance.new("Frame", Content)
+    InputContainer.Size = UDim2.new(1, 0, 0, 70)
+    InputContainer.BackgroundTransparency = 1
+
+    local InputFrame = Instance.new("Frame", InputContainer)
+    InputFrame.Size = UDim2.new(1, 0, 0, 50)
+    InputFrame.BackgroundColor3 = CardColor
+    InputFrame.BackgroundTransparency = 0.1
+    Instance.new("UICorner", InputFrame).CornerRadius = UDim.new(0, 10)
+    local InputStroke = ApplyGlow(InputFrame, CurrentTheme)
+
+    local KeyInput = Instance.new("TextBox", InputFrame)
+    KeyInput.Size = UDim2.new(1, -20, 1, 0)
+    KeyInput.Position = UDim2.new(0, 10, 0, 0)
+    KeyInput.BackgroundTransparency = 1
+    KeyInput.PlaceholderText = "Enter your license key..."
+    KeyInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
+    KeyInput.Text = ""
+    KeyInput.Font = Enum.Font.Gotham
+    KeyInput.TextSize = 16
+    KeyInput.TextColor3 = TextWhite
+    KeyInput.TextXAlignment = Enum.TextXAlignment.Center
+    KeyInput.ClearTextOnFocus = false
+
+    -- Botão de Validar
+    local ValidateButton = Instance.new("TextButton", Content)
+    ValidateButton.Size = UDim2.new(1, 0, 0, 50)
+    ValidateButton.BackgroundColor3 = CurrentTheme
+    ValidateButton.Text = "VALIDATE KEY"
+    ValidateButton.Font = Enum.Font.GothamBold
+    ValidateButton.TextSize = 16
+    ValidateButton.TextColor3 = TextWhite
+    ValidateButton.AutoButtonColor = false
+    Instance.new("UICorner", ValidateButton).CornerRadius = UDim.new(0, 10)
+    ApplyGlow(ValidateButton, CurrentTheme)
+
+    -- Botão de Copiar Link
+    local GetKeyButton = Instance.new("TextButton", Content)
+    GetKeyButton.Size = UDim2.new(1, 0, 0, 45)
+    GetKeyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    GetKeyButton.Text = "COPY KEY LINK"
+    GetKeyButton.Font = Enum.Font.GothamMedium
+    GetKeyButton.TextSize = 14
+    GetKeyButton.TextColor3 = TextWhite
+    GetKeyButton.AutoButtonColor = false
+    Instance.new("UICorner", GetKeyButton).CornerRadius = UDim.new(0, 10)
+    ApplyGlow(GetKeyButton, Color3.fromRGB(50, 100, 200))
+
+    -- Função para fechar a GUI
+    local function CloseGUI()
+        TweenService:Create(BackgroundOverlay, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1
+        }):Play()
+        
+        task.wait(0.3)
+        KeyScreenGui:Destroy()
+        getgenv().UI_CLOSED = true
+        
+        -- Marca como fechado para permitir reexecução
+        marcarComoFechado()
+    end
+
+    CloseBtn.MouseButton1Click:Connect(CloseGUI)
+
+    -- Animação de entrada
+    task.spawn(function()
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        MainFrame.BackgroundTransparency = 1
+        
+        TweenService:Create(BackgroundOverlay, TweenInfo.new(0.4), {BackgroundTransparency = 0.8}):Play()
+        TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 450, 0, 500),
+            BackgroundTransparency = 0.05
+        }):Play()
+    end)
+
+    -- Efeitos hover nos botões
+    ValidateButton.MouseEnter:Connect(function()
+        TweenService:Create(ValidateButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(158, 63, 246)}):Play()
+    end)
+    
+    ValidateButton.MouseLeave:Connect(function()
+        TweenService:Create(ValidateButton, TweenInfo.new(0.2), {BackgroundColor3 = CurrentTheme}):Play()
+    end)
+
+    GetKeyButton.MouseEnter:Connect(function()
+        TweenService:Create(GetKeyButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 120, 220)}):Play()
+    end)
+    
+    GetKeyButton.MouseLeave:Connect(function()
+        TweenService:Create(GetKeyButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 50)}):Play()
+    end)
+
+    -- Lógica do Timer de Cópia Persistente
+    local isCooldown = false
+    local function startCooldown(seconds)
+        isCooldown = true
+        GetKeyButton.Interactable = false
+        
+        task.spawn(function()
+            local originalText = "COPY KEY LINK"
+            local remaining = seconds
+            while remaining > 0 do
+                local mins = math.floor(remaining / 60)
+                local secs = remaining % 60
+                GetKeyButton.Text = string.format("WAIT %02d:%02d", mins, secs)
+                GetKeyButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+                task.wait(1)
+                remaining = remaining - 1
+                if not GetKeyButton or not GetKeyButton.Parent then break end
+            end
+            if GetKeyButton and GetKeyButton.Parent then
+                isCooldown = false
+                GetKeyButton.Interactable = true
+                GetKeyButton.Text = originalText
+                GetKeyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+            end
+        end)
+    end
+
+    -- Verificar se já existe um timer salvo ao abrir
+    local timeLeft = getRemainingCooldown()
+    if timeLeft > 0 then
+        startCooldown(timeLeft)
+    end
+
+    -- Lógica para copiar link da key
+    GetKeyButton.MouseButton1Click:Connect(function()
+        if isCooldown then return end
+        
+        local secureGetKeyLink = Junkie.get_key_link()
+        if not secureGetKeyLink then
+            GetKeyButton.Text = "ERROR!"
+            GetKeyButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+            task.wait(1.5)
+            GetKeyButton.Text = "COPY KEY LINK"
+            GetKeyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+            return
+        end
+        
+        if setclipboard then
+            setclipboard(secureGetKeyLink)
+            GetKeyButton.Text = "COPIED!"
+            GetKeyButton.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
+            
+            -- Efeito de confirmação
+            task.spawn(function()
+                local originalSize = GetKeyButton.Size
+                TweenService:Create(GetKeyButton, TweenInfo.new(0.1), {
+                    Size = UDim2.new(1.02, 0, 0, 47)
+                }):Play()
+                task.wait(0.1)
+                TweenService:Create(GetKeyButton, TweenInfo.new(0.1), {
+                    Size = originalSize
+                }):Play()
+            end)
+            
+            task.wait(1)
+            saveTimer()
+            startCooldown(300)
+            ShowNotification("Success", "Key link copied to clipboard!", 3)
+        else
+            print("Key Link:", secureGetKeyLink)
+            saveTimer()
+            startCooldown(300)
+            ShowNotification("Info", "Key link printed to console", 3)
+        end
+    end)
+
+    -- Lógica de Validação da Key
+    ValidateButton.MouseButton1Click:Connect(function()
+        if not ValidateButton.Interactable then return end
+        
+        local key = KeyInput.Text:gsub("%s+", "")
+        if #key == 0 then
+            -- Efeito de erro no input
+            InputStroke.Color = Color3.fromRGB(255, 50, 50)
+            ShakeFrame(InputFrame)
+            ShowNotification("Error", "Please enter a key", 3)
+            return
+        end
+        
+        -- Animação de loading
+        ValidateButton.Text = "VERIFYING..."
+        ValidateButton.Interactable = false
+        KeyInput.Interactable = false
+        
+        task.spawn(function()
+            local result = Junkie.check_key(key)
+            
+            if result and result.valid then
+                -- Efeito de sucesso
+                InputStroke.Color = Color3.fromRGB(50, 255, 100)
+                
+                ValidateButton.Text = "✓ SUCCESS"
+                ValidateButton.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
+                
+                -- Efeito de confirmação
+                task.spawn(function()
+                    local originalSize = ValidateButton.Size
+                    for i = 1, 2 do
+                        TweenService:Create(ValidateButton, TweenInfo.new(0.1), {
+                            Size = UDim2.new(1.03, 0, 0, 52)
+                        }):Play()
+                        task.wait(0.1)
+                        TweenService:Create(ValidateButton, TweenInfo.new(0.1), {
+                            Size = originalSize
+                        }):Play()
+                        task.wait(0.1)
+                    end
+                end)
+                
+                saveVerifiedKey(key)
+                getgenv().SCRIPT_KEY = key
+                
+                ShowNotification("Welcome", "Key validated successfully!", 3)
+                task.wait(1)
+                CloseGUI()
+                main()
+            else
+                -- Efeito de erro
+                InputStroke.Color = Color3.fromRGB(255, 50, 50)
+                
+                ValidateButton.Text = "✗ INVALID KEY"
+                ValidateButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+                
+                ShakeFrame(InputFrame)
+                ShakeFrame(MainFrame)
+                ShowNotification("Error", "Invalid license key", 3)
+                
+                task.wait(2)
+                ValidateButton.Text = "VALIDATE KEY"
+                ValidateButton.Interactable = true
+                KeyInput.Interactable = true
+                ValidateButton.BackgroundColor3 = CurrentTheme
+                InputStroke.Color = CurrentTheme
+            end
+        end)
+    end)
+
+    -- Focus no input
+    KeyInput.Focused:Connect(function()
+        InputStroke.Thickness = 2.5
+    end)
+    
+    KeyInput.FocusLost:Connect(function()
+        InputStroke.Thickness = 2
+    end)
+
+    -- Permitir fechar com ESC
+    local escConnection
+    escConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if input.KeyCode == Enum.KeyCode.Escape then
+            escConnection:Disconnect()
+            CloseGUI()
+        end
+    end)
+
+    -- Arrastar a janela
+    local dragging, dragInput, dragStart, startPos
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true 
+            dragStart = input.Position 
+            startPos = MainFrame.AbsolutePosition
+            input.Changed:Connect(function() 
+                if input.UserInputState == Enum.UserInputState.End then 
+                    dragging = false 
+                end 
+            end)
+        end
+    end)
+    
+    TopBar.InputChanged:Connect(function(input) 
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then 
+            dragInput = input 
+        end 
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input) 
+        if input == dragInput and dragging then 
+            local delta = input.Position - dragStart
+            local screenSize = KeyScreenGui.AbsoluteSize
+            local frameSize = MainFrame.AbsoluteSize
+            local newPosX = math.clamp(startPos.X + delta.X, 0, screenSize.X - frameSize.X)
+            local newPosY = math.clamp(startPos.Y + delta.Y, 0, screenSize.Y - frameSize.Y)
+            MainFrame.Position = UDim2.new(0, newPosX + (frameSize.X * MainFrame.AnchorPoint.X), 0, newPosY + (frameSize.Y * MainFrame.AnchorPoint.Y))
+        end 
+    end)
+
+    return KeyScreenGui
+end
+
+-- Verificação inicial da key salva
+local savedKey = loadVerifiedKey()
+if savedKey then
+    local result = Junkie.check_key(savedKey)
+    if result and result.valid then
+        getgenv().SCRIPT_KEY = savedKey
+        ShowNotification("Vortex Hub", "Welcome back! Loading hub...", 3)
+        main()
+    else
+        clearSavedKey()
+        task.wait(1)
+        KeySystem:CreateKeyGUI()
+    end
+else
+    task.wait(1)
+    KeySystem:CreateKeyGUI()
+end

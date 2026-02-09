@@ -1,0 +1,133 @@
+-- CONFIGURAÇÕES
+local npcName = "Noah"
+local farmSpeed = 35 
+local distanceToInteract = 4
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- LÓGICA DE DESATIVAR
+if _G.AutoQuestNoahActive then
+    _G.AutoQuestNoahActive = false
+    if _G.QuestVel then _G.QuestVel:Destroy() _G.QuestVel = nil end
+    if _G.QuestGyro then _G.QuestGyro:Destroy() _G.QuestGyro = nil end
+    print("Auto Quest Noah DESATIVADO")
+    return
+else
+    _G.AutoQuestNoahActive = true
+    print("Auto Quest Noah ATIVADO")
+end
+
+-- FUNÇÃO DE VERIFICAÇÃO DE MISSÃO
+local function jaTemMissao()
+    local tem = false
+    pcall(function()
+        local questGui = playerGui:FindFirstChild("Quest")
+        if questGui and questGui.Main.Visible == true then
+            local questNameLabel = questGui.Main.Info.Top:FindFirstChild("QuestName")
+            -- Se o texto não estiver vazio e não for "None", você tem missão
+            if questNameLabel and questNameLabel.Text ~= "" and questNameLabel.Text ~= "None" then
+                tem = true
+            end
+        end
+    end)
+    return tem
+end
+
+local function setupPhysics()
+    if not _G.AutoQuestNoahActive then return end
+    local char = player.Character
+    if not char then return end
+    local root = char:WaitForChild("HumanoidRootPart")
+    
+    if _G.QuestVel then _G.QuestVel:Destroy() end
+    if _G.QuestGyro then _G.QuestGyro:Destroy() end
+
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+    bv.Velocity = Vector3.new(0, 0, 0)
+    bv.Parent = root
+    _G.QuestVel = bv
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+    bg.P = 3000
+    bg.Parent = root
+    _G.QuestGyro = bg
+end
+
+local function clickButton(textTarget)
+    if not _G.AutoQuestNoahActive then return false end
+    for _, gui in pairs(playerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") and gui.Enabled then
+            for _, btn in pairs(gui:GetDescendants()) do
+                if btn:IsA("TextButton") and btn.Visible and string.find(btn.Text, textTarget) then
+                    local conns = getconnections(btn.MouseButton1Click)
+                    if #conns > 0 then
+                        for _, conn in pairs(conns) do conn:Fire() end
+                    else
+                        btn:Activate()
+                    end
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+task.spawn(function()
+    while _G.AutoQuestNoahActive do
+        task.wait(1)
+        
+        -- SE NÃO TEM MISSÃO (PORQUE ACABOU DE COMPLETAR OU LOGOU AGORA)
+        if not jaTemMissao() and _G.AutoQuestNoahActive then
+            local noah = workspace.NPCs:FindFirstChild(npcName)
+            if noah and noah:FindFirstChild("UpperTorso") then
+                setupPhysics()
+                local char = player.Character
+                if not char then continue end
+                local root = char:WaitForChild("HumanoidRootPart")
+                local noahPos = noah.UpperTorso.Position
+                
+                print("Indo buscar missão no Noah...")
+                
+                -- Voa até o Noah
+                while _G.AutoQuestNoahActive and (root.Position - noahPos).Magnitude > distanceToInteract and not jaTemMissao() do
+                    if not _G.QuestVel then break end
+                    _G.QuestVel.Velocity = (noahPos - root.Position).Unit * farmSpeed
+                    _G.QuestGyro.CFrame = CFrame.new(root.Position, noahPos)
+                    task.wait()
+                end
+                
+                if _G.QuestVel then _G.QuestVel.Velocity = Vector3.new(0,0,0) end
+                task.wait(1)
+                
+                -- Pega a missão
+                if not jaTemMissao() and _G.AutoQuestNoahActive then
+                    local prompt = noah.UpperTorso:FindFirstChildOfClass("ProximityPrompt")
+                    if prompt then
+                        fireproximityprompt(prompt)
+                        task.wait(3) -- Tempo para carregar o diálogo
+                        
+                        if clickButton("help") or clickButton("How can i help") then
+                            task.wait(2)
+                            if clickButton("Alright!") then
+                                task.wait(2)
+                                -- CLIQUE FINAL CORRIGIDO (SEM O ERRO DE SINTAXE)
+                                local clicou = clickButton("%.%.%.")
+                                if not clicou then clickButton("...") end
+                                print("Missão Coletada!")
+                            end
+                        end
+                    end
+                end
+                
+                -- Desliga a física de viagem para você poder farmar
+                if _G.QuestVel then _G.QuestVel:Destroy() _G.QuestVel = nil end
+                if _G.QuestGyro then _G.QuestGyro:Destroy() _G.QuestGyro = nil end
+            end
+        end
+        -- O loop fica rodando. Quando a missão sumir, ele volta pro topo e vai pro Noah de novo.
+    end
+end)

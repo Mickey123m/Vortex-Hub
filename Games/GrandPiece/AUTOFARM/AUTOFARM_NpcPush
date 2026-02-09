@@ -1,0 +1,79 @@
+-- SCRIPT DE COMBATE (FORCE ACTIVATE) - INTEGRADO
+local weaponName = "Melee" 
+local attackDelay = 0.4 
+local activationRange = 15 
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if _G.CombatActive then
+    _G.CombatActive = false
+    _G.HoldingM1 = false
+    print("Combate DESATIVADO")
+    return
+else
+    _G.CombatActive = true
+    print("Combate ATIVADO")
+end
+
+local function jaTemMissao()
+    local tem = false
+    pcall(function()
+        local questGui = playerGui:FindFirstChild("Quest")
+        if questGui and questGui.Main.Visible == true then
+            local questNameLabel = questGui.Main.Info.Top:FindFirstChild("QuestName")
+            if questNameLabel and questNameLabel.Text ~= "" and questNameLabel.Text ~= "None" then
+                tem = true
+            end
+        end
+    end)
+    return tem
+end
+
+task.spawn(function()
+    while _G.CombatActive do
+        if jaTemMissao() then
+            local character = player.Character
+            if character and character:FindFirstChild("Humanoid") and character.Humanoid.Health > 0 then
+                local root = character:FindFirstChild("HumanoidRootPart")
+                local targetNPC = nil
+                
+                if root then
+                    for _, npc in pairs(workspace.NPCs:GetChildren()) do
+                        if npc.Name == "Desert Bandit" and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                            local npcRoot = npc:FindFirstChild("HumanoidRootPart")
+                            if npcRoot and (root.Position - npcRoot.Position).Magnitude <= activationRange then
+                                targetNPC = npc
+                                break
+                            end
+                        end
+                    end
+                end
+
+                if targetNPC then
+                    local tool = player.Backpack:FindFirstChild(weaponName) or character:FindFirstChild(weaponName)
+                    if tool then
+                        if tool.Parent ~= character then tool.Parent = character end
+                        _G.HoldingM1 = true
+                        _G.canM1 = true
+                        _G.canuse = true
+                        _G.allowMelee = true
+                        tool:Activate()
+                        
+                        pcall(function()
+                            local inputCallbacks = require(player.Backpack:WaitForChild("InputCallbacks"))
+                            if inputCallbacks and inputCallbacks.Callbacks and inputCallbacks.Callbacks.Attack then
+                                inputCallbacks.Callbacks.Attack:PC_Activate()
+                            end
+                        end)
+                    end
+                else
+                    _G.HoldingM1 = false
+                end
+            end
+        else
+            _G.HoldingM1 = false
+        end
+        task.wait(attackDelay)
+    end
+end)
