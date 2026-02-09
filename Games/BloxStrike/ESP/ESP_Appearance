@@ -1,0 +1,98 @@
+-- Script de Visual para Mãos, Braços e Luvas (Neon + Rainbow + Transparente)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+-- Controle Global para o Toggle
+if _G.HandsGloveToggle == nil then _G.HandsGloveToggle = false end
+_G.HandsGloveToggle = not _G.HandsGloveToggle
+
+-- Configurações de Estilo
+local TRANSPARENCY_VAL = 0.5
+local RAINBOW_SPEED = 0.5 -- Velocidade da mudança de cor
+
+-- Função para calcular a cor arco-íris baseada no tempo
+local function getRainbowColor()
+    local hue = (tick() * RAINBOW_SPEED) % 1
+    return Color3.fromHSV(hue, 1, 1)
+end
+
+-- Função para aplicar o efeito nas mãos, braços e luvas
+local function applyToHandsAndGloves(obj)
+    local currentRainbow = getRainbowColor()
+    
+    for _, part in pairs(obj:GetDescendants()) do
+        if part:IsA("BasePart") or part:IsA("MeshPart") then
+            local name = part.Name:lower()
+            -- Filtro: Braços, Mãos, Luvas, Dedos e Limbs
+            if name:find("hand") or name:find("arm") or name:find("glove") or name:find("finger") or name:find("limb") then
+                if _G.HandsGloveToggle then
+                    -- Backup das propriedades originais
+                    if not part:FindFirstChild("OriginalMaterial") then
+                        local m = Instance.new("StringValue", part)
+                        m.Name = "OriginalMaterial"
+                        m.Value = tostring(part.Material.Name)
+                        
+                        local t = Instance.new("NumberValue", part)
+                        t.Name = "OriginalTransparency"
+                        t.Value = part.Transparency
+                        
+                        local c = Instance.new("Color3Value", part)
+                        c.Name = "OriginalColor"
+                        c.Value = part.Color
+                    end
+                    
+                    -- Aplica o Estilo Neon, Cor Arco-íris e Transparência
+                    part.Material = Enum.Material.Neon
+                    part.Color = currentRainbow
+                    part.Transparency = TRANSPARENCY_VAL
+                else
+                    -- Restaura o Original
+                    if part:FindFirstChild("OriginalMaterial") then
+                        part.Material = Enum.Material[part.OriginalMaterial.Value]
+                        part.Transparency = part.OriginalTransparency.Value
+                        part.Color = part.OriginalColor.Value
+                        
+                        part.OriginalMaterial:Destroy()
+                        part.OriginalTransparency:Destroy()
+                        part.OriginalColor:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Se desativar o Toggle, limpa tudo e encerra
+if not _G.HandsGloveToggle then
+    if _G.HandsGloveConnection then
+        _G.HandsGloveConnection:Disconnect()
+        _G.HandsGloveConnection = nil
+    end
+    -- Limpa na Camera
+    for _, child in pairs(Camera:GetChildren()) do
+        applyToHandsAndGloves(child)
+    end
+    -- Limpa no Character
+    if LocalPlayer.Character then
+        applyToHandsAndGloves(LocalPlayer.Character)
+    end
+    return
+end
+
+-- Loop de atualização constante (RenderStepped para suavidade do Rainbow)
+_G.HandsGloveConnection = RunService.RenderStepped:Connect(function()
+    -- 1. Verifica no Viewmodel da Câmera
+    for _, child in pairs(Camera:GetChildren()) do
+        if child:IsA("Model") or child:IsA("BasePart") then
+            applyToHandsAndGloves(child)
+        end
+    end
+
+    -- 2. Verifica no seu Personagem
+    local char = LocalPlayer.Character
+    if char then
+        applyToHandsAndGloves(char)
+    end
+end)

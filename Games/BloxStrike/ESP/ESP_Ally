@@ -1,0 +1,84 @@
+-- Script de ESP Otimizado (Aliados - Verde)
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Controle Global para o Toggle do ESP de Aliados
+if _G.AllyESPToggle == nil then _G.AllyESPToggle = false end
+_G.AllyESPToggle = not _G.AllyESPToggle
+
+-- Cor dos Aliados
+local COLOR_ALLY = Color3.fromRGB(0, 255, 127) -- Verde Marinho/Claro
+
+-- Cache das pastas
+local CharFolder = Workspace:FindFirstChild("Characters")
+local CT_Folder = CharFolder and CharFolder:FindFirstChild("Counter-Terrorists")
+local TR_Folder = CharFolder and CharFolder:FindFirstChild("Terrorists")
+
+-- Função para limpar o ESP de aliados
+local function clearAllyESP()
+    if not CharFolder then return end
+    for _, folder in pairs(CharFolder:GetChildren()) do
+        for _, model in pairs(folder:GetChildren()) do
+            local h = model:FindFirstChild("AllyHighlight")
+            if h then h:Destroy() end
+        end
+    end
+end
+
+if not _G.AllyESPToggle then
+    clearAllyESP()
+    return
+end
+
+-- Função para aplicar o contorno nos aliados
+local function applyAllyESP(model)
+    local h = model:FindFirstChild("AllyHighlight")
+    if not h then
+        h = Instance.new("Highlight")
+        h.Name = "AllyHighlight"
+        h.FillTransparency = 1 -- Apenas contorno
+        h.OutlineColor = COLOR_ALLY
+        h.OutlineTransparency = 0
+        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        h.Parent = model
+    end
+end
+
+-- Loop principal de aliados
+task.spawn(function()
+    while _G.AllyESPToggle do
+        if not CharFolder then break end
+
+        -- Verifica em qual pasta você está para achar seus aliados
+        local myTeamFolder = nil
+        if CT_Folder and CT_Folder:FindFirstChild(LocalPlayer.Name) then
+            myTeamFolder = CT_Folder
+        elseif TR_Folder and TR_Folder:FindFirstChild(LocalPlayer.Name) then
+            myTeamFolder = TR_Folder
+        end
+
+        -- Se você não estiver em um time, limpa o ESP de aliados
+        if not myTeamFolder then
+            clearAllyESP()
+        else
+            -- Se você está em um time, processa apenas quem está na mesma pasta que você
+            for _, ally in pairs(myTeamFolder:GetChildren()) do
+                if ally:IsA("Model") and ally.Name ~= LocalPlayer.Name then
+                    applyAllyESP(ally)
+                end
+            end
+            
+            -- Limpa o ESP de quem não é mais aliado (se você trocou de time)
+            local enemyFolder = (myTeamFolder == CT_Folder) and TR_Folder or CT_Folder
+            if enemyFolder then
+                for _, enemy in pairs(enemyFolder:GetChildren()) do
+                    local h = enemy:FindFirstChild("AllyHighlight")
+                    if h then h:Destroy() end
+                end
+            end
+        end
+
+        task.wait(0.5) -- Loop mais lento para aliados (consome quase nada de CPU)
+    end
+end)

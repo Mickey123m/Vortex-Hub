@@ -1,0 +1,95 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+if _G.HealthESPToggle == nil then _G.HealthESPToggle = false end
+_G.HealthESPToggle = not _G.HealthESPToggle
+
+local CharFolder = Workspace:FindFirstChild("Characters")
+local CT_Folder = CharFolder and CharFolder:FindFirstChild("Counter-Terrorists")
+local TR_Folder = CharFolder and CharFolder:FindFirstChild("Terrorists")
+
+local function clearHealthESP()
+    if not CharFolder then return end
+    for _, folder in pairs(CharFolder:GetChildren()) do
+        for _, model in pairs(folder:GetChildren()) do
+            local b = model:FindFirstChild("HealthBarGui")
+            if b then b:Destroy() end
+        end
+    end
+end
+
+if not _G.HealthESPToggle then
+    clearHealthESP()
+    return
+end
+
+local function updateHealthBar(model)
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    local root = model:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not root then return end
+
+    local b = model:FindFirstChild("HealthBarGui")
+    if not b then
+        b = Instance.new("BillboardGui")
+        b.Name = "HealthBarGui"
+        b.Size = UDim2.new(4, 0, 0.4, 0)
+        b.Adornee = root
+        b.AlwaysOnTop = true
+        b.StudsOffset = Vector3.new(0, -3.5, 0)
+        
+        local back = Instance.new("Frame")
+        back.Name = "BG"
+        back.Size = UDim2.new(1, 0, 1, 0)
+        back.BackgroundColor3 = Color3.new(0, 0, 0)
+        back.BorderSizePixel = 0
+        back.Parent = b
+        
+        local bar = Instance.new("Frame")
+        bar.Name = "Main"
+        bar.Size = UDim2.new(1, 0, 1, 0)
+        bar.BackgroundColor3 = Color3.new(0, 1, 0)
+        bar.BorderSizePixel = 0
+        bar.Parent = back
+        
+        b.Parent = model
+    end
+
+    local mainBar = b.BG.Main
+    local healthRatio = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+    mainBar.Size = UDim2.new(healthRatio, 0, 1, 0)
+    mainBar.BackgroundColor3 = Color3.fromHSV(healthRatio * 0.35, 1, 1)
+end
+
+task.spawn(function()
+    while _G.HealthESPToggle do
+        if not CharFolder then break end
+
+        local myTeamFolder = nil
+        if CT_Folder and CT_Folder:FindFirstChild(LocalPlayer.Name) then
+            myTeamFolder = CT_Folder
+        elseif TR_Folder and TR_Folder:FindFirstChild(LocalPlayer.Name) then
+            myTeamFolder = TR_Folder
+        end
+
+        if myTeamFolder then
+            local enemyFolder = (myTeamFolder == CT_Folder) and TR_Folder or CT_Folder
+            if enemyFolder then
+                for _, friend in pairs(myTeamFolder:GetChildren()) do
+                    local b = friend:FindFirstChild("HealthBarGui")
+                    if b then b:Destroy() end
+                end
+
+                for _, enemy in pairs(enemyFolder:GetChildren()) do
+                    if enemy:IsA("Model") then
+                        updateHealthBar(enemy)
+                    end
+                end
+            end
+        else
+            clearHealthESP()
+        end
+
+        task.wait(0.05)
+    end
+end)

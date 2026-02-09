@@ -1,0 +1,71 @@
+local RunService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+
+-- Identificador único para o script não se duplicar
+local SCRIPT_ID = "Immersive_ItemESP_AntiRecoil"
+
+-- Se o script já estiver rodando, vamos desligar e sair
+if _G[SCRIPT_ID] then
+    _G[SCRIPT_ID].Janitor()
+    _G[SCRIPT_ID] = nil
+    return
+end
+
+-- Tabela de estado para o Toggle
+local State = {
+    Highlights = {},
+    Enabled = true
+}
+
+-- Função de Limpeza (Destrói tudo ao desligar)
+local function Cleanup()
+    State.Enabled = false
+    RunService:UnbindFromRenderStep("AntiRecoilStep")
+    for model, h in pairs(State.Highlights) do
+        if h then h:Destroy() end
+    end
+    State.Highlights = {}
+end
+
+-- Função para aplicar o brilho
+local function applyHighlight(model)
+    if not State.Enabled or State.Highlights[model] then return end
+    
+    local h = Instance.new("Highlight")
+    h.Name = "ItemESP_V2"
+    h.FillColor = Color3.fromRGB(0, 255, 130)
+    h.OutlineColor = Color3.fromRGB(255, 255, 255)
+    h.FillTransparency = 0.5
+    h.Parent = model
+    State.Highlights[model] = h
+end
+
+-- Lógica do ESP Otimizada
+local connection = workspace.DescendantAdded:Connect(function(desc)
+    if State.Enabled and desc:IsA("Model") and desc:GetAttribute("Weapon") then
+        applyHighlight(desc)
+    end
+end)
+
+-- Varredura Inicial
+for _, obj in ipairs(workspace:GetDescendants()) do
+    if obj:IsA("Model") and obj:GetAttribute("Weapon") then
+        applyHighlight(obj)
+    end
+end
+
+-- Lógica do Anti-Recoil
+RunService:BindToRenderStep("AntiRecoilStep", Enum.RenderPriority.Camera.Value + 1, function()
+    if not State.Enabled then return end
+    local Camera = workspace.CurrentCamera
+    local x, y, z = Camera.CFrame:ToEulerAnglesYXZ()
+    Camera.CFrame = CFrame.new(Camera.CFrame.Position) * CFrame.fromEulerAnglesYXZ(x, y, z)
+end)
+
+-- Salva a função de desligar no ambiente global do executor
+_G[SCRIPT_ID] = {
+    Janitor = function()
+        Cleanup()
+        connection:Disconnect()
+    end
+}

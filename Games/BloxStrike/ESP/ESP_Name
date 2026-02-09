@@ -1,0 +1,87 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+if _G.NameESPToggle == nil then _G.NameESPToggle = false end
+_G.NameESPToggle = not _G.NameESPToggle
+
+local CharFolder = Workspace:FindFirstChild("Characters")
+local CT_Folder = CharFolder and CharFolder:FindFirstChild("Counter-Terrorists")
+local TR_Folder = CharFolder and CharFolder:FindFirstChild("Terrorists")
+
+local function clearNameESP()
+	if not CharFolder then return end
+	for _, folder in pairs(CharFolder:GetChildren()) do
+		for _, model in pairs(folder:GetChildren()) do
+			local b = model:FindFirstChild("NameTagGui")
+			if b then b:Destroy() end
+		end
+	end
+end
+
+if not _G.NameESPToggle then
+	clearNameESP()
+	return
+end
+
+local function updateNameTag(model)
+	local head = model:FindFirstChild("Head")
+	if not head then return end
+
+	local b = model:FindFirstChild("NameTagGui")
+	if not b then
+		b = Instance.new("BillboardGui")
+		b.Name = "NameTagGui"
+		b.Size = UDim2.new(4, 0, 1, 0)
+		b.Adornee = head
+		b.AlwaysOnTop = true
+		b.StudsOffset = Vector3.new(0, 1.5, 0)
+		
+		local text = Instance.new("TextLabel")
+		text.Name = "PlayerName"
+		text.Size = UDim2.new(1, 0, 1, 0)
+		text.BackgroundTransparency = 1
+		text.Text = model.Name
+		text.TextColor3 = Color3.new(1, 1, 1)
+		text.TextStrokeTransparency = 0
+		text.TextScaled = false
+		text.TextSize = 14
+		text.Font = Enum.Font.SourceSansBold
+		text.Parent = b
+		
+		b.Parent = model
+	end
+end
+
+task.spawn(function()
+	while _G.NameESPToggle do
+		if not CharFolder then break end
+
+		local myTeamFolder = nil
+		if CT_Folder and CT_Folder:FindFirstChild(LocalPlayer.Name) then
+			myTeamFolder = CT_Folder
+		elseif TR_Folder and TR_Folder:FindFirstChild(LocalPlayer.Name) then
+			myTeamFolder = TR_Folder
+		end
+
+		if myTeamFolder then
+			local enemyFolder = (myTeamFolder == CT_Folder) and TR_Folder or CT_Folder
+			if enemyFolder then
+				for _, friend in pairs(myTeamFolder:GetChildren()) do
+					local b = friend:FindFirstChild("NameTagGui")
+					if b then b:Destroy() end
+				end
+
+				for _, enemy in pairs(enemyFolder:GetChildren()) do
+					if enemy:IsA("Model") then
+						updateNameTag(enemy)
+					end
+				end
+			end
+		else
+			clearNameESP()
+		end
+
+		task.wait(0.5)
+	end
+end)
