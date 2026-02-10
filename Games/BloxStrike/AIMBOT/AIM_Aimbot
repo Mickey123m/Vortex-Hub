@@ -6,15 +6,26 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
-if _G.AimbotToggle == nil then _G.AimbotToggle = false end
-_G.AimbotToggle = not _G.AimbotToggle
-
-local AIM_KEY = Enum.KeyCode.LeftControl
+-- Usar variável global do hub ou padrão
+local AIM_KEY = _G.AIM_KEY or Enum.KeyCode.LeftControl
 local TARGET_PART = "Head"
 
+-- Toggle system
+if _G.AimbotToggle == nil then 
+    _G.AimbotToggle = false 
+end
+
+-- Toggle ao executar
+_G.AimbotToggle = not _G.AimbotToggle
+
 if not _G.AimbotToggle then
-    RunService:UnbindFromRenderStep("HardLockAimbot")
-    _G.AimbotConnection = nil
+    -- Desativar
+    if RunService:IsBoundToRenderStep("HardLockAimbot") then
+        RunService:UnbindFromRenderStep("HardLockAimbot")
+    end
+    if _G.AimbotConnection then
+        _G.AimbotConnection = nil
+    end
     return
 end
 
@@ -28,7 +39,17 @@ local function getTarget()
     local ct = charFolder:FindFirstChild("Counter-Terrorists")
     local tr = charFolder:FindFirstChild("Terrorists")
     
-    local myTeam = (ct and ct:FindFirstChild(LocalPlayer.Name)) and "CT" or "TR"
+    -- Determinar time do jogador
+    local myTeam = "Unknown"
+    if LocalPlayer.Character then
+        local myChar = LocalPlayer.Character
+        if ct and ct:FindFirstChild(LocalPlayer.Name) then
+            myTeam = "CT"
+        elseif tr and tr:FindFirstChild(LocalPlayer.Name) then
+            myTeam = "TR"
+        end
+    end
+    
     local enemyFolder = (myTeam == "CT") and tr or ct
 
     if enemyFolder then
@@ -53,13 +74,27 @@ local function getTarget()
     return closestTarget
 end
 
-RunService:BindToRenderStep("HardLockAimbot", Enum.RenderPriority.Last.Value, function()
+-- Função principal do aimbot
+local function aimbotLoop()
     if UserInputService:IsKeyDown(AIM_KEY) then
         local target = getTarget()
         if target then
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
         end
     end
-end)
+end
 
+-- Ativar
+RunService:BindToRenderStep("HardLockAimbot", Enum.RenderPriority.Last.Value, aimbotLoop)
 _G.AimbotConnection = true
+
+-- Função de desativação para o hub
+local function DeactivateAimbot()
+    if RunService:IsBoundToRenderStep("HardLockAimbot") then
+        RunService:UnbindFromRenderStep("HardLockAimbot")
+    end
+    _G.AimbotToggle = false
+    _G.AimbotConnection = nil
+end
+
+return DeactivateAimbot

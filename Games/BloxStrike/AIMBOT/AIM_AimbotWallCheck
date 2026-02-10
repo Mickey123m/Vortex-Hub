@@ -6,24 +6,52 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
-if _G.AimbotToggle == nil then _G.AimbotToggle = false end
-_G.AimbotToggle = not _G.AimbotToggle
-
-local AIM_KEY = Enum.KeyCode.LeftControl
+-- Usar variável global do hub ou padrão
+local AIM_KEY = _G.AIM_KEY_WALLCHECK or _G.AIM_KEY or Enum.KeyCode.LeftControl
 local TARGET_PART = "Head"
 
-if not _G.AimbotToggle then
-    RunService:UnbindFromRenderStep("HardLockAimbot")
-    _G.AimbotConnection = nil
+-- Toggle system
+if _G.AimbotWallCheckToggle == nil then 
+    _G.AimbotWallCheckToggle = false 
+end
+
+-- Toggle ao executar
+_G.AimbotWallCheckToggle = not _G.AimbotWallCheckToggle
+
+if not _G.AimbotWallCheckToggle then
+    -- Desativar
+    if RunService:IsBoundToRenderStep("HardLockAimbotWallCheck") then
+        RunService:UnbindFromRenderStep("HardLockAimbotWallCheck")
+    end
+    if _G.AimbotWallCheckConnection then
+        _G.AimbotWallCheckConnection = nil
+    end
     return
 end
 
 local function isVisible(part, character)
+    if not LocalPlayer.Character then return false end
+    
     local rayParams = RaycastParams.new()
     rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, character, Camera}
     
-    local ray = Workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position), rayParams)
+    -- Filtrar personagem do jogador, inimigo e camera
+    local filterList = {Camera}
+    
+    if LocalPlayer.Character then
+        table.insert(filterList, LocalPlayer.Character)
+    end
+    
+    if character then
+        table.insert(filterList, character)
+    end
+    
+    rayParams.FilterDescendantsInstances = filterList
+    
+    local rayOrigin = Camera.CFrame.Position
+    local rayDirection = (part.Position - rayOrigin)
+    local ray = Workspace:Raycast(rayOrigin, rayDirection, rayParams)
+    
     return ray == nil
 end
 
@@ -37,7 +65,17 @@ local function getTarget()
     local ct = charFolder:FindFirstChild("Counter-Terrorists")
     local tr = charFolder:FindFirstChild("Terrorists")
     
-    local myTeam = (ct and ct:FindFirstChild(LocalPlayer.Name)) and "CT" or "TR"
+    -- Determinar time do jogador
+    local myTeam = "Unknown"
+    if LocalPlayer.Character then
+        local myChar = LocalPlayer.Character
+        if ct and ct:FindFirstChild(LocalPlayer.Name) then
+            myTeam = "CT"
+        elseif tr and tr:FindFirstChild(LocalPlayer.Name) then
+            myTeam = "TR"
+        end
+    end
+    
     local enemyFolder = (myTeam == "CT") and tr or ct
 
     if enemyFolder then
@@ -52,6 +90,7 @@ local function getTarget()
                     local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
                     
                     if dist < minDistance then
+                        -- Verificar visibilidade (wall check)
                         if isVisible(head, enemy) then
                             minDistance = dist
                             closestTarget = head
@@ -64,13 +103,27 @@ local function getTarget()
     return closestTarget
 end
 
-RunService:BindToRenderStep("HardLockAimbot", Enum.RenderPriority.Last.Value, function()
+-- Função principal do aimbot
+local function aimbotLoop()
     if UserInputService:IsKeyDown(AIM_KEY) then
         local target = getTarget()
         if target then
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
         end
     end
-end)
+end
 
-_G.AimbotConnection = true
+-- Ativar
+RunService:BindToRenderStep("HardLockAimbotWallCheck", Enum.RenderPriority.Last.Value, aimbotLoop)
+_G.AimbotWallCheckConnection = true
+
+-- Função de desativação para o hub
+local function DeactivateAimbotWallCheck()
+    if RunService:IsBoundToRenderStep("HardLockAimbotWallCheck") then
+        RunService:UnbindFromRenderStep("HardLockAimbotWallCheck")
+    end
+    _G.AimbotWallCheckToggle = false
+    _G.AimbotWallCheckConnection = nil
+end
+
+return DeactivateAimbotWallCheck
