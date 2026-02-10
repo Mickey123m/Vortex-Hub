@@ -1,3 +1,4 @@
+-- Cole este código no seu repositório GitHub e use a URL no hub
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -6,27 +7,32 @@ local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
--- Usar variável global do hub ou padrão
+-- VARIÁVEL GLOBAL DO HUB
 local AIM_KEY = _G.AIM_KEY or Enum.KeyCode.LeftControl
 local TARGET_PART = "Head"
 
--- Toggle system
-if _G.AimbotToggle == nil then 
-    _G.AimbotToggle = false 
+-- Sistema de toggle
+if _G.AimbotActive == nil then
+    _G.AimbotActive = false
 end
 
--- Toggle ao executar
-_G.AimbotToggle = not _G.AimbotToggle
-
-if not _G.AimbotToggle then
-    -- Desativar
-    if RunService:IsBoundToRenderStep("HardLockAimbot") then
-        RunService:UnbindFromRenderStep("HardLockAimbot")
+-- Alternar estado
+if _G.AimbotActive then
+    -- Desativar se já estiver ativo
+    if RunService:IsBoundToRenderStep("VortexAimbot") then
+        RunService:UnbindFromRenderStep("VortexAimbot")
     end
-    if _G.AimbotConnection then
-        _G.AimbotConnection = nil
-    end
+    _G.AimbotActive = false
     return
+else
+    _G.AimbotActive = true
+end
+
+-- Verificar se o hub definiu uma key
+if _G.AIM_KEY then
+    AIM_KEY = _G.AIM_KEY
+elseif _G.AIM_MOUSEBUTTON then
+    -- Mouse button configurado
 end
 
 local function getTarget()
@@ -39,10 +45,8 @@ local function getTarget()
     local ct = charFolder:FindFirstChild("Counter-Terrorists")
     local tr = charFolder:FindFirstChild("Terrorists")
     
-    -- Determinar time do jogador
     local myTeam = "Unknown"
     if LocalPlayer.Character then
-        local myChar = LocalPlayer.Character
         if ct and ct:FindFirstChild(LocalPlayer.Name) then
             myTeam = "CT"
         elseif tr and tr:FindFirstChild(LocalPlayer.Name) then
@@ -74,9 +78,25 @@ local function getTarget()
     return closestTarget
 end
 
--- Função principal do aimbot
+-- Loop principal
 local function aimbotLoop()
-    if UserInputService:IsKeyDown(AIM_KEY) then
+    local keyPressed = false
+    
+    -- Verificar mouse buttons
+    if AIM_KEY == Enum.KeyCode.Unknown then
+        if _G.AIM_MOUSEBUTTON == 1 then
+            keyPressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
+        elseif _G.AIM_MOUSEBUTTON == 2 then
+            keyPressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+        elseif _G.AIM_MOUSEBUTTON == 3 then
+            keyPressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton3)
+        end
+    else
+        -- Tecla normal
+        keyPressed = UserInputService:IsKeyDown(AIM_KEY)
+    end
+    
+    if keyPressed then
         local target = getTarget()
         if target then
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
@@ -85,16 +105,17 @@ local function aimbotLoop()
 end
 
 -- Ativar
-RunService:BindToRenderStep("HardLockAimbot", Enum.RenderPriority.Last.Value, aimbotLoop)
-_G.AimbotConnection = true
+RunService:BindToRenderStep("VortexAimbot", Enum.RenderPriority.Last.Value, aimbotLoop)
 
--- Função de desativação para o hub
+-- Função de desativação
 local function DeactivateAimbot()
-    if RunService:IsBoundToRenderStep("HardLockAimbot") then
-        RunService:UnbindFromRenderStep("HardLockAimbot")
+    if RunService:IsBoundToRenderStep("VortexAimbot") then
+        RunService:UnbindFromRenderStep("VortexAimbot")
     end
-    _G.AimbotToggle = false
-    _G.AimbotConnection = nil
+    _G.AimbotActive = false
 end
+
+-- Manter referência
+_G.VortexAimbotDeactivate = DeactivateAimbot
 
 return DeactivateAimbot
