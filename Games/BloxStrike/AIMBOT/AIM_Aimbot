@@ -1,113 +1,65 @@
--- Script de ESP Otimizado (Monitoramento de Pasta + Outlines Dinâmicos)
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
+
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
--- Controle Global para o Toggle
-if _G.ESPToggle == nil then _G.ESPToggle = false end
-_G.ESPToggle = not _G.ESPToggle
+if _G.AimbotToggle == nil then _G.AimbotToggle = false end
+_G.AimbotToggle = not _G.AimbotToggle
 
--- Configurações de cores
-local COLOR_WALL = Color3.fromRGB(255, 165, 0)   -- Laranja
-local COLOR_VISIBLE = Color3.fromRGB(255, 0, 0)  -- Vermelho
+local AIM_KEY = Enum.KeyCode.LeftControl
+local TARGET_PART = "Head"
 
--- Cache das pastas (conforme imagem)
-local CharFolder = Workspace:FindFirstChild("Characters")
-local CT_Folder = CharFolder and CharFolder:FindFirstChild("Counter-Terrorists")
-local TR_Folder = CharFolder and CharFolder:FindFirstChild("Terrorists")
-
--- Função para remover ESP de todos
-local function clearAllESP()
-    if not CharFolder then return end
-    for _, folder in pairs(CharFolder:GetChildren()) do
-        for _, model in pairs(folder:GetChildren()) do
-            local h = model:FindFirstChild("ESPHighlight")
-            if h then h:Destroy() end
-        end
-    end
-end
-
-if not _G.ESPToggle then
-    clearAllESP()
-    print("ESP Desativado")
+if not _G.AimbotToggle then
+    RunService:UnbindFromRenderStep("HardLockAimbot")
+    _G.AimbotConnection = nil
     return
 end
 
--- Configuração de Raycast
-local rayParams = RaycastParams.new()
-rayParams.FilterType = Enum.RaycastFilterType.Exclude
+local function getTarget()
+    local closestTarget = nil
+    local minDistance = math.huge
 
--- Função de visibilidade
-local function checkVisibility(character)
-    local root = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head")
-    if not root then return false end
+    local charFolder = Workspace:FindFirstChild("Characters")
+    if not charFolder then return nil end
+
+    local ct = charFolder:FindFirstChild("Counter-Terrorists")
+    local tr = charFolder:FindFirstChild("Terrorists")
     
-    local _, onScreen = Camera:WorldToViewportPoint(root.Position)
-    if not onScreen then return false end
+    local myTeam = (ct and ct:FindFirstChild(LocalPlayer.Name)) and "CT" or "TR"
+    local enemyFolder = (myTeam == "CT") and tr or ct
 
-    rayParams.FilterDescendantsInstances = {LocalPlayer.Character, CharFolder, Camera}
-    local ray = Workspace:Raycast(Camera.CFrame.Position, (root.Position - Camera.CFrame.Position), rayParams)
-    
-    return ray == nil
-end
-
--- Função de atualização de visual
-local function updateESP(model)
-    local h = model:FindFirstChild("ESPHighlight")
-    if not h then
-        h = Instance.new("Highlight")
-        h.Name = "ESPHighlight"
-        h.FillTransparency = 1
-        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        h.Parent = model
-    end
-
-    if checkVisibility(model) then
-        h.OutlineColor = COLOR_VISIBLE
-    else
-        h.OutlineColor = COLOR_WALL
-    end
-end
-
--- Loop principal otimizado
-task.spawn(function()
-    print("ESP Ativado: Monitorando sua presença nas pastas...")
-    
-    while _G.ESPToggle do
-        if not CharFolder then break end
-
-        -- Verifica em qual pasta você está
-        local myTeamFolder = nil
-        if CT_Folder and CT_Folder:FindFirstChild(LocalPlayer.Name) then
-            myTeamFolder = CT_Folder
-        elseif TR_Folder and TR_Folder:FindFirstChild(LocalPlayer.Name) then
-            myTeamFolder = TR_Folder
-        end
-
-        -- SE VOCÊ NÃO ESTIVER EM NENHUMA PASTA (Morreu ou saiu do time)
-        if not myTeamFolder then
-            clearAllESP() -- Remove o ESP de todo mundo
-        else
-            -- SE VOCÊ ESTÁ EM UMA PASTA, processa apenas os inimigos
-            local enemyFolder = (myTeamFolder == CT_Folder) and TR_Folder or CT_Folder
+    if enemyFolder then
+        for _, enemy in pairs(enemyFolder:GetChildren()) do
+            local head = enemy:FindFirstChild(TARGET_PART)
+            local hum = enemy:FindFirstChildOfClass("Humanoid")
             
-            if enemyFolder then
-                -- Limpa ESP de quem for do seu time (caso tenha sobrado)
-                for _, friend in pairs(myTeamFolder:GetChildren()) do
-                    local h = friend:FindFirstChild("ESPHighlight")
-                    if h then h:Destroy() end
-                end
-
-                -- Atualiza ESP dos inimigos
-                for _, enemy in pairs(enemyFolder:GetChildren()) do
-                    if enemy:IsA("Model") then
-                        updateESP(enemy)
+            if head and hum and hum.Health > 0 then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                    
+                    if dist < minDistance then
+                        minDistance = dist
+                        closestTarget = head
                     end
                 end
             end
         end
+    end
+    return closestTarget
+end
 
-        task.wait(0.1)
+RunService:BindToRenderStep("HardLockAimbot", Enum.RenderPriority.Last.Value, function()
+    if UserInputService:IsKeyDown(AIM_KEY) then
+        local target = getTarget()
+        if target then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+        end
     end
 end)
+
+_G.AimbotConnection = true
