@@ -1,3 +1,7 @@
+-- VORTEX HUB - BloxStrike Edition
+-- Versão: 3.0 (Keybind System Corrigido)
+-- Data: 2024
+
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -8,6 +12,7 @@ local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
+-- CORES
 local DefaultTheme = Color3.fromHex("#7B2FDE")
 local DefaultHex = "#7B2FDE"
 local DiscordBlue = Color3.fromRGB(50, 70, 150)
@@ -51,13 +56,32 @@ local SavedHeaderColorBeforeRainbow = HeaderSidebarColor
 local SavedTextColorBeforeRainbow = Color3.fromRGB(255, 255, 255)
 local IsRainbowActive = false
 
--- SISTEMA DE GERENCIAMENTO DE SCRIPTS ATIVOS
+-- SISTEMA DE GERENCIAMENTO DE SCRIPTS
 local ActiveScripts = {}
 local ActiveScriptFunctions = {}
 local ActiveToggleStates = {}
 local AutoFarmScripts = {}
 local AutoRebirthScript = nil
 local AutoThiefScript = nil
+
+-- CONFIGURAÇÃO DO AIMBOT
+local AIMBOT_CONFIG = {
+    Key = Enum.KeyCode.LeftControl,
+    KeyName = "LCTRL",
+    MouseButton = nil
+}
+
+-- VARIÁVEIS GLOBAIS PARA OS AIMBOTS
+_G.AIM_KEY = Enum.KeyCode.LeftControl
+_G.AIM_KEY_WALLCHECK = Enum.KeyCode.LeftControl
+_G.AIM_MOUSEBUTTON = nil
+
+-- SISTEMA DE CAPTURA DE TECLAS - NOVO E CORRIGIDO
+local CurrentToggleKey = Enum.KeyCode.Insert
+local isListeningForAimbotKey = false
+local isListeningForHubKey = false
+local aimbotKeybindConnection = nil
+local hubKeybindConnection = nil
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "VortexHub"
@@ -68,6 +92,7 @@ ScreenGui.IgnoreGuiInset = true
 
 local modules = {}
 
+-- NOTIFICAÇÃO
 function modules.ShowNotification(title, text, duration)
     duration = duration or 4
     
@@ -139,9 +164,8 @@ function modules.ShowNotification(title, text, duration)
     NotifFrame:Destroy()
 end
 
--- FUNÇÃO PARA DESATIVAR TODOS OS SCRIPTS
+-- DESATIVAR TODOS OS SCRIPTS
 function modules.DeactivateAllScripts(silent)
-    -- Desativar scripts toggle normais
     for scriptId, _ in pairs(ActiveScripts) do
         if ActiveScriptFunctions[scriptId] then
             local success, err = pcall(function()
@@ -153,11 +177,9 @@ function modules.DeactivateAllScripts(silent)
         end
     end
     
-    -- Limpar tabelas
     ActiveScripts = {}
     ActiveScriptFunctions = {}
     
-    -- Desativar Auto Farm scripts
     for _, scriptData in pairs(AutoFarmScripts) do
         if scriptData.Deactivate then
             pcall(scriptData.Deactivate)
@@ -165,19 +187,17 @@ function modules.DeactivateAllScripts(silent)
     end
     AutoFarmScripts = {}
     
-    -- Desativar Auto Rebirth
     if AutoRebirthScript and AutoRebirthScript.Deactivate then
         pcall(AutoRebirthScript.Deactivate)
         AutoRebirthScript = nil
     end
     
-    -- Desativar Auto Thief
     if AutoThiefScript and AutoThiefScript.Deactivate then
         pcall(AutoThiefScript.Deactivate)
         AutoThiefScript = nil
     end
     
-    -- Limpar variáveis globais
+    -- Limpar variáveis globais dos aimbots
     _G.VortexStopFarm = nil
     _G.ValorMinimo = nil
     _G.WebhookURL = nil
@@ -187,12 +207,26 @@ function modules.DeactivateAllScripts(silent)
     _G.BountyHunter = false
     _G.ValorAlvoBounty = nil
     
-    -- Notificar usuário apenas se não for modo silencioso
+    -- Aimbot variables
+    if _G.VortexAimbotDeactivate then
+        pcall(_G.VortexAimbotDeactivate)
+        _G.VortexAimbotDeactivate = nil
+    end
+    
+    if _G.VortexAimbotWallCheckDeactivate then
+        pcall(_G.VortexAimbotWallCheckDeactivate)
+        _G.VortexAimbotWallCheckDeactivate = nil
+    end
+    
+    if _G.AimbotActive then _G.AimbotActive = false end
+    if _G.AimbotWallCheckActive then _G.AimbotWallCheckActive = false end
+    
     if not silent then
         modules.ShowNotification("System", "All scripts deactivated", 3)
     end
 end
 
+-- MAIN FRAME
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 650, 0, 460)
@@ -208,9 +242,9 @@ MainStroke.Color = CurrentTheme
 MainStroke.Thickness = 2
 MainStroke.Transparency = 0.8
 
+-- TOGGLE KEY
 local savedPosition = nil
 local savedAnchorPoint = nil
-local CurrentToggleKey = Enum.KeyCode.Insert
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == CurrentToggleKey then
@@ -244,6 +278,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
+-- SOFT GLOW EFFECT
 function modules.ApplySoftGlow(frame, color)
     frame.ClipsDescendants = false
     local Grad = Instance.new("UIGradient", frame)
@@ -272,6 +307,7 @@ function modules.ApplySoftGlow(frame, color)
     InnerPadding.PaddingBottom = UDim.new(0, 1)
 end
 
+-- TOP BAR
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.Size = UDim2.new(1, 0, 0, 45)
 TopBar.BackgroundColor3 = CurrentHeaderColor
@@ -329,9 +365,20 @@ CloseBtn.AnchorPoint = Vector2.new(1, 0.5)
 CloseBtn.BackgroundTransparency = 1
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 8)
 
-CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.2, BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play() end)
-CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play() end)
+CloseBtn.MouseEnter:Connect(function() 
+    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {
+        BackgroundTransparency = 0.2, 
+        BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    }):Play() 
+end)
 
+CloseBtn.MouseLeave:Connect(function() 
+    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {
+        BackgroundTransparency = 1
+    }):Play() 
+end)
+
+-- SIDEBAR
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Size = UDim2.new(0, 65, 1, -65)
 Sidebar.Position = UDim2.new(0, 15, 0, 55)
@@ -339,11 +386,13 @@ Sidebar.BackgroundColor3 = CurrentHeaderColor
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 10)
 modules.ApplySoftGlow(Sidebar, CurrentTheme)
 
+-- CONTAINER
 local Container = Instance.new("Frame", MainFrame)
 Container.Position = UDim2.new(0, 90, 0, 55)
 Container.Size = UDim2.new(1, -105, 1, -70)
 Container.BackgroundTransparency = 1
 
+-- PAGES SYSTEM
 local Pages = {}
 function CreatePage(name)
     local Page = Instance.new("ScrollingFrame", Container)
@@ -378,6 +427,7 @@ local ProfilePage = CreatePage("Profile")
 local MiscPage = CreatePage("Misc")
 local SettingsPage = CreatePage("Settings")
 
+-- HELPER FUNCTIONS
 function CreateHorizontalSubCard(parent, title, value, pos, size)
     local Card = Instance.new("Frame", parent)
     Card.Size = size
@@ -434,6 +484,7 @@ end
 local AvatarStrokeRef = nil
 local DiscordCardRef = nil
 
+-- PROFILE PAGE (MANTIDO IGUAL)
 function modules.CreateProfilePage()
     local ProfileCard = Instance.new("Frame", ProfilePage)
     ProfileCard.Size = UDim2.new(1, 0, 0, 105)
@@ -669,14 +720,112 @@ function modules.CreateProfilePage()
     local AgeVal = CreateSubCard(StatsCard, "Account Age", player.AccountAge .. " days", UDim2.new(0.45, 8, 0, 35), UDim2.new(0.55, -20, 0, 38))
 end
 
--- SISTEMA MELHORADO DE TOGGLE COM GERENCIAMENTO
+-- FUNÇÃO PARA OBTER NOME DA TECLA (MELHORADA)
+local function GetKeyNameFromInput(input)
+    if input.KeyCode ~= Enum.KeyCode.Unknown then
+        local keyName = tostring(input.KeyCode):gsub("Enum.KeyCode.", "")
+        
+        local keyNameMap = {
+            ["LeftControl"] = "LCTRL",
+            ["RightControl"] = "RCTRL",
+            ["LeftShift"] = "LSHIFT",
+            ["RightShift"] = "RSHIFT",
+            ["LeftAlt"] = "LALT",
+            ["RightAlt"] = "RALT",
+            ["PageUp"] = "PGUP",
+            ["PageDown"] = "PGDN",
+            ["Escape"] = "ESC",
+            ["Return"] = "ENTER",
+            ["Backquote"] = "`",
+            ["Semicolon"] = ";",
+            ["Quote"] = "'",
+            ["LeftBracket"] = "[",
+            ["RightBracket"] = "]",
+            ["Backslash"] = "\\",
+            ["Comma"] = ",",
+            ["Period"] = ".",
+            ["Slash"] = "/",
+            ["Minus"] = "-",
+            ["Equals"] = "=",
+            ["Insert"] = "INS",
+            ["Delete"] = "DEL",
+            ["Home"] = "HOME",
+            ["End"] = "END",
+            ["CapsLock"] = "CAPS",
+            ["Tab"] = "TAB",
+            ["Space"] = "SPACE",
+            ["Left"] = "LEFT",
+            ["Right"] = "RIGHT",
+            ["Up"] = "UP",
+            ["Down"] = "DOWN"
+        }
+        
+        return keyNameMap[keyName] or keyName:upper()
+    elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+        return "MB1"
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        return "MB2"
+    elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+        return "MB3"
+    end
+    
+    return "NONE"
+end
+
+-- FUNÇÃO PARA OBTER NOME DE UM KeyCode (MELHORADA)
+local function GetKeyNameFromKeyCode(keyCode)
+    if keyCode == Enum.KeyCode.Unknown then
+        return "NONE"
+    end
+    
+    local keyName = tostring(keyCode):gsub("Enum.KeyCode.", "")
+    
+    local keyNameMap = {
+        ["LeftControl"] = "LCTRL",
+        ["RightControl"] = "RCTRL",
+        ["LeftShift"] = "LSHIFT",
+        ["RightShift"] = "RSHIFT",
+        ["LeftAlt"] = "LALT",
+        ["RightAlt"] = "RALT",
+        ["PageUp"] = "PGUP",
+        ["PageDown"] = "PGDN",
+        ["Escape"] = "ESC",
+        ["Return"] = "ENTER",
+        ["Backquote"] = "`",
+        ["Semicolon"] = ";",
+        ["Quote"] = "'",
+        ["LeftBracket"] = "[",
+        ["RightBracket"] = "]",
+        ["Backslash"] = "\\",
+        ["Comma"] = ",",
+        ["Period"] = ".",
+        ["Slash"] = "/",
+        ["Minus"] = "-",
+        ["Equals"] = "=",
+        ["Insert"] = "INS",
+        ["Delete"] = "DEL",
+        ["Home"] = "HOME",
+        ["End"] = "END",
+        ["CapsLock"] = "CAPS",
+        ["Tab"] = "TAB",
+        ["Space"] = "SPACE",
+        ["Left"] = "LEFT",
+        ["Right"] = "RIGHT",
+        ["Up"] = "UP",
+        ["Down"] = "DOWN"
+    }
+    
+    return keyNameMap[keyName] or keyName:upper()
+end
+
+-- TOGGLE SYSTEM (MANTIDO IGUAL)
 function modules.CreateToggleInRow(row, name, scriptUrl, isPVP, fullWidth)
     local ToggleFrame = Instance.new("Frame", row)
     
     if fullWidth then
-        ToggleFrame.Size = UDim2.new(1, 0, 1, 0)
+        ToggleFrame.Size = UDim2.new(1, 0, 0, 45)
     else
-        ToggleFrame.Size = UDim2.new(0.5, -5, 1, 0)
+        ToggleFrame.Size = UDim2.new(0.5, -5, 0, 45)
     end
     
     ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
@@ -734,15 +883,11 @@ function modules.CreateToggleInRow(row, name, scriptUrl, isPVP, fullWidth)
             local success, err = pcall(function()
                 local scriptFunction = loadstring(game:HttpGet(scriptUrl))()
                 if type(scriptFunction) == "function" then
-                    -- Armazenar função de desativação se o script retornar uma
                     ActiveScriptFunctions[scriptUrl] = function()
-                        -- Tentar executar a função de desativação
                         pcall(scriptFunction)
                     end
                 else
-                    -- Se não retornar função, assumir que o script auto-desativa
                     ActiveScriptFunctions[scriptUrl] = function()
-                        -- Tentar executar novamente para desativar
                         pcall(function()
                             loadstring(game:HttpGet(scriptUrl))()
                         end)
@@ -771,7 +916,6 @@ function modules.CreateToggleInRow(row, name, scriptUrl, isPVP, fullWidth)
             end
             ActiveScriptFunctions[scriptUrl] = nil
         else
-            -- Fallback: executar o script novamente para desativar
             task.spawn(function()
                 pcall(function()
                     loadstring(game:HttpGet(scriptUrl))()
@@ -788,14 +932,14 @@ function modules.CreateToggleInRow(row, name, scriptUrl, isPVP, fullWidth)
         end
     end)
     
-    -- Aplicar estado salvo
     UpdateToggleAppearance(isActive)
     
     return ToggleFrame
 end
 
+-- SETTINGS PAGE (COM SISTEMA DE KEYBIND CORRIGIDO)
 function modules.CreateSettingsPage()
-    -- CATEGORIA ESP VISUALS
+    -- ESP VISUALS
     local ESPHeader = Instance.new("Frame", SettingsPage)
     ESPHeader.Size = UDim2.new(1, 0, 0, 45)
     ESPHeader.BackgroundColor3 = Color3.fromRGB(10, 25, 25)
@@ -821,7 +965,6 @@ function modules.CreateSettingsPage()
     local UIListESP = Instance.new("UIListLayout", ESPContainer)
     UIListESP.Padding = UDim.new(0, 10)
 
-    -- LINHA 1: ESP Ally e ESP Appearance
     local ESPRow1 = Instance.new("Frame", ESPContainer)
     ESPRow1.Size = UDim2.new(1, 0, 0, 45)
     ESPRow1.BackgroundTransparency = 1
@@ -832,7 +975,6 @@ function modules.CreateSettingsPage()
     local ESPAppearanceToggle = modules.CreateToggleInRow(ESPRow1, "ESP Appearance", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Appearance", false, false)
     ESPAppearanceToggle.Position = UDim2.new(0.5, 5, 0, 0)
 
-    -- LINHA 2: ESP Enemies e ESP Guns
     local ESPRow2 = Instance.new("Frame", ESPContainer)
     ESPRow2.Size = UDim2.new(1, 0, 0, 45)
     ESPRow2.BackgroundTransparency = 1
@@ -843,7 +985,6 @@ function modules.CreateSettingsPage()
     local ESPGunsToggle = modules.CreateToggleInRow(ESPRow2, "ESP Guns", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Guns", false, false)
     ESPGunsToggle.Position = UDim2.new(0.5, 5, 0, 0)
 
-    -- LINHA 3: ESP Health e ESP Name (lado a lado)
     local ESPRow3 = Instance.new("Frame", ESPContainer)
     ESPRow3.Size = UDim2.new(1, 0, 0, 45)
     ESPRow3.BackgroundTransparency = 1
@@ -854,7 +995,7 @@ function modules.CreateSettingsPage()
     local ESPNameToggle = modules.CreateToggleInRow(ESPRow3, "ESP Name", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/ESP/ESP_Name", false, false)
     ESPNameToggle.Position = UDim2.new(0.5, 5, 0, 0)
 
-    -- CATEGORIA AIMBOT
+    -- AIMBOT
     local AimHeader = Instance.new("Frame", SettingsPage)
     AimHeader.Size = UDim2.new(1, 0, 0, 45)
     AimHeader.BackgroundColor3 = Color3.fromRGB(25, 10, 10)
@@ -880,7 +1021,6 @@ function modules.CreateSettingsPage()
     local UIListAim = Instance.new("UIListLayout", AimContainer)
     UIListAim.Padding = UDim.new(0, 10)
 
-    -- LINHA 1: Aimbot e Aimbot [Wall Check]
     local AimRow1 = Instance.new("Frame", AimContainer)
     AimRow1.Size = UDim2.new(1, 0, 0, 45)
     AimRow1.BackgroundTransparency = 1
@@ -891,7 +1031,6 @@ function modules.CreateSettingsPage()
     local AimbotWallCheckToggle = modules.CreateToggleInRow(AimRow1, "Aimbot [Wall Check]", "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Games/BloxStrike/AIMBOT/AIM_AimbotWallCheck", true, false)
     AimbotWallCheckToggle.Position = UDim2.new(0.5, 5, 0, 0)
 
-    -- LINHA 2: Auto Trigger [BETA] (full width)
     local AimRow2 = Instance.new("Frame", AimContainer)
     AimRow2.Size = UDim2.new(1, 0, 0, 45)
     AimRow2.BackgroundTransparency = 1
@@ -900,7 +1039,216 @@ function modules.CreateSettingsPage()
     AutoTriggerToggle.Position = UDim2.new(0, 0, 0, 0)
     AutoTriggerToggle.Size = UDim2.new(1, 0, 1, 0)
 
-    -- CATEGORIA UTILITIES
+    -- CONFIGURAÇÃO DO AIMBOT (CORRIGIDO)
+    local AimbotConfigHeader = Instance.new("Frame", SettingsPage)
+    AimbotConfigHeader.Size = UDim2.new(1, 0, 0, 45)
+    AimbotConfigHeader.BackgroundColor3 = Color3.fromRGB(30, 15, 15)
+    AimbotConfigHeader.BackgroundTransparency = 0.5
+    Instance.new("UICorner", AimbotConfigHeader).CornerRadius = UDim.new(0, 10)
+    local AimbotConfigHeaderStroke = Instance.new("UIStroke", AimbotConfigHeader)
+    AimbotConfigHeaderStroke.Color = CategoryColors.Aim
+    AimbotConfigHeaderStroke.Thickness = 2
+    local AimbotConfigHeaderText = Instance.new("TextLabel", AimbotConfigHeader)
+    AimbotConfigHeaderText.Size = UDim2.new(1, 0, 1, 0)
+    AimbotConfigHeaderText.Position = UDim2.new(0, 20, 0, 0)
+    AimbotConfigHeaderText.Text = "AIMBOT CONFIGURATION"
+    AimbotConfigHeaderText.TextColor3 = CategoryColors.Aim
+    AimbotConfigHeaderText.Font = Enum.Font.GothamBold
+    AimbotConfigHeaderText.TextSize = 14
+    AimbotConfigHeaderText.TextXAlignment = Enum.TextXAlignment.Left
+    AimbotConfigHeaderText.BackgroundTransparency = 1
+
+    local AimbotConfigContainer = Instance.new("Frame", SettingsPage)
+    AimbotConfigContainer.Size = UDim2.new(1, 0, 0, 80)
+    AimbotConfigContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    AimbotConfigContainer.BackgroundTransparency = 0
+    Instance.new("UICorner", AimbotConfigContainer).CornerRadius = UDim.new(0, 10)
+    
+    local ConfigGlow = Instance.new("UIGradient", AimbotConfigContainer)
+    ConfigGlow.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, CategoryColors.Aim),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 40))
+    })
+    ConfigGlow.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.6, 0.8),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    ConfigGlow.Rotation = -45
+    
+    local ConfigStroke = Instance.new("UIStroke", AimbotConfigContainer)
+    ConfigStroke.Color = CategoryColors.Aim
+    ConfigStroke.Thickness = 1.5
+    ConfigStroke.Transparency = 0.3
+
+    local ConfigTitle = Instance.new("TextLabel", AimbotConfigContainer)
+    ConfigTitle.Size = UDim2.new(0.7, -30, 0, 25)
+    ConfigTitle.Position = UDim2.new(0, 15, 0, 10)
+    ConfigTitle.Text = "AIMBOT KEYBIND"
+    ConfigTitle.TextColor3 = CategoryColors.Aim
+    ConfigTitle.Font = Enum.Font.GothamBold
+    ConfigTitle.TextSize = 14
+    ConfigTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ConfigTitle.BackgroundTransparency = 1
+
+    local CurrentKeyContainer = Instance.new("Frame", AimbotConfigContainer)
+    CurrentKeyContainer.Size = UDim2.new(0.7, -30, 0, 25)
+    CurrentKeyContainer.Position = UDim2.new(0, 15, 0, 35)
+    CurrentKeyContainer.BackgroundTransparency = 1
+
+    local CurrentKeyValue = Instance.new("TextLabel", CurrentKeyContainer)
+    CurrentKeyValue.Size = UDim2.new(1, 0, 1, 0)
+    CurrentKeyValue.Position = UDim2.new(0, 0, 0, 0)
+    CurrentKeyValue.Text = "Current: [" .. AIMBOT_CONFIG.KeyName .. "]"
+    CurrentKeyValue.TextColor3 = CurrentTextColor
+    CurrentKeyValue.Font = Enum.Font.GothamMedium
+    CurrentKeyValue.TextSize = 13
+    CurrentKeyValue.TextXAlignment = Enum.TextXAlignment.Left
+    CurrentKeyValue.BackgroundTransparency = 1
+
+    local ChangeKeyBtn = Instance.new("TextButton", AimbotConfigContainer)
+    ChangeKeyBtn.Size = UDim2.new(0, 100, 0, 35)
+    ChangeKeyBtn.Position = UDim2.new(1, -115, 0.5, -17.5)
+    ChangeKeyBtn.Text = "CHANGE"
+    ChangeKeyBtn.BackgroundColor3 = CategoryColors.Aim
+    ChangeKeyBtn.TextColor3 = Color3.new(1, 1, 1)
+    ChangeKeyBtn.Font = Enum.Font.GothamMedium
+    ChangeKeyBtn.TextSize = 12
+    ChangeKeyBtn.AutoButtonColor = false
+    Instance.new("UICorner", ChangeKeyBtn).CornerRadius = UDim.new(0, 6)
+    
+    local KeyBtnStroke = Instance.new("UIStroke", ChangeKeyBtn)
+    KeyBtnStroke.Color = Color3.fromRGB(255, 255, 255)
+    KeyBtnStroke.Thickness = 1
+    KeyBtnStroke.Transparency = 0.7
+
+    ChangeKeyBtn.MouseEnter:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.min(CategoryColors.Aim.R * 255 + 20, 255),
+                math.min(CategoryColors.Aim.G * 255 + 20, 255),
+                math.min(CategoryColors.Aim.B * 255 + 20, 255)
+            )
+        }):Play()
+        TweenService:Create(KeyBtnStroke, TweenInfo.new(0.2), {Transparency = 0.3}):Play()
+    end)
+    
+    ChangeKeyBtn.MouseLeave:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.2), {BackgroundColor3 = CategoryColors.Aim}):Play()
+        TweenService:Create(KeyBtnStroke, TweenInfo.new(0.2), {Transparency = 0.7}):Play()
+    end)
+    
+    ChangeKeyBtn.MouseButton1Down:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.max(CategoryColors.Aim.R * 255 - 30, 0),
+                math.max(CategoryColors.Aim.G * 255 - 30, 0),
+                math.max(CategoryColors.Aim.B * 255 - 30, 0)
+            )
+        }):Play()
+    end)
+    
+    ChangeKeyBtn.MouseButton1Up:Connect(function()
+        TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.1), {BackgroundColor3 = CategoryColors.Aim}):Play()
+    end)
+
+    local function UpdateKeyDisplay()
+        CurrentKeyValue.Text = "Current: [" .. AIMBOT_CONFIG.KeyName .. "]"
+    end
+    
+    UpdateKeyDisplay()
+
+    local function StopListeningForAimbotKey()
+        if aimbotKeybindConnection then
+            aimbotKeybindConnection:Disconnect()
+            aimbotKeybindConnection = nil
+        end
+        isListeningForAimbotKey = false
+        ChangeKeyBtn.Text = "CHANGE"
+        ChangeKeyBtn.BackgroundColor3 = CategoryColors.Aim
+        CurrentKeyValue.Text = "Current: [" .. AIMBOT_CONFIG.KeyName .. "]"
+        CurrentKeyValue.TextColor3 = CurrentTextColor
+    end
+
+    ChangeKeyBtn.MouseButton1Click:Connect(function()
+        if isListeningForAimbotKey then
+            StopListeningForAimbotKey()
+            return
+        end
+        
+        isListeningForAimbotKey = true
+        CurrentKeyValue.Text = "Press any key..."
+        CurrentKeyValue.TextColor3 = Color3.fromRGB(255, 100, 100)
+        ChangeKeyBtn.Text = "CANCEL"
+        ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        
+        -- Limpar conexão anterior
+        if aimbotKeybindConnection then
+            aimbotKeybindConnection:Disconnect()
+        end
+        
+        -- Criar nova conexão
+        aimbotKeybindConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if not isListeningForAimbotKey or gameProcessed then return end
+            
+            -- Processar tecla
+            if input.KeyCode ~= Enum.KeyCode.Unknown then
+                -- Tecla normal
+                AIMBOT_CONFIG.Key = input.KeyCode
+                AIMBOT_CONFIG.KeyName = GetKeyNameFromInput(input)
+                AIMBOT_CONFIG.MouseButton = nil
+                
+                -- Definir variáveis globais
+                _G.AIM_KEY = input.KeyCode
+                _G.AIM_KEY_WALLCHECK = input.KeyCode
+                _G.AIM_MOUSEBUTTON = nil
+                
+            elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+                -- Mouse Button 1
+                AIMBOT_CONFIG.Key = Enum.KeyCode.Unknown
+                AIMBOT_CONFIG.KeyName = "MB1"
+                AIMBOT_CONFIG.MouseButton = 1
+                
+                _G.AIM_KEY = Enum.KeyCode.Unknown
+                _G.AIM_KEY_WALLCHECK = Enum.KeyCode.Unknown
+                _G.AIM_MOUSEBUTTON = 1
+                
+            elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                -- Mouse Button 2
+                AIMBOT_CONFIG.Key = Enum.KeyCode.Unknown
+                AIMBOT_CONFIG.KeyName = "MB2"
+                AIMBOT_CONFIG.MouseButton = 2
+                
+                _G.AIM_KEY = Enum.KeyCode.Unknown
+                _G.AIM_KEY_WALLCHECK = Enum.KeyCode.Unknown
+                _G.AIM_MOUSEBUTTON = 2
+                
+            elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+                -- Mouse Button 3
+                AIMBOT_CONFIG.Key = Enum.KeyCode.Unknown
+                AIMBOT_CONFIG.KeyName = "MB3"
+                AIMBOT_CONFIG.MouseButton = 3
+                
+                _G.AIM_KEY = Enum.KeyCode.Unknown
+                _G.AIM_KEY_WALLCHECK = Enum.KeyCode.Unknown
+                _G.AIM_MOUSEBUTTON = 3
+            else
+                -- Não é uma tecla válida
+                return
+            end
+            
+            -- Atualizar display
+            UpdateKeyDisplay()
+            
+            -- Mostrar notificação
+            modules.ShowNotification("Aimbot Config", "Keybind set to " .. AIMBOT_CONFIG.KeyName .. " for both aimbots", 3)
+            
+            -- Parar de escutar
+            StopListeningForAimbotKey()
+        end)
+    end)
+
+    -- UTILITIES
     local UtilitiesHeader = Instance.new("Frame", SettingsPage)
     UtilitiesHeader.Size = UDim2.new(1, 0, 0, 45)
     UtilitiesHeader.BackgroundColor3 = Color3.fromRGB(15, 20, 25)
@@ -926,7 +1274,6 @@ function modules.CreateSettingsPage()
     local UIListUtilities = Instance.new("UIListLayout", UtilitiesContainer)
     UIListUtilities.Padding = UDim.new(0, 10)
 
-    -- LINHA 1: Anti Flashbang
     local UtilitiesRow1 = Instance.new("Frame", UtilitiesContainer)
     UtilitiesRow1.Size = UDim2.new(1, 0, 0, 45)
     UtilitiesRow1.BackgroundTransparency = 1
@@ -936,7 +1283,7 @@ function modules.CreateSettingsPage()
     AntiFlashbangToggle.Size = UDim2.new(1, 0, 1, 0)
 end
 
--- Função para criar um botão moderno com seta
+-- MODERN BUTTON (MANTIDO IGUAL)
 function CreateModernButton(parent, text, iconId, arrowIconId)
     local ButtonContainer = Instance.new("TextButton", parent)
     ButtonContainer.Size = UDim2.new(1, 0, 0, 45)
@@ -1022,6 +1369,7 @@ function CreateModernButton(parent, text, iconId, arrowIconId)
     return ButtonContainer
 end
 
+-- MISC PAGE (COM SISTEMA DE KEYBIND CORRIGIDO)
 function modules.CreateMiscPage()
     local InterfaceHeader = Instance.new("Frame", MiscPage)
     InterfaceHeader.Size = UDim2.new(1, 0, 0, 45)
@@ -1048,14 +1396,13 @@ function modules.CreateMiscPage()
     local InterfaceList = Instance.new("UIListLayout", InterfaceContainer)
     InterfaceList.Padding = UDim.new(0, 10)
 
-    -- CONTAINER DE KEYBIND MELHORADO
+    -- KEYBIND CONTAINER (CORRIGIDO)
     local KeybindContainer = Instance.new("Frame", InterfaceContainer)
-    KeybindContainer.Size = UDim2.new(1, 0, 0, 70)
+    KeybindContainer.Size = UDim2.new(1, 0, 0, 80)
     KeybindContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     KeybindContainer.BackgroundTransparency = 0
     Instance.new("UICorner", KeybindContainer).CornerRadius = UDim.new(0, 10)
     
-    -- Aplicar efeito de glow
     local KeybindGlow = Instance.new("UIGradient", KeybindContainer)
     KeybindGlow.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, CategoryColors.Interface),
@@ -1074,30 +1421,34 @@ function modules.CreateMiscPage()
     KeybindStroke.Transparency = 0.3
 
     local KeybindTitle = Instance.new("TextLabel", KeybindContainer)
-    KeybindTitle.Size = UDim2.new(1, -30, 0, 25)
-    KeybindTitle.Position = UDim2.new(0, 15, 0, 8)
-    KeybindTitle.Text = "TOGGLE KEYBIND"
+    KeybindTitle.Size = UDim2.new(0.7, -30, 0, 25)
+    KeybindTitle.Position = UDim2.new(0, 15, 0, 10)
+    KeybindTitle.Text = "HUB TOGGLE KEYBIND"
     KeybindTitle.TextColor3 = CategoryColors.Interface
     KeybindTitle.Font = Enum.Font.GothamBold
     KeybindTitle.TextSize = 14
     KeybindTitle.TextXAlignment = Enum.TextXAlignment.Left
     KeybindTitle.BackgroundTransparency = 1
 
-    local CurrentKeyLabel = Instance.new("TextLabel", KeybindContainer)
-    CurrentKeyLabel.Size = UDim2.new(0.6, -10, 0, 25)
-    CurrentKeyLabel.Position = UDim2.new(0, 15, 0, 35)
-    CurrentKeyLabel.Text = "Current: [ INSERT ]"
-    CurrentKeyLabel.TextColor3 = CurrentTextColor
-    CurrentKeyLabel.Font = Enum.Font.GothamMedium
-    CurrentKeyLabel.TextSize = 12
-    CurrentKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
-    CurrentKeyLabel.BackgroundTransparency = 1
+    local KeybindDisplay = Instance.new("Frame", KeybindContainer)
+    KeybindDisplay.Size = UDim2.new(0.7, -30, 0, 25)
+    KeybindDisplay.Position = UDim2.new(0, 15, 0, 35)
+    KeybindDisplay.BackgroundTransparency = 1
 
-    -- BOTÃO DE MUDAR KEYBIND MELHORADO
+    local CurrentKeyValue = Instance.new("TextLabel", KeybindDisplay)
+    CurrentKeyValue.Size = UDim2.new(1, 0, 1, 0)
+    CurrentKeyValue.Position = UDim2.new(0, 0, 0, 0)
+    CurrentKeyValue.Text = "Current: [ INSERT ]"
+    CurrentKeyValue.TextColor3 = CurrentTextColor
+    CurrentKeyValue.Font = Enum.Font.GothamMedium
+    CurrentKeyValue.TextSize = 13
+    CurrentKeyValue.TextXAlignment = Enum.TextXAlignment.Left
+    CurrentKeyValue.BackgroundTransparency = 1
+
     local ChangeKeyBtn = Instance.new("TextButton", KeybindContainer)
-    ChangeKeyBtn.Size = UDim2.new(0, 130, 0, 30)
-    ChangeKeyBtn.Position = UDim2.new(1, -145, 0, 32)
-    ChangeKeyBtn.Text = "CHANGE KEY"
+    ChangeKeyBtn.Size = UDim2.new(0, 100, 0, 35)
+    ChangeKeyBtn.Position = UDim2.new(1, -115, 0.5, -17.5)
+    ChangeKeyBtn.Text = "CHANGE"
     ChangeKeyBtn.BackgroundColor3 = CategoryColors.Interface
     ChangeKeyBtn.TextColor3 = Color3.new(1, 1, 1)
     ChangeKeyBtn.Font = Enum.Font.GothamMedium
@@ -1110,7 +1461,6 @@ function modules.CreateMiscPage()
     KeyBtnStroke.Thickness = 1
     KeyBtnStroke.Transparency = 0.7
 
-    -- Efeitos hover para o botão
     ChangeKeyBtn.MouseEnter:Connect(function()
         TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.2), {
             BackgroundColor3 = Color3.fromRGB(
@@ -1141,116 +1491,80 @@ function modules.CreateMiscPage()
         TweenService:Create(ChangeKeyBtn, TweenInfo.new(0.1), {BackgroundColor3 = CategoryColors.Interface}):Play()
     end)
 
-    local waitingForKey = false
-    local keybindConnection
-    
-    local function GetKeyNameFromInput(input)
-        if input.KeyCode ~= Enum.KeyCode.Unknown then
-            local keyName = tostring(input.KeyCode):gsub("Enum.KeyCode.", "")
-            
-            local keyNameMap = {
-                ["LeftControl"] = "LControl",
-                ["RightControl"] = "RControl",
-                ["LeftShift"] = "LShift",
-                ["RightShift"] = "RShift",
-                ["LeftAlt"] = "LAlt",
-                ["RightAlt"] = "RAlt",
-                ["PageUp"] = "PgUp",
-                ["PageDown"] = "PgDown",
-                ["Escape"] = "Esc",
-                ["Return"] = "Enter",
-                ["Backquote"] = "`",
-                ["Semicolon"] = ";",
-                ["Quote"] = "'",
-                ["LeftBracket"] = "[",
-                ["RightBracket"] = "]",
-                ["Backslash"] = "\\",
-                ["Comma"] = ",",
-                ["Period"] = ".",
-                ["Slash"] = "/",
-                ["Minus"] = "-",
-                ["Equals"] = "=",
-                ["Insert"] = "Ins",
-                ["Delete"] = "Del",
-                ["Home"] = "Home",
-                ["End"] = "End",
-                ["CapsLock"] = "Caps"
-            }
-            
-            return keyNameMap[keyName] or keyName:upper()
-        elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-            return "MB1"
-        elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-            return "MB2"
-        elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
-            return "MB3"
-        end
-        
-        return "NONE"
-    end
-
     local function UpdateKeyLabel()
-        local keyName = GetKeyNameFromInput({KeyCode = CurrentToggleKey})
-        CurrentKeyLabel.Text = "Current: [ " .. keyName .. " ]"
+        local keyName = GetKeyNameFromKeyCode(CurrentToggleKey)
+        CurrentKeyValue.Text = "Current: [ " .. keyName .. " ]"
     end
     
     UpdateKeyLabel()
 
+    local function StopListeningForHubKey()
+        if hubKeybindConnection then
+            hubKeybindConnection:Disconnect()
+            hubKeybindConnection = nil
+        end
+        isListeningForHubKey = false
+        ChangeKeyBtn.Text = "CHANGE"
+        ChangeKeyBtn.BackgroundColor3 = CategoryColors.Interface
+        UpdateKeyLabel()
+        CurrentKeyValue.TextColor3 = CurrentTextColor
+    end
+
     ChangeKeyBtn.MouseButton1Click:Connect(function()
-        if waitingForKey then return end
-        
-        waitingForKey = true
-        CurrentKeyLabel.Text = "Press any key or click..."
-        ChangeKeyBtn.Text = "PRESS A KEY"
-        ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 50)
-        
-        -- Cancelar conexão anterior se existir
-        if keybindConnection then
-            keybindConnection:Disconnect()
+        if isListeningForHubKey then
+            StopListeningForHubKey()
+            return
         end
         
-        keybindConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if waitingForKey and not gameProcessed then
-                waitingForKey = false
-                
-                if input.KeyCode ~= Enum.KeyCode.Unknown then
-                    CurrentToggleKey = input.KeyCode
-                    UpdateKeyLabel()
-                    modules.ShowNotification("Keybind", "Hotkey changed to " .. GetKeyNameFromInput(input), 3)
-                
-                elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    CurrentToggleKey = Enum.KeyCode.Unknown
-                    CurrentKeyLabel.Text = "Current: [ MB1 ]"
-                    modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 1", 3)
-                elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-                    CurrentToggleKey = Enum.KeyCode.Unknown
-                    CurrentKeyLabel.Text = "Current: [ MB2 ]"
-                    modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 2", 3)
-                elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
-                    CurrentToggleKey = Enum.KeyCode.Unknown
-                    CurrentKeyLabel.Text = "Current: [ MB3 ]"
-                    modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 3", 3)
-                end
-                
-                ChangeKeyBtn.Text = "CHANGE KEY"
-                ChangeKeyBtn.BackgroundColor3 = CategoryColors.Interface
-                
-                if keybindConnection then
-                    keybindConnection:Disconnect()
-                    keybindConnection = nil
-                end
+        isListeningForHubKey = true
+        CurrentKeyValue.Text = "Press any key..."
+        CurrentKeyValue.TextColor3 = Color3.fromRGB(255, 100, 100)
+        ChangeKeyBtn.Text = "CANCEL"
+        ChangeKeyBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        
+        -- Limpar conexão anterior
+        if hubKeybindConnection then
+            hubKeybindConnection:Disconnect()
+        end
+        
+        -- Criar nova conexão
+        hubKeybindConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+            if not isListeningForHubKey or gameProcessed then return end
+            
+            -- Processar tecla
+            if input.KeyCode ~= Enum.KeyCode.Unknown then
+                CurrentToggleKey = input.KeyCode
+                UpdateKeyLabel()
+                modules.ShowNotification("Keybind", "Hotkey changed to " .. GetKeyNameFromInput(input), 3)
+            elseif input.UserInputType == Enum.UserInputType.MouseButton1 then
+                CurrentToggleKey = Enum.KeyCode.Unknown
+                CurrentKeyValue.Text = "Current: [ MB1 ]"
+                modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 1", 3)
+            elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+                CurrentToggleKey = Enum.KeyCode.Unknown
+                CurrentKeyValue.Text = "Current: [ MB2 ]"
+                modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 2", 3)
+            elseif input.UserInputType == Enum.UserInputType.MouseButton3 then
+                CurrentToggleKey = Enum.KeyCode.Unknown
+                CurrentKeyValue.Text = "Current: [ MB3 ]"
+                modules.ShowNotification("Keybind", "Hotkey changed to Mouse Button 3", 3)
+            else
+                -- Não é uma tecla válida
+                return
             end
+            
+            -- Parar de escutar
+            StopListeningForHubKey()
         end)
     end)
 
-    -- SEÇÃO DE THEME COLOR APRIMORADA
+    -- THEME COLOR (MANTIDO IGUAL)
     local ThemeContainer = Instance.new("Frame", InterfaceContainer)
-    ThemeContainer.Size = UDim2.new(1, 0, 0, 110)
+    ThemeContainer.Size = UDim2.new(1, 0, 0, 150)
     ThemeContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     ThemeContainer.BackgroundTransparency = 0
     Instance.new("UICorner", ThemeContainer).CornerRadius = UDim.new(0, 10)
     
-    -- Adicionar glow para tema também
     local ThemeGlow = Instance.new("UIGradient", ThemeContainer)
     ThemeGlow.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, CategoryColors.Interface),
@@ -1279,11 +1593,10 @@ function modules.CreateMiscPage()
     ThemeTitle.BackgroundTransparency = 1
 
     local ThemeButtons = Instance.new("Frame", ThemeContainer)
-    ThemeButtons.Size = UDim2.new(1, -30, 0, 70)
+    ThemeButtons.Size = UDim2.new(1, -30, 0, 110)
     ThemeButtons.Position = UDim2.new(0, 15, 0, 35)
     ThemeButtons.BackgroundTransparency = 1
 
-    -- ADICIONAR PADDING NO CONTAINER DOS TEMAS PARA DAR ESPAÇO NO BOTTOM
     local ThemePadding = Instance.new("UIPadding", ThemeButtons)
     ThemePadding.PaddingBottom = UDim.new(0, 8)
     ThemePadding.PaddingLeft = UDim.new(0, 2)
@@ -1368,7 +1681,6 @@ function modules.CreateMiscPage()
         end
     end
 
-    -- Criar grade 2x3 para os botões de tema
     local ThemeGrid = Instance.new("UIGridLayout", ThemeButtons)
     ThemeGrid.CellPadding = UDim2.new(0, 8, 0, 8)
     ThemeGrid.CellSize = UDim2.new(0.33, -8, 0.45, 0)
@@ -1383,13 +1695,11 @@ function modules.CreateMiscPage()
         ThemeBtn.LayoutOrder = i
         Instance.new("UICorner", ThemeBtn).CornerRadius = UDim.new(0, 8)
         
-        -- Adicionar stroke para destacar
         local ThemeBtnStroke = Instance.new("UIStroke", ThemeBtn)
         ThemeBtnStroke.Color = Color3.fromRGB(255, 255, 255)
         ThemeBtnStroke.Thickness = 1
         ThemeBtnStroke.Transparency = 0.8
         
-        -- Adicionar nome do tema como tooltip
         if theme.Name == "Purple (V)" then
             local VLabel = Instance.new("TextLabel", ThemeBtn)
             VLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -1400,7 +1710,6 @@ function modules.CreateMiscPage()
             VLabel.TextSize = 14
         end
         
-        -- Efeitos hover melhorados
         ThemeBtn.MouseEnter:Connect(function()
             TweenService:Create(ThemeBtn, TweenInfo.new(0.2), {
                 Size = UDim2.new(0, 44, 0, 44),
@@ -1454,6 +1763,7 @@ function modules.CreateMiscPage()
         end)
     end
 
+    -- GAME SETTINGS (MANTIDO IGUAL)
     local GameHeader = Instance.new("Frame", MiscPage)
     GameHeader.Size = UDim2.new(1, 0, 0, 45)
     GameHeader.BackgroundColor3 = Color3.fromRGB(25, 20, 15)
@@ -1473,21 +1783,21 @@ function modules.CreateMiscPage()
     GameHeaderText.BackgroundTransparency = 1
 
     local GameContainer = Instance.new("Frame", MiscPage)
-    GameContainer.Size = UDim2.new(1, 0, 0, 45)
+    GameContainer.Size = UDim2.new(1, 0, 0, 60)
     GameContainer.BackgroundTransparency = 1
     GameContainer.AutomaticSize = Enum.AutomaticSize.Y
     local GameList = Instance.new("UIListLayout", GameContainer)
     GameList.Padding = UDim.new(0, 10)
 
     local FOVContainer = Instance.new("Frame", GameContainer)
-    FOVContainer.Size = UDim2.new(1, 0, 0, 45)
+    FOVContainer.Size = UDim2.new(1, 0, 0, 60)
     FOVContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     FOVContainer.BackgroundTransparency = 0
     Instance.new("UICorner", FOVContainer).CornerRadius = UDim.new(0, 8)
 
     local FOVLabel = Instance.new("TextLabel", FOVContainer)
-    FOVLabel.Size = UDim2.new(0.4, -10, 1, 0)
-    FOVLabel.Position = UDim2.new(0, 15, 0, 0)
+    FOVLabel.Size = UDim2.new(1, -30, 0, 25)
+    FOVLabel.Position = UDim2.new(0, 15, 0, 5)
     FOVLabel.Text = "FOV: 70"
     FOVLabel.TextColor3 = CurrentTextColor
     FOVLabel.Font = Enum.Font.GothamMedium
@@ -1496,13 +1806,13 @@ function modules.CreateMiscPage()
     FOVLabel.BackgroundTransparency = 1
 
     local FOVSliderContainer = Instance.new("Frame", FOVContainer)
-    FOVSliderContainer.Size = UDim2.new(0.6, -20, 1, 0)
-    FOVSliderContainer.Position = UDim2.new(0.4, 0, 0, 0)
+    FOVSliderContainer.Size = UDim2.new(1, -30, 0, 25)
+    FOVSliderContainer.Position = UDim2.new(0, 15, 0, 30)
     FOVSliderContainer.BackgroundTransparency = 1
 
     local FOVSlider = Instance.new("Frame", FOVSliderContainer)
-    FOVSlider.Size = UDim2.new(1, -10, 0, 20)
-    FOVSlider.Position = UDim2.new(0, 0, 0.5, -10)
+    FOVSlider.Size = UDim2.new(1, 0, 0, 10)
+    FOVSlider.Position = UDim2.new(0, 0, 0.5, -5)
     FOVSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
     FOVSlider.BorderSizePixel = 0
     Instance.new("UICorner", FOVSlider).CornerRadius = UDim.new(1, 0)
@@ -1515,7 +1825,7 @@ function modules.CreateMiscPage()
 
     local FOVBtn = Instance.new("TextButton", FOVSlider)
     FOVBtn.Size = UDim2.new(0, 20, 0, 20)
-    FOVBtn.Position = UDim2.new(0.5, -10, 0, 0)
+    FOVBtn.Position = UDim2.new(0.5, -10, 0.5, -10)
     FOVBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     FOVBtn.Text = ""
     Instance.new("UICorner", FOVBtn).CornerRadius = UDim.new(1, 0)
@@ -1538,7 +1848,7 @@ function modules.CreateMiscPage()
         FOVLabel.Text = "FOV: " .. TargetFOV
         local fillPercent = (TargetFOV - MinFOV) / (MaxFOV - MinFOV)
         FOVFill.Size = UDim2.new(fillPercent, 0, 1, 0)
-        FOVBtn.Position = UDim2.new(fillPercent, -10, 0, 0)
+        FOVBtn.Position = UDim2.new(fillPercent, -10, 0.5, -10)
         
         workspace.CurrentCamera.FieldOfView = TargetFOV
     end
@@ -1566,6 +1876,7 @@ function modules.CreateMiscPage()
         end
     end)
 
+    -- GENERAL UTILITIES (MANTIDO IGUAL)
     local GeneralHeader = Instance.new("Frame", MiscPage)
     GeneralHeader.Size = UDim2.new(1, 0, 0, 45)
     GeneralHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
@@ -1591,7 +1902,6 @@ function modules.CreateMiscPage()
     local GeneralList = Instance.new("UIListLayout", GeneralContainer)
     GeneralList.Padding = UDim.new(0, 10)
 
-    -- BOTÃO REJOIN SERVER MODERNO
     local RejoinButton = CreateModernButton(GeneralContainer, "Rejoin Server", 118779487828816, 138707159604637)
     
     RejoinButton.MouseButton1Click:Connect(function()
@@ -1601,7 +1911,6 @@ function modules.CreateMiscPage()
         modules.ShowNotification("Utilities", "Rejoining server...", 3)
     end)
 
-    -- BOTÃO SERVER HOP MODERNO
     local ServerHopButton = CreateModernButton(GeneralContainer, "Server Hop", 118779487828816, 138707159604637)
     
     ServerHopButton.MouseButton1Click:Connect(function()
@@ -1635,7 +1944,6 @@ function modules.CreateMiscPage()
         end)
     end)
 
-    -- BOTÃO EMPTY SERVER MODERNO
     local EmptyServerButton = CreateModernButton(GeneralContainer, "Empty Server", 118779487828816, 138707159604637)
     
     EmptyServerButton.MouseButton1Click:Connect(function()
@@ -1679,6 +1987,7 @@ function modules.CreateMiscPage()
         end)
     end)
 
+    -- CUSTOMIZATION (MANTIDO IGUAL)
     local CustomHeader = Instance.new("Frame", MiscPage)
     CustomHeader.Size = UDim2.new(1, 0, 0, 45)
     CustomHeader.BackgroundColor3 = Color3.fromRGB(25, 15, 25)
@@ -1946,6 +2255,7 @@ function modules.CreateMiscPage()
     end)
 end
 
+-- TAB SYSTEM (MANTIDO IGUAL)
 local TabButtons = {}
 function CreateTabBtn(iconId, pos, tabName, isBottom)
     local Btn = Instance.new("TextButton", Sidebar)
@@ -2012,7 +2322,7 @@ modules.CreateProfilePage()
 modules.CreateSettingsPage()
 modules.CreateMiscPage()
 
--- SISTEMA DE ARRASTAR SIMPLES
+-- DRAGGABLE (MANTIDO IGUAL)
 local dragging = false
 local dragInput
 local dragStart
@@ -2060,12 +2370,22 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- FUNÇÃO DE FECHAMENTO COMPLETA NO BOTÃO "X"
+-- CLOSE HUB (CORRIGIDO)
 local function CloseHub()
-    -- Primeiro desativar todos os scripts em modo silencioso
+    -- Parar listeners de keybind
+    if aimbotKeybindConnection then
+        aimbotKeybindConnection:Disconnect()
+        aimbotKeybindConnection = nil
+    end
+    if hubKeybindConnection then
+        hubKeybindConnection:Disconnect()
+        hubKeybindConnection = nil
+    end
+    isListeningForAimbotKey = false
+    isListeningForHubKey = false
+    
     modules.DeactivateAllScripts(true)
     
-    -- Desconectar conexões
     if cameraFOVConnection then
         cameraFOVConnection:Disconnect()
     end
@@ -2078,30 +2398,34 @@ local function CloseHub()
         cursorLoop:Disconnect()
     end
     
-    -- Limpar cursor personalizado
     if cursorGui then
         cursorGui:Destroy()
         UserInputService.MouseIconEnabled = true
     end
     
-    -- Destruir interface
     ScreenGui:Destroy()
     
-    -- Notificar no console (apenas no console, sem notificação visual)
     warn("[Vortex Hub] Closed. All scripts have been deactivated.")
 end
 
 CloseBtn.MouseButton1Click:Connect(CloseHub)
 
--- CONEXÃO PARA DESATIVAR SCRIPTS SE A INTERFACE FOR DESTRUÍDA
 game:GetService("CoreGui").ChildRemoved:Connect(function(child)
     if child.Name == "VortexHub" then
-        -- Garantir que todos os scripts sejam desativados em modo silencioso
         task.wait(0.1)
         modules.DeactivateAllScripts(true)
+        if aimbotKeybindConnection then
+            aimbotKeybindConnection:Disconnect()
+            aimbotKeybindConnection = nil
+        end
+        if hubKeybindConnection then
+            hubKeybindConnection:Disconnect()
+            hubKeybindConnection = nil
+        end
     end
 end)
 
+-- WELCOME NOTIFICATION
 task.spawn(function()
     modules.ShowNotification("Vortex Hub", "Welcome back, " .. player.DisplayName .. "! Press [ INSERT ] to toggle the hub menu.", 6)
 end)
