@@ -1,0 +1,100 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+if _G.MonsterESP_Active then
+	_G.MonsterESP_Active = false
+	
+	if _G.MonsterESPLoop then
+		_G.MonsterESPLoop:Disconnect()
+		_G.MonsterESPLoop = nil
+	end
+	
+	if _G.PlayerAddedConn then
+		_G.PlayerAddedConn:Disconnect()
+		_G.PlayerAddedConn = nil
+	end
+
+	for _, player in pairs(Players:GetPlayers()) do
+		local character = player.Character
+		if character then
+			local highlight = character:FindFirstChild("MonsterHighlight")
+			if highlight then
+				highlight:Destroy()
+			end
+		end
+	end
+
+	local folder = CoreGui:FindFirstChild("MonsterESP_Folder")
+	if folder then
+		folder:Destroy()
+	end
+	
+	return
+end
+
+_G.MonsterESP_Active = true
+
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "MonsterESP_Folder"
+ESPFolder.Parent = CoreGui
+
+local function ManageHighlight(player)
+	if player == Players.LocalPlayer then return end
+
+	local function Update()
+		if not _G.MonsterESP_Active then return end
+		
+		local character = player.Character
+		if not character then return end
+
+		if player:GetAttribute("Role") == "Monster" then
+			local highlight = character:FindFirstChild("MonsterHighlight")
+			if not highlight then
+				highlight = Instance.new("Highlight")
+				highlight.Name = "MonsterHighlight"
+				highlight.Parent = character
+				highlight.Adornee = character
+				highlight.FillColor = Color3.new(1, 0, 0)
+				highlight.OutlineColor = Color3.new(1, 0, 0)
+				highlight.FillTransparency = 0.5
+				highlight.OutlineTransparency = 0
+			end
+		else
+			local highlight = character:FindFirstChild("MonsterHighlight")
+			if highlight then
+				highlight:Destroy()
+			end
+		end
+	end
+
+	player.CharacterAdded:Connect(Update)
+	player:GetAttributeChangedSignal("Role"):Connect(Update)
+	if player.Character then
+		Update()
+	end
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+	ManageHighlight(player)
+end
+
+_G.PlayerAddedConn = Players.PlayerAdded:Connect(ManageHighlight)
+
+_G.MonsterESPLoop = RunService.RenderStepped:Connect(function()
+	if not _G.MonsterESP_Active then
+		if _G.MonsterESPLoop then
+			_G.MonsterESPLoop:Disconnect()
+			_G.MonsterESPLoop = nil
+		end
+		return
+	end
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player:GetAttribute("Role") == "Monster" and player.Character then
+			if not player.Character:FindFirstChild("MonsterHighlight") then
+				ManageHighlight(player)
+			end
+		end
+	end
+end)

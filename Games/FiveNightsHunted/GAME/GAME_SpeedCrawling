@@ -1,0 +1,33 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local TARGET_SPEED = 25
+local CRAWL_SPEED_THRESHOLD = 8
+
+if _G.FastCrawl_Active then
+	_G.FastCrawl_Active = false
+	if _G.CrawlConnection then
+		_G.CrawlConnection:Disconnect()
+		_G.CrawlConnection = nil
+	end
+	return
+end
+
+_G.FastCrawl_Active = true
+
+local function ApplySpeed()
+	local character = Players.LocalPlayer.Character
+	if not character then return end
+	
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if not humanoid then return end
+
+	if humanoid.WalkSpeed > 0 and humanoid.WalkSpeed <= CRAWL_SPEED_THRESHOLD then
+		humanoid.WalkSpeed = TARGET_SPEED
+	end
+end
+
+_G.CrawlConnection = RunService.Heartbeat:Connect(function()
+	if not _G.FastCrawl_Active then return end
+	ApplySpeed()
+end)

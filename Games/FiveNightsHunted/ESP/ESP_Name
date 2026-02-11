@@ -1,0 +1,91 @@
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+if _G.NameESP_Active then
+	_G.NameESP_Active = false
+	
+	if _G.NameAddedConn then
+		_G.NameAddedConn:Disconnect()
+		_G.NameAddedConn = nil
+	end
+
+	for _, player in pairs(Players:GetPlayers()) do
+		local char = player.Character
+		if char then
+			local head = char:FindFirstChild("Head")
+			if head then
+				local gui = head:FindFirstChild("NameESP")
+				if gui then gui:Destroy() end
+			end
+		end
+	end
+	return
+end
+
+_G.NameESP_Active = true
+
+local function GetNameColor(targetPlayer)
+	local localPlayer = Players.LocalPlayer
+	local myRole = localPlayer:GetAttribute("Role")
+	local targetRole = targetPlayer:GetAttribute("Role")
+
+	if myRole == "Monster" then
+		return Color3.new(1, 1, 1)
+	else
+		if targetRole == "Monster" then
+			return Color3.new(1, 0, 0)
+		else
+			return Color3.new(0, 1, 0)
+		end
+	end
+end
+
+local function CreateNameESP(player)
+	if player == Players.LocalPlayer then return end
+
+	local function Setup(character)
+		if not _G.NameESP_Active then return end
+		
+		local head = character:FindFirstChild("Head") or character:WaitForChild("Head", 5)
+		if not head or head:FindFirstChild("NameESP") then return end
+
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "NameESP"
+		billboard.Adornee = head
+		billboard.Size = UDim2.new(4, 0, 1.5, 0)
+		billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = head
+
+		local label = Instance.new("TextLabel")
+		label.Name = "NameLabel"
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.TextStrokeTransparency = 0
+		label.TextScaled = true
+		label.Font = Enum.Font.RobotoMono
+		label.Text = player.Name
+		label.Parent = billboard
+
+		local function Update()
+			if not _G.NameESP_Active or not label then 
+				if billboard then billboard:Destroy() end
+				return 
+			end
+			label.TextColor3 = GetNameColor(player)
+		end
+
+		Players.LocalPlayer:GetAttributeChangedSignal("Role"):Connect(Update)
+		player:GetAttributeChangedSignal("Role"):Connect(Update)
+		Update()
+	end
+
+	player.CharacterAdded:Connect(Setup)
+	if player.Character then Setup(player.Character) end
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+	CreateNameESP(player)
+end
+
+_G.NameAddedConn = Players.PlayerAdded:Connect(CreateNameESP)

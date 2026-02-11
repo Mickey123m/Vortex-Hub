@@ -1,0 +1,81 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+
+if _G.TaskESP_Active then
+	_G.TaskESP_Active = false
+	
+	if _G.TaskAddedConn then
+		_G.TaskAddedConn:Disconnect()
+		_G.TaskAddedConn = nil
+	end
+
+	for _, v in pairs(Workspace:GetDescendants()) do
+		if v.Name == "TaskHighlight" and v:IsA("Highlight") then
+			v:Destroy()
+		end
+	end
+
+	local folder = CoreGui:FindFirstChild("TaskESP_Folder")
+	if folder then
+		folder:Destroy()
+	end
+	
+	return
+end
+
+_G.TaskESP_Active = true
+
+local function ApplyHighlight(obj)
+	if not _G.TaskESP_Active then return end
+	if obj.Name == "Computer" and (obj:IsA("Model") or obj:IsA("BasePart")) then
+		
+		local function Update()
+			local highlight = obj:FindFirstChild("TaskHighlight")
+			if obj:GetAttribute("Completed") == true then
+				if highlight then
+					highlight:Destroy()
+				end
+			else
+				if not highlight then
+					highlight = Instance.new("Highlight")
+					highlight.Name = "TaskHighlight"
+					highlight.Parent = obj
+					highlight.Adornee = obj
+					highlight.FillColor = Color3.new(0, 0.6, 1)
+					highlight.OutlineColor = Color3.new(1, 1, 1)
+					highlight.FillTransparency = 0.4
+					highlight.OutlineTransparency = 0
+					highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+				end
+			end
+		end
+
+		obj:GetAttributeChangedSignal("Completed"):Connect(Update)
+		Update()
+	end
+end
+
+local function InitESP()
+	local taskFolder = nil
+	for _, v in pairs(Workspace:GetDescendants()) do
+		if v.Name == "Tasks" and v:IsA("Folder") then
+			taskFolder = v
+			break
+		end
+	end
+
+	if taskFolder then
+		for _, task in pairs(taskFolder:GetChildren()) do
+			ApplyHighlight(task)
+		end
+
+		_G.TaskAddedConn = taskFolder.ChildAdded:Connect(function(child)
+			task.wait(0.5)
+			ApplyHighlight(child)
+		end)
+	end
+end
+
+InitESP()

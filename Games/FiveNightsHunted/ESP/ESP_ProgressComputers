@@ -1,0 +1,96 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+
+if _G.ComputerProgress_Active then
+	_G.ComputerProgress_Active = false
+	
+	if _G.ProgressAddedConn then
+		_G.ProgressAddedConn:Disconnect()
+		_G.ProgressAddedConn = nil
+	end
+
+	for _, v in pairs(Workspace:GetDescendants()) do
+		if v.Name == "TaskProgressUI" then
+			v:Destroy()
+		end
+	end
+
+	local folder = CoreGui:FindFirstChild("ProgressESP_Folder")
+	if folder then
+		folder:Destroy()
+	end
+	
+	return
+end
+
+_G.ComputerProgress_Active = true
+
+local function CreateProgressUI(obj)
+	if not _G.ComputerProgress_Active then return end
+	if obj.Name == "Computer" and (obj:IsA("Model") or obj:IsA("BasePart")) then
+		
+		local billboard = obj:FindFirstChild("TaskProgressUI") or Instance.new("BillboardGui")
+		billboard.Name = "TaskProgressUI"
+		billboard.Adornee = obj
+		billboard.Size = UDim2.new(6, 0, 2.5, 0)
+		billboard.StudsOffset = Vector3.new(0, 4, 0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = obj
+
+		local label = billboard:FindFirstChild("ProgressLabel") or Instance.new("TextLabel")
+		label.Name = "ProgressLabel"
+		label.Size = UDim2.new(1, 0, 1, 0)
+		label.BackgroundTransparency = 1
+		label.TextStrokeTransparency = 0
+		label.TextScaled = true
+		label.Font = Enum.Font.RobotoMono
+		label.Parent = billboard
+
+		local function Update()
+			if not _G.ComputerProgress_Active then 
+				billboard:Destroy()
+				return 
+			end
+
+			local isCompleted = obj:GetAttribute("Completed")
+			local progress = obj:GetAttribute("Progress") or 0
+
+			if isCompleted == true then
+				label.Text = "Completed"
+				label.TextColor3 = Color3.new(0, 1, 0)
+			else
+				label.Text = math.floor(progress) .. "%"
+				label.TextColor3 = Color3.new(0, 0.6, 1)
+			end
+		end
+
+		obj:GetAttributeChangedSignal("Progress"):Connect(Update)
+		obj:GetAttributeChangedSignal("Completed"):Connect(Update)
+		Update()
+	end
+end
+
+local function InitProgressESP()
+	local taskFolder = nil
+	for _, v in pairs(Workspace:GetDescendants()) do
+		if v.Name == "Tasks" and v:IsA("Folder") then
+			taskFolder = v
+			break
+		end
+	end
+
+	if taskFolder then
+		for _, task in pairs(taskFolder:GetChildren()) do
+			CreateProgressUI(task)
+		end
+
+		_G.ProgressAddedConn = taskFolder.ChildAdded:Connect(function(child)
+			task.wait(0.5)
+			CreateProgressUI(child)
+		end)
+	end
+end
+
+InitProgressESP()

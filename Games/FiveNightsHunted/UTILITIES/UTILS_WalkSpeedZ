@@ -1,0 +1,25 @@
+local v_u_1 = game:GetService("Players").LocalPlayer
+local v_u_2 = game:GetService("UserInputService")
+
+local v_u_3 = 25
+local v_u_4 = 16
+local v_u_5 = false
+
+v_u_2.InputBegan:Connect(function(p1, p2)
+    if not p2 and p1.KeyCode == Enum.KeyCode.Z then
+        v_u_5 = not v_u_5
+        local v_u_6 = v_u_1.Character and v_u_1.Character:FindFirstChildOfClass("Humanoid")
+        if v_u_6 then
+            v_u_6.WalkSpeed = v_u_5 and v_u_3 or v_u_4
+        end
+    end
+end)
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if v_u_5 then
+        local v_u_7 = v_u_1.Character and v_u_1.Character:FindFirstChildOfClass("Humanoid")
+        if v_u_7 and v_u_7.WalkSpeed ~= v_u_3 then
+            v_u_7.WalkSpeed = v_u_3
+        end
+    end
+end)

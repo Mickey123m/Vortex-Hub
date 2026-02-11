@@ -1,0 +1,83 @@
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+if _G.HealthESP_Active then
+	_G.HealthESP_Active = false
+	
+	if _G.HealthAddedConn then
+		_G.HealthAddedConn:Disconnect()
+		_G.HealthAddedConn = nil
+	end
+
+	for _, player in pairs(Players:GetPlayers()) do
+		local char = player.Character
+		if char then
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local gui = hrp:FindFirstChild("HealthESP")
+				if gui then gui:Destroy() end
+			end
+		end
+	end
+	return
+end
+
+_G.HealthESP_Active = true
+
+local function CreateHealthBar(player)
+	if player == Players.LocalPlayer then return end
+
+	local function Setup(character)
+		if not _G.HealthESP_Active then return end
+		
+		local hrp = character:FindFirstChild("HumanoidRootPart") or character:WaitForChild("HumanoidRootPart", 5)
+		local hum = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 5)
+		
+		if not hrp or not hum or hrp:FindFirstChild("HealthESP") then return end
+
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "HealthESP"
+		billboard.Adornee = hrp
+		billboard.Size = UDim2.new(4, 0, 0.4, 0)
+		billboard.StudsOffset = Vector3.new(0, -3.5, 0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = hrp
+
+		local background = Instance.new("Frame")
+		background.Name = "Background"
+		background.Size = UDim2.new(1, 0, 1, 0)
+		background.BackgroundColor3 = Color3.new(0, 0, 0)
+		background.BackgroundTransparency = 0.5
+		background.BorderSizePixel = 0
+		background.Parent = billboard
+
+		local bar = Instance.new("Frame")
+		bar.Name = "Bar"
+		bar.Size = UDim2.new(math.clamp(hum.Health / hum.MaxHealth, 0, 1), 0, 1, 0)
+		bar.BackgroundColor3 = Color3.fromHSV(math.clamp(hum.Health / hum.MaxHealth, 0, 1) * 0.3, 1, 1)
+		bar.BorderSizePixel = 0
+		bar.Parent = background
+
+		local function Update()
+			if not _G.HealthESP_Active or not hum or not bar then 
+				if billboard then billboard:Destroy() end
+				return 
+			end
+			local healthPercent = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+			bar.Size = UDim2.new(healthPercent, 0, 1, 0)
+			bar.BackgroundColor3 = Color3.fromHSV(healthPercent * 0.3, 1, 1)
+		end
+
+		hum:GetPropertyChangedSignal("Health"):Connect(Update)
+		hum:GetPropertyChangedSignal("MaxHealth"):Connect(Update)
+	end
+
+	player.CharacterAdded:Connect(Setup)
+	if player.Character then Setup(player.Character) end
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+	CreateHealthBar(player)
+end
+
+_G.HealthAddedConn = Players.PlayerAdded:Connect(CreateHealthBar)

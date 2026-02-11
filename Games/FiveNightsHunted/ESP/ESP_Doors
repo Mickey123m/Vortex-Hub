@@ -1,0 +1,41 @@
+local v_u_1 = game:GetService("Players").LocalPlayer
+local v_u_2 = game:GetService("RunService")
+
+local v_u_3 = Color3.fromRGB(170, 0, 255)
+
+if _G.DoorESP_Conn then
+    _G.DoorESP_Conn:Disconnect()
+    _G.DoorESP_Conn = nil
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v.Name == "DoorHighlight" then v:Destroy() end
+    end
+    return
+end
+
+local function v_u_4()
+    local v_u_5 = nil
+    for _, v in ipairs(workspace:GetChildren()) do
+        if v:IsA("Folder") and v:FindFirstChild("Map") then
+            v_u_5 = v.Map:FindFirstChild("Doors")
+            break
+        end
+    end
+
+    if v_u_5 then
+        for _, v_u_6 in ipairs(v_u_5:GetChildren()) do
+            if not v_u_6:FindFirstChild("DoorHighlight") then
+                local v_u_7 = Instance.new("Highlight")
+                v_u_7.Name = "DoorHighlight"
+                v_u_7.FillColor = v_u_3
+                v_u_7.OutlineColor = Color3.new(1, 1, 1)
+                v_u_7.FillTransparency = 0.5
+                v_u_7.OutlineTransparency = 0
+                v_u_7.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                v_u_7.Adornee = v_u_6
+                v_u_7.Parent = v_u_6
+            end
+        end
+    end
+end
+
+_G.DoorESP_Conn = v_u_2.Heartbeat:Connect(v_u_4)
