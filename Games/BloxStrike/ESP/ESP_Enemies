@@ -30,7 +30,6 @@ end
 
 if not _G.ESPToggle then
     clearAllESP()
-    print("ESP Desativado")
     return
 end
 
@@ -72,8 +71,6 @@ end
 
 -- Loop principal otimizado
 task.spawn(function()
-    print("ESP Ativado: Monitorando sua presença nas pastas...")
-    
     while _G.ESPToggle do
         if not CharFolder then break end
 
