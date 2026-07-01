@@ -1,0 +1,137 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+shared.EspNameSystem = shared.EspNameSystem or {
+    Enabled = false,
+    Connections = {},
+    PlayerConnections = {},
+    Objects = {}
+}
+
+local system = shared.EspNameSystem
+
+local function createESP(character, otherPlayer)
+    if not character or not character.PrimaryPart then return end
+    if system.Objects[character] then return end
+    
+    local folder = Instance.new("Folder")
+    folder.Name = "ESP_" .. otherPlayer.Name
+    
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = Color3.fromRGB(0, 255, 0)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = character
+    highlight.Parent = folder
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Adornee = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart
+    billboard.Parent = folder
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = otherPlayer.Name
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    textLabel.TextStrokeTransparency = 0
+    textLabel.TextSize = 14
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.Parent = billboard
+    
+    folder.Parent = character
+    system.Objects[character] = folder
+end
+
+local function removeESP(character)
+    if system.Objects[character] then
+        system.Objects[character]:Destroy()
+        system.Objects[character] = nil
+    end
+end
+
+local function clearAllESP()
+    for character, folder in pairs(system.Objects) do
+        if folder then
+            folder:Destroy()
+        end
+    end
+    system.Objects = {}
+end
+
+local function setupPlayerConnection(otherPlayer)
+    if otherPlayer == player then return end
+    if system.PlayerConnections[otherPlayer] then return end
+    
+    local conn = otherPlayer.CharacterAdded:Connect(function(character)
+        if system.Enabled then
+            task.wait(0.1)
+            if character and character.PrimaryPart and otherPlayer ~= player then
+                createESP(character, otherPlayer)
+            end
+        end
+    end)
+    
+    system.PlayerConnections[otherPlayer] = conn
+end
+
+local function setupConnections()
+    system.Connections.CharacterAdded = Players.PlayerAdded:Connect(function(otherPlayer)
+        if system.Enabled and otherPlayer ~= player then
+            setupPlayerConnection(otherPlayer)
+            if otherPlayer.Character and otherPlayer.Character.PrimaryPart then
+                createESP(otherPlayer.Character, otherPlayer)
+            end
+        end
+    end)
+    
+    system.Connections.CharacterRemoving = Players.PlayerRemoving:Connect(function(otherPlayer)
+        if otherPlayer.Character then
+            removeESP(otherPlayer.Character)
+        end
+        if system.PlayerConnections[otherPlayer] then
+            system.PlayerConnections[otherPlayer]:Disconnect()
+            system.PlayerConnections[otherPlayer] = nil
+        end
+    end)
+    
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= player then
+            setupPlayerConnection(otherPlayer)
+            if otherPlayer.Character and otherPlayer.Character.PrimaryPart then
+                createESP(otherPlayer.Character, otherPlayer)
+            end
+        end
+    end
+end
+
+local function cleanupConnections()
+    if system.Connections.CharacterAdded then
+        system.Connections.CharacterAdded:Disconnect()
+        system.Connections.CharacterAdded = nil
+    end
+    if system.Connections.CharacterRemoving then
+        system.Connections.CharacterRemoving:Disconnect()
+        system.Connections.CharacterRemoving = nil
+    end
+    for _, conn in pairs(system.PlayerConnections) do
+        if conn then
+            conn:Disconnect()
+        end
+    end
+    system.PlayerConnections = {}
+end
+
+system.Enabled = not system.Enabled
+
+if system.Enabled then
+    clearAllESP()
+    setupConnections()
+else
+    clearAllESP()
+    cleanupConnections()
+end
