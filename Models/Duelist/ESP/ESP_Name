@@ -1,36 +1,25 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-shared.EspNameSystem = shared.EspNameSystem or {
+shared.EspNameOnlySystem = shared.EspNameOnlySystem or {
     Enabled = false,
     Connections = {},
     PlayerConnections = {},
     Objects = {}
 }
 
-local system = shared.EspNameSystem
+local system = shared.EspNameOnlySystem
 
 local function createESP(character, otherPlayer)
     if not character or not character.PrimaryPart then return end
     if system.Objects[character] then return end
     
-    local folder = Instance.new("Folder")
-    folder.Name = "ESP_" .. otherPlayer.Name
-    
-    local highlight = Instance.new("Highlight")
-    highlight.FillColor = Color3.fromRGB(0, 255, 0)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
-    highlight.OutlineTransparency = 0
-    highlight.Adornee = character
-    highlight.Parent = folder
-    
     local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESP_NameTag"
     billboard.Size = UDim2.new(0, 200, 0, 50)
     billboard.StudsOffset = Vector3.new(0, 3, 0)
     billboard.AlwaysOnTop = true
     billboard.Adornee = character:FindFirstChild("HumanoidRootPart") or character.PrimaryPart
-    billboard.Parent = folder
     
     local textLabel = Instance.new("TextLabel")
     textLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -43,8 +32,8 @@ local function createESP(character, otherPlayer)
     textLabel.Font = Enum.Font.SourceSansBold
     textLabel.Parent = billboard
     
-    folder.Parent = character
-    system.Objects[character] = folder
+    billboard.Parent = character
+    system.Objects[character] = billboard
 end
 
 local function removeESP(character)
@@ -55,9 +44,9 @@ local function removeESP(character)
 end
 
 local function clearAllESP()
-    for character, folder in pairs(system.Objects) do
-        if folder then
-            folder:Destroy()
+    for character, billboard in pairs(system.Objects) do
+        if billboard then
+            billboard:Destroy()
         end
     end
     system.Objects = {}
