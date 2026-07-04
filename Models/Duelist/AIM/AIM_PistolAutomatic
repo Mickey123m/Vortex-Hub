@@ -1,0 +1,60 @@
+local player = game.Players.LocalPlayer
+local isAuto = false
+local canToggle = true
+
+local function applyToAll(value)
+    local char = player.Character
+    if not char then return end
+    
+    for _, t in ipairs(char:GetChildren()) do
+        if t:IsA("Tool") and t:HasTag("Gun") then
+            pcall(function()
+                t:SetAttribute("Automatic", value)
+            end)
+        end
+    end
+    
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        for _, t in ipairs(backpack:GetChildren()) do
+            if t:IsA("Tool") and t:HasTag("Gun") then
+                pcall(function()
+                    t:SetAttribute("Automatic", value)
+                end)
+            end
+        end
+    end
+end
+
+local function toggle()
+    if not canToggle then
+        return
+    end
+    
+    canToggle = false
+    isAuto = not isAuto
+    applyToAll(isAuto)
+    task.wait(0.5)
+    canToggle = true
+end
+
+local function onCharacterAdded(char)
+    canToggle = false
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and child:HasTag("Gun") then
+            task.wait(0.1)
+            child:SetAttribute("Automatic", isAuto)
+        end
+    end)
+    task.wait(0.5)
+    applyToAll(isAuto)
+    canToggle = true
+end
+
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+
+toggle()

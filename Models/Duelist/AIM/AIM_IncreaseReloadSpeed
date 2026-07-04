@@ -1,0 +1,123 @@
+local Player = game.Players.LocalPlayer
+
+if not _G.ReloadSpeedToggle then
+    _G.ReloadSpeedToggle = false
+end
+
+if not _G.ReloadLoopStarted then
+    _G.ReloadLoopStarted = false
+end
+
+local function processToolReload(tool, speed)
+    if tool:IsA("Tool") and tool:HasTag("Gun") then
+        tool:SetAttribute("ReloadSpeed", speed)
+        
+        local reloadSpeedObj = tool:FindFirstChild("ReloadSpeed")
+        if reloadSpeedObj and reloadSpeedObj:IsA("NumberValue") then
+            reloadSpeedObj.Value = speed
+        end
+        
+        local reloadTimeObj = tool:FindFirstChild("ReloadTime")
+        if reloadTimeObj and reloadTimeObj:IsA("NumberValue") then
+            reloadTimeObj.Value = speed
+        end
+        
+        return true
+    end
+    return false
+end
+
+local function applyReloadSpeedToAll(speed)
+    local character = Player.Character
+    if character then
+        for _, child in ipairs(character:GetChildren()) do
+            processToolReload(child, speed)
+        end
+    end
+    
+    local backpack = Player:FindFirstChild("Backpack")
+    if backpack then
+        for _, child in ipairs(backpack:GetChildren()) do
+            processToolReload(child, speed)
+        end
+    end
+end
+
+local function toggleReloadSpeed()
+    _G.ReloadSpeedToggle = not _G.ReloadSpeedToggle
+    
+    local newSpeed = _G.ReloadSpeedToggle and 0.01 or 1.0
+    
+    applyReloadSpeedToAll(newSpeed)
+    
+    local multiplier = _G.ReloadSpeedToggle and 0.01 or 1.0
+    Player:SetAttribute("PlayerCardReloadCooldownMultiplier", multiplier)
+end
+
+local function startReloadMonitoring()
+    if _G.ReloadLoopStarted then
+        return
+    end
+    _G.ReloadLoopStarted = true
+    
+    local function onToolAdded(tool)
+        task.wait(0.1)
+        local currentSpeed = _G.ReloadSpeedToggle and 0.01 or 1.0
+        processToolReload(tool, currentSpeed)
+    end
+    
+    local function setupCharacterMonitoring(character)
+        if not character then return end
+        local connection = character.ChildAdded:Connect(onToolAdded)
+        
+        if not _G.ReloadConnections then
+            _G.ReloadConnections = {}
+        end
+        table.insert(_G.ReloadConnections, connection)
+    end
+    
+    local function setupBackpackMonitoring(backpack)
+        if not backpack then return end
+        local connection = backpack.ChildAdded:Connect(onToolAdded)
+        
+        if not _G.ReloadConnections then
+            _G.ReloadConnections = {}
+        end
+        table.insert(_G.ReloadConnections, connection)
+    end
+    
+    local function onCharacterAdded(character)
+        task.wait(0.5)
+        local currentSpeed = _G.ReloadSpeedToggle and 0.01 or 1.0
+        applyReloadSpeedToAll(currentSpeed)
+        
+        local multiplier = _G.ReloadSpeedToggle and 0.01 or 1.0
+        Player:SetAttribute("PlayerCardReloadCooldownMultiplier", multiplier)
+        
+        setupCharacterMonitoring(character)
+    end
+    
+    setupCharacterMonitoring(Player.Character)
+    setupBackpackMonitoring(Player:FindFirstChild("Backpack"))
+    
+    local characterConnection = Player.CharacterAdded:Connect(onCharacterAdded)
+    if not _G.ReloadConnections then
+        _G.ReloadConnections = {}
+    end
+    table.insert(_G.ReloadConnections, characterConnection)
+    
+    if not Player:FindFirstChild("Backpack") then
+        local backpackConnection = Player.ChildAdded:Connect(function(child)
+            if child.Name == "Backpack" then
+                setupBackpackMonitoring(child)
+            end
+        end)
+        if not _G.ReloadConnections then
+            _G.ReloadConnections = {}
+        end
+        table.insert(_G.ReloadConnections, backpackConnection)
+    end
+end
+
+toggleReloadSpeed()
+startReloadMonitoring()

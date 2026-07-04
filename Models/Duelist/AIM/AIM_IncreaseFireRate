@@ -1,0 +1,109 @@
+local Player = game.Players.LocalPlayer
+
+if not _G.FireRateToggle then
+    _G.FireRateToggle = false
+end
+
+if not _G.FireRateLoopStarted then
+    _G.FireRateLoopStarted = false
+end
+
+local function processTool(tool, rate)
+    if tool:IsA("Tool") and tool:HasTag("Gun") then
+        tool:SetAttribute("FireRate", rate)
+        
+        local fireRateObj = tool:FindFirstChild("FireRate")
+        if fireRateObj and fireRateObj:IsA("NumberValue") then
+            fireRateObj.Value = rate
+        end
+        
+        return true
+    end
+    return false
+end
+
+local function applyFireRateToAll(rate)
+    local character = Player.Character
+    if character then
+        for _, child in ipairs(character:GetChildren()) do
+            processTool(child, rate)
+        end
+    end
+    
+    local backpack = Player:FindFirstChild("Backpack")
+    if backpack then
+        for _, child in ipairs(backpack:GetChildren()) do
+            processTool(child, rate)
+        end
+    end
+end
+
+local function toggleFireRate()
+    _G.FireRateToggle = not _G.FireRateToggle
+    local newRate = _G.FireRateToggle and 99999 or 350
+    applyFireRateToAll(newRate)
+end
+
+local function startMonitoring()
+    if _G.FireRateLoopStarted then
+        return
+    end
+    _G.FireRateLoopStarted = true
+    
+    local function onToolAdded(tool)
+        task.wait(0.1)
+        local currentRate = _G.FireRateToggle and 99999 or 350
+        processTool(tool, currentRate)
+    end
+    
+    local function setupCharacterMonitoring(character)
+        if not character then return end
+        local connection = character.ChildAdded:Connect(onToolAdded)
+        
+        if not _G.FireRateConnections then
+            _G.FireRateConnections = {}
+        end
+        table.insert(_G.FireRateConnections, connection)
+    end
+    
+    local function setupBackpackMonitoring(backpack)
+        if not backpack then return end
+        local connection = backpack.ChildAdded:Connect(onToolAdded)
+        
+        if not _G.FireRateConnections then
+            _G.FireRateConnections = {}
+        end
+        table.insert(_G.FireRateConnections, connection)
+    end
+    
+    local function onCharacterAdded(character)
+        task.wait(0.5)
+        local currentRate = _G.FireRateToggle and 99999 or 350
+        applyFireRateToAll(currentRate)
+        setupCharacterMonitoring(character)
+    end
+    
+    setupCharacterMonitoring(Player.Character)
+    setupBackpackMonitoring(Player:FindFirstChild("Backpack"))
+    
+    local characterConnection = Player.CharacterAdded:Connect(onCharacterAdded)
+    if not _G.FireRateConnections then
+        _G.FireRateConnections = {}
+    end
+    table.insert(_G.FireRateConnections, characterConnection)
+    
+    if not Player:FindFirstChild("Backpack") then
+        local backpackConnection = Player.ChildAdded:Connect(function(child)
+            if child.Name == "Backpack" then
+                setupBackpackMonitoring(child)
+            end
+        end)
+        if not _G.FireRateConnections then
+            _G.FireRateConnections = {}
+        end
+        table.insert(_G.FireRateConnections, backpackConnection)
+    end
+end
+
+toggleFireRate()
+startMonitoring()
