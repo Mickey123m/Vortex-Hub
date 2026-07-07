@@ -1,2 +1,537 @@
--- This script was generated using the MoonVeil Obfuscator v1.4.5 [https://moonveil.cc]
-local k=loadstring(game:HttpGet'https://jnkie.com/sdk/library.lua')();k.service='VortexHub-Services-linkvertise-FinishTheWord';k.identifier='1007820';k.provider='Vortex-Hub-Key-linkvertise-FinishTheWord'local e_={ScriptURL='https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FinishTheWord/AutoType.lua',KeyFileName='vortex_key.txt',TimerFileName='vortex_timer.txt',CooldownSeconds=300};getgenv().SCRIPT_KEY=nil;getgenv().UI_CLOSED=false local ra,_a,p=game:GetService'TweenService',game:GetService'Players',game:GetService'UserInputService'local Ea=_a.LocalPlayer local function O()local h,ea,V=pcall(function()return type(writefile)=='function'end),pcall(function()return type(readfile)=='function'end),pcall(function()return type(isfile)=='function'end)return h and ea and V end local za=O()local function L(R)if not za then return false end pcall(function()writefile(e_.KeyFileName,R)end)return true end local function Ca()if not za then return nil end local B,Da=pcall(function()if isfile(e_.KeyFileName)then return readfile(e_.KeyFileName)end end)return B and Da or nil end local function A()if za and isfile(e_.KeyFileName)then pcall(function()delfile(e_.KeyFileName)end)end end local function z()if not za then return end pcall(function()writefile(e_.TimerFileName,tostring(os.time()))end)end local function u_()if not za or not isfile(e_.TimerFileName)then return 0 end local b_,Aa=pcall(function()return tonumber(readfile(e_.TimerFileName))end)if b_ and Aa then local T=os.time()-Aa local F=e_.CooldownSeconds-T return F>0 and F or 0 end return 0 end local function o_(y)local Ba=y.Position;task.spawn(function()for ba=1,4 do local da=(ba%2==0 and 5 or-5);y.Position=UDim2 .new(Ba.X.Scale,Ba.X.Offset+da,Ba.Y.Scale,Ba.Y.Offset);task.wait(0.050000000000000003)end y.Position=Ba end)end local oa={}function oa:CreateGUI()local ma=Instance.new'ScreenGui';ma.Name='VortexKeySystem';ma.ResetOnSpawn=false;ma.IgnoreGuiInset=true;ma.ZIndexBehavior=Enum.ZIndexBehavior.Sibling local fa_,P=pcall(function()return game:GetService'CoreGui'end);ma.Parent=fa_ and P or Ea:WaitForChild'PlayerGui'local ca=Instance.new'Frame';ca.Name='Overlay';ca.Size=UDim2 .new(1,0,1,0);ca.BackgroundColor3=Color3 .new(0,0,0);ca.BackgroundTransparency=0.5;ca.BorderSizePixel=0;ca.Parent=ma local w_=Instance.new'Frame';w_.AnchorPoint=Vector2 .new(0.5,0.5);w_.Position=UDim2 .new(0.5,0,0.5,0);w_.BackgroundColor3=Color3 .fromHex'17171C';w_.BorderSizePixel=0;w_.ClipsDescendants=true;w_.Size=UDim2 .new(0,400,0,420);w_.Parent=ma local i_=Instance.new'UICorner';i_.CornerRadius=UDim.new(0,10);i_.Parent=w_ local H=Instance.new'UIStroke';H.Color=Color3 .fromHex'25252D';H.Thickness=1;H.Parent=w_ local s_=Instance.new'Frame';s_.Size=UDim2 .new(1,0,0,42);s_.BackgroundColor3=Color3 .fromHex'1C1C22';s_.BorderSizePixel=0;s_.Parent=w_ local q=Instance.new'UICorner';q.CornerRadius=UDim.new(0,10);q.Parent=s_ local j=Instance.new'TextLabel';j.Text='VORTEX HUB';j.Size=UDim2 .new(1,-50,1,0);j.Position=UDim2 .new(0,15,0,0);j.TextColor3=Color3 .fromRGB(138,43,226);j.Font=Enum.Font.GothamBold;j.TextSize=14;j.BackgroundTransparency=1;j.TextXAlignment=Enum.TextXAlignment.Left;j.Parent=s_ local ja=Instance.new'TextButton';ja.Text='\195\151';ja.Size=UDim2 .new(0,28,0,28);ja.Position=UDim2 .new(1,-35,0.5,-14);ja.BackgroundTransparency=1;ja.TextColor3=Color3 .fromRGB(150,150,150);ja.Font=Enum.Font.Gotham;ja.TextSize=18;ja.AutoButtonColor=false;ja.Parent=s_ local N=Instance.new'UICorner';N.CornerRadius=UDim.new(0,6);N.Parent=ja;ja.MouseEnter:Connect(function()ra:Create(ja,TweenInfo.new(0.20000000000000001,Enum.EasingStyle.Quad),{BackgroundTransparency=0,BackgroundColor3=Color3 .fromRGB(200,45,45),TextColor3=Color3 .new(1,1,1)}):Play()end);ja.MouseLeave:Connect(function()ra:Create(ja,TweenInfo.new(0.20000000000000001,Enum.EasingStyle.Quad),{BackgroundTransparency=1,TextColor3=Color3 .fromRGB(150,150,150)}):Play()end);ja.MouseButton1Click:Connect(function()getgenv().UI_CLOSED=true;ma:Destroy()end)local D=Instance.new'Frame';D.Size=UDim2 .new(1,-40,1,-60);D.Position=UDim2 .new(0,20,0,55);D.BackgroundTransparency=1;D.Parent=w_ local l_=Instance.new'Frame';l_.Size=UDim2 .new(0,70,0,70);l_.Position=UDim2 .new(0.5,-35,0,10);l_.BackgroundColor3=Color3 .fromRGB(138,43,226);l_.Parent=D local J=Instance.new'UICorner';J.CornerRadius=UDim.new(0,12);J.Parent=l_ local Z=Instance.new'TextLabel';Z.Text='V';Z.Size=UDim2 .new(1,0,1,0);Z.Font=Enum.Font.GothamBold;Z.TextSize=32;Z.TextColor3=Color3 .new(1,1,1);Z.BackgroundTransparency=1;Z.Parent=l_ local pa=Instance.new'TextLabel';pa.Text='ACCESS VERIFICATION';pa.Size=UDim2 .new(1,0,0,24);pa.Position=UDim2 .new(0,0,0,90);pa.Font=Enum.Font.GothamBold;pa.TextSize=16;pa.TextColor3=Color3 .new(1,1,1);pa.BackgroundTransparency=1;pa.TextXAlignment=Enum.TextXAlignment.Center;pa.Parent=D local x=Instance.new'TextLabel';x.Text='Enter your access key to continue';x.Size=UDim2 .new(1,0,0,16);x.Position=UDim2 .new(0,0,0,114);x.Font=Enum.Font.Gotham;x.TextSize=12;x.TextColor3=Color3 .fromRGB(150,150,150);x.BackgroundTransparency=1;x.TextXAlignment=Enum.TextXAlignment.Center;x.Parent=D local a_=Instance.new'Frame';a_.Size=UDim2 .new(1,0,0,44);a_.Position=UDim2 .new(0,0,0,145);a_.BackgroundColor3=Color3 .fromHex'1C1C22';a_.Parent=D local f_=Instance.new'UICorner';f_.CornerRadius=UDim.new(0,6);f_.Parent=a_ local wa=Instance.new'UIStroke';wa.Color=Color3 .fromHex'25252D';wa.Thickness=1.5;wa.Parent=a_ local la=Instance.new'TextBox';la.Size=UDim2 .new(1,-20,1,0);la.Position=UDim2 .new(0,10,0,0);la.BackgroundTransparency=1;la.PlaceholderText='Enter key here...';la.PlaceholderColor3=Color3 .fromRGB(80,80,100);la.Text='';la.Font=Enum.Font.Gotham;la.TextSize=14;la.TextColor3=Color3 .new(1,1,1);la.ClearTextOnFocus=false;la.Parent=a_;la.Focused:Connect(function()ra:Create(wa,TweenInfo.new(0.20000000000000001),{Color=Color3 .fromRGB(138,43,226)}):Play()end);la.FocusLost:Connect(function()ra:Create(wa,TweenInfo.new(0.20000000000000001),{Color=Color3 .fromHex'25252D'}):Play()end)local v=Instance.new'TextButton';v.Size=UDim2 .new(1,0,0,44);v.Position=UDim2 .new(0,0,0,200);v.BackgroundColor3=Color3 .fromRGB(138,43,226);v.Text='VALIDATE KEY';v.Font=Enum.Font.GothamBold;v.TextSize=14;v.TextColor3=Color3 .new(1,1,1);v.AutoButtonColor=false;v.Parent=D local Q=Instance.new'UICorner';Q.CornerRadius=UDim.new(0,6);Q.Parent=v;v.MouseEnter:Connect(function()ra:Create(v,TweenInfo.new(0.20000000000000001),{BackgroundColor3=Color3 .fromRGB(158,63,246)}):Play()end);v.MouseLeave:Connect(function()ra:Create(v,TweenInfo.new(0.20000000000000001),{BackgroundColor3=Color3 .fromRGB(138,43,226)}):Play()end)local g=Instance.new'TextButton';g.Size=UDim2 .new(1,0,0,38);g.Position=UDim2 .new(0,0,0,255);g.BackgroundColor3=Color3 .fromHex'25252D';g.Text='GET ACCESS LINK';g.Font=Enum.Font.Gotham;g.TextSize=12;g.TextColor3=Color3 .new(1,1,1);g.AutoButtonColor=false;g.Parent=D local ta=Instance.new'UICorner';ta.CornerRadius=UDim.new(0,6);ta.Parent=g;g.MouseEnter:Connect(function()ra:Create(g,TweenInfo.new(0.20000000000000001),{BackgroundColor3=Color3 .fromHex'2D2D35'}):Play()end);g.MouseLeave:Connect(function()ra:Create(g,TweenInfo.new(0.20000000000000001),{BackgroundColor3=Color3 .fromHex'25252D'}):Play()end)local ia=Instance.new'TextLabel';ia.Size=UDim2 .new(1,0,0,18);ia.Position=UDim2 .new(0,0,0,305);ia.BackgroundTransparency=1;ia.Text='';ia.Font=Enum.Font.Gotham;ia.TextSize=11;ia.TextColor3=Color3 .fromRGB(150,150,150);ia.TextXAlignment=Enum.TextXAlignment.Center;ia.Parent=D local m=Instance.new'Frame';m.Size=UDim2 .new(0,0,0,2);m.Position=UDim2 .new(0,0,0,330);m.BackgroundColor3=Color3 .fromRGB(138,43,226);m.BackgroundTransparency=1;m.BorderSizePixel=0;m.Parent=D local function n_(t_,ka)ia.Text=t_;ia.TextColor3=ka or Color3 .fromRGB(150,150,150)end local function M(sa,c)m.BackgroundTransparency=0;m.BackgroundColor3=c or Color3 .fromRGB(138,43,226);ra:Create(m,TweenInfo.new(0.29999999999999999),{Size=UDim2 .new(sa,0,0,2)}):Play()end local d_,r_=false,nil local function va(W)if r_ then task.cancel(r_);r_=nil end d_=true;g.Interactable=false;g.BackgroundColor3=Color3 .fromRGB(40,40,45);r_=task.spawn(function()local E=W while E>0 do local ua,ya=math.floor(E/60),E%60;g.Text=string.format('WAIT %02d:%02d',ua,ya);M(1-(E/W),Color3 .fromRGB(200,100,50));task.wait(1);E=E-1 if not g or not g.Parent then break end end if g and g.Parent then d_=false;g.Interactable=true;g.Text='GET ACCESS LINK';g.BackgroundColor3=Color3 .fromHex'25252D';M(0,Color3 .fromRGB(138,43,226));m.BackgroundTransparency=1;z()end r_=nil end)end local U=u_()if U>0 then va(U)end g.MouseButton1Click:Connect(function()if d_ then return end local K=k.get_key_link()if not K then n_('Error: Failed to get access link',Color3 .fromRGB(255,70,70));M(1,Color3 .fromRGB(255,70,70));task.delay(2,function()M(0,Color3 .fromRGB(138,43,226));m.BackgroundTransparency=1 end)return end if setclipboard then setclipboard(K);n_('Link copied to clipboard',Color3 .fromRGB(50,200,100));M(1,Color3 .fromRGB(50,200,100));task.delay(1.5,function()M(0,Color3 .fromRGB(138,43,226));m.BackgroundTransparency=1 end)else n_('Link: '..K,Color3 .fromRGB(100,100,255))end z();va(e_.CooldownSeconds)end)local function qa()if not v.Interactable then return end local xa=la.Text:gsub('%s+','')if#xa==0 then wa.Color=Color3 .fromRGB(255,50,50);o_(a_);n_('Please enter a key',Color3 .fromRGB(255,200,50));task.delay(1.5,function()wa.Color=Color3 .fromHex'25252D'end)return end v.Text='VERIFYING...';v.Interactable=false;la.Interactable=false;n_('Verifying key...',Color3 .fromRGB(100,100,255));M(0.5,Color3 .fromRGB(100,100,255));task.spawn(function()local ha=k.check_key(xa)if ha and ha.valid then wa.Color=Color3 .fromRGB(50,255,100);v.Text='SUCCESS';v.BackgroundColor3=Color3 .fromRGB(50,200,100);n_('Key validated successfully',Color3 .fromRGB(50,255,100));M(1,Color3 .fromRGB(50,255,100));L(xa);getgenv().SCRIPT_KEY=xa;task.wait(0.80000000000000004);getgenv().UI_CLOSED=true;ma:Destroy()local X,C=pcall(function()loadstring(game:HttpGet(e_.ScriptURL))()end)else wa.Color=Color3 .fromRGB(255,50,50);v.Text='INVALID KEY';v.BackgroundColor3=Color3 .fromRGB(255,50,50);o_(a_);n_('Invalid key, please try again',Color3 .fromRGB(255,70,70));M(1,Color3 .fromRGB(255,70,70));task.wait(1.5);v.Text='VALIDATE KEY';v.BackgroundColor3=Color3 .fromRGB(138,43,226);v.Interactable=true;la.Interactable=true;wa.Color=Color3 .fromHex'25252D';M(0,Color3 .fromRGB(138,43,226));m.BackgroundTransparency=1;la.Text=''end end)end v.MouseButton1Click:Connect(qa);la.FocusLost:Connect(function(na)if na then qa()end end);p.InputBegan:Connect(function(G,S)if S then return end if G.KeyCode==Enum.KeyCode.Escape then getgenv().UI_CLOSED=true;ma:Destroy()end end);w_.BackgroundTransparency=1;w_.Size=UDim2 .new(0,0,0,0);task.delay(0.10000000000000001,function()ra:Create(w_,TweenInfo.new(0.40000000000000002,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{BackgroundTransparency=0,Size=UDim2 .new(0,400,0,420)}):Play()end)return ma end local ga=Ca()if ga then local aa=k.check_key(ga)if aa and aa.valid then getgenv().SCRIPT_KEY=ga local I,Y=pcall(function()loadstring(game:HttpGet(e_.ScriptURL))()end)if not I then oa:CreateGUI()end else A();oa:CreateGUI()end else oa:CreateGUI()end while not getgenv().UI_CLOSED and not getgenv().SCRIPT_KEY do task.wait(0.10000000000000001)end
+local Junkie = loadstring(game:HttpGet("https://jnkie.com/sdk/library.lua"))()
+Junkie.service = "VortexHub-Services-linkvertise-FinishTheWord"
+Junkie.identifier = "1007820"
+Junkie.provider = "Vortex-Hub-Key-linkvertise-FinishTheWord"
+
+local Config = {
+    ScriptURL = "https://raw.githubusercontent.com/Mickey123m/Vortex-Hub/refs/heads/main/Models/FinishTheWord/AutoType.lua",
+    KeyFileName = "vortex_key.txt",
+    TimerFileName = "vortex_timer.txt",
+    CooldownSeconds = 300
+}
+
+getgenv().SCRIPT_KEY = nil
+getgenv().UI_CLOSED = false
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local function hasFileSystemSupport()
+    local hasWritefile = pcall(function() return type(writefile) == "function" end)
+    local hasReadfile = pcall(function() return type(readfile) == "function" end)
+    local hasIsfile = pcall(function() return type(isfile) == "function" end)
+    return hasWritefile and hasReadfile and hasIsfile
+end
+
+local fileSystemSupported = hasFileSystemSupport()
+
+local function saveVerifiedKey(key)
+    if not fileSystemSupported then return false end
+    pcall(function() writefile(Config.KeyFileName, key) end)
+    return true
+end
+
+local function loadVerifiedKey()
+    if not fileSystemSupported then return nil end
+    local ok, content = pcall(function()
+        if isfile(Config.KeyFileName) then 
+            return readfile(Config.KeyFileName) 
+        end
+    end)
+    return ok and content or nil
+end
+
+local function clearSavedKey()
+    if fileSystemSupported and isfile(Config.KeyFileName) then
+        pcall(function() delfile(Config.KeyFileName) end)
+    end
+end
+
+local function saveTimer()
+    if not fileSystemSupported then return end
+    pcall(function() writefile(Config.TimerFileName, tostring(os.time())) end)
+end
+
+local function getRemainingCooldown()
+    if not fileSystemSupported or not isfile(Config.TimerFileName) then return 0 end
+    local ok, lastTime = pcall(function() return tonumber(readfile(Config.TimerFileName)) end)
+    if ok and lastTime then
+        local diff = os.time() - lastTime
+        local remaining = Config.CooldownSeconds - diff
+        return remaining > 0 and remaining or 0
+    end
+    return 0
+end
+
+local function ShakeFrame(frame)
+    local originalPos = frame.Position
+    task.spawn(function()
+        for i = 1, 4 do
+            local offset = (i % 2 == 0 and 5 or -5)
+            frame.Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + offset, 
+                                      originalPos.Y.Scale, originalPos.Y.Offset)
+            task.wait(0.05)
+        end
+        frame.Position = originalPos
+    end)
+end
+
+local KeySystem = {}
+
+function KeySystem:CreateGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "VortexKeySystem"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+    ScreenGui.Parent = success and coreGui or LocalPlayer:WaitForChild("PlayerGui")
+
+    local Overlay = Instance.new("Frame")
+    Overlay.Name = "Overlay"
+    Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.5
+    Overlay.BorderSizePixel = 0
+    Overlay.Parent = ScreenGui
+
+    local MainFrame = Instance.new("Frame")
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+    MainFrame.BackgroundColor3 = Color3.fromHex("17171C")
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.Size = UDim2.new(0, 400, 0, 420)
+    MainFrame.Parent = ScreenGui
+
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 10)
+    MainCorner.Parent = MainFrame
+
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Color3.fromHex("25252D")
+    MainStroke.Thickness = 1
+    MainStroke.Parent = MainFrame
+
+    local TopBar = Instance.new("Frame")
+    TopBar.Size = UDim2.new(1, 0, 0, 42)
+    TopBar.BackgroundColor3 = Color3.fromHex("1C1C22")
+    TopBar.BorderSizePixel = 0
+    TopBar.Parent = MainFrame
+
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.CornerRadius = UDim.new(0, 10)
+    TopCorner.Parent = TopBar
+
+    local Title = Instance.new("TextLabel")
+    Title.Text = "VORTEX HUB"
+    Title.Size = UDim2.new(1, -50, 1, 0)
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.TextColor3 = Color3.fromRGB(138, 43, 226)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 14
+    Title.BackgroundTransparency = 1
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TopBar
+
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Text = "×"
+    CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+    CloseBtn.Position = UDim2.new(1, -35, 0.5, -14)
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    CloseBtn.Font = Enum.Font.Gotham
+    CloseBtn.TextSize = 18
+    CloseBtn.AutoButtonColor = false
+    CloseBtn.Parent = TopBar
+
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 6)
+    CloseCorner.Parent = CloseBtn
+
+    CloseBtn.MouseEnter:Connect(function()
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0,
+            BackgroundColor3 = Color3.fromRGB(200, 45, 45),
+            TextColor3 = Color3.new(1, 1, 1)
+        }):Play()
+    end)
+
+    CloseBtn.MouseLeave:Connect(function()
+        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 1,
+            TextColor3 = Color3.fromRGB(150, 150, 150)
+        }):Play()
+    end)
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        getgenv().UI_CLOSED = true
+        ScreenGui:Destroy()
+    end)
+
+    local Content = Instance.new("Frame")
+    Content.Size = UDim2.new(1, -40, 1, -60)
+    Content.Position = UDim2.new(0, 20, 0, 55)
+    Content.BackgroundTransparency = 1
+    Content.Parent = MainFrame
+
+    local IconFrame = Instance.new("Frame")
+    IconFrame.Size = UDim2.new(0, 70, 0, 70)
+    IconFrame.Position = UDim2.new(0.5, -35, 0, 10)
+    IconFrame.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    IconFrame.Parent = Content
+    
+    local IconCorner = Instance.new("UICorner")
+    IconCorner.CornerRadius = UDim.new(0, 12)
+    IconCorner.Parent = IconFrame
+    
+    local IconLabel = Instance.new("TextLabel")
+    IconLabel.Text = "V"
+    IconLabel.Size = UDim2.new(1, 0, 1, 0)
+    IconLabel.Font = Enum.Font.GothamBold
+    IconLabel.TextSize = 32
+    IconLabel.TextColor3 = Color3.new(1, 1, 1)
+    IconLabel.BackgroundTransparency = 1
+    IconLabel.Parent = IconFrame
+
+    local WelcomeText = Instance.new("TextLabel")
+    WelcomeText.Text = "ACCESS VERIFICATION"
+    WelcomeText.Size = UDim2.new(1, 0, 0, 24)
+    WelcomeText.Position = UDim2.new(0, 0, 0, 90)
+    WelcomeText.Font = Enum.Font.GothamBold
+    WelcomeText.TextSize = 16
+    WelcomeText.TextColor3 = Color3.new(1, 1, 1)
+    WelcomeText.BackgroundTransparency = 1
+    WelcomeText.TextXAlignment = Enum.TextXAlignment.Center
+    WelcomeText.Parent = Content
+
+    local SubText = Instance.new("TextLabel")
+    SubText.Text = "Enter your access key to continue"
+    SubText.Size = UDim2.new(1, 0, 0, 16)
+    SubText.Position = UDim2.new(0, 0, 0, 114)
+    SubText.Font = Enum.Font.Gotham
+    SubText.TextSize = 12
+    SubText.TextColor3 = Color3.fromRGB(150, 150, 150)
+    SubText.BackgroundTransparency = 1
+    SubText.TextXAlignment = Enum.TextXAlignment.Center
+    SubText.Parent = Content
+
+    local InputFrame = Instance.new("Frame")
+    InputFrame.Size = UDim2.new(1, 0, 0, 44)
+    InputFrame.Position = UDim2.new(0, 0, 0, 145)
+    InputFrame.BackgroundColor3 = Color3.fromHex("1C1C22")
+    InputFrame.Parent = Content
+    
+    local InputCorner = Instance.new("UICorner")
+    InputCorner.CornerRadius = UDim.new(0, 6)
+    InputCorner.Parent = InputFrame
+    
+    local InputStroke = Instance.new("UIStroke")
+    InputStroke.Color = Color3.fromHex("25252D")
+    InputStroke.Thickness = 1.5
+    InputStroke.Parent = InputFrame
+
+    local KeyInput = Instance.new("TextBox")
+    KeyInput.Size = UDim2.new(1, -20, 1, 0)
+    KeyInput.Position = UDim2.new(0, 10, 0, 0)
+    KeyInput.BackgroundTransparency = 1
+    KeyInput.PlaceholderText = "Enter key here..."
+    KeyInput.PlaceholderColor3 = Color3.fromRGB(80, 80, 100)
+    KeyInput.Text = ""
+    KeyInput.Font = Enum.Font.Gotham
+    KeyInput.TextSize = 14
+    KeyInput.TextColor3 = Color3.new(1, 1, 1)
+    KeyInput.ClearTextOnFocus = false
+    KeyInput.Parent = InputFrame
+
+    KeyInput.Focused:Connect(function()
+        TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+            Color = Color3.fromRGB(138, 43, 226)
+        }):Play()
+    end)
+
+    KeyInput.FocusLost:Connect(function()
+        TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+            Color = Color3.fromHex("25252D")
+        }):Play()
+    end)
+
+    local ValidateButton = Instance.new("TextButton")
+    ValidateButton.Size = UDim2.new(1, 0, 0, 44)
+    ValidateButton.Position = UDim2.new(0, 0, 0, 200)
+    ValidateButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    ValidateButton.Text = "VALIDATE KEY"
+    ValidateButton.Font = Enum.Font.GothamBold
+    ValidateButton.TextSize = 14
+    ValidateButton.TextColor3 = Color3.new(1, 1, 1)
+    ValidateButton.AutoButtonColor = false
+    ValidateButton.Parent = Content
+    
+    local ValidateCorner = Instance.new("UICorner")
+    ValidateCorner.CornerRadius = UDim.new(0, 6)
+    ValidateCorner.Parent = ValidateButton
+
+    ValidateButton.MouseEnter:Connect(function()
+        TweenService:Create(ValidateButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(158, 63, 246)
+        }):Play()
+    end)
+
+    ValidateButton.MouseLeave:Connect(function()
+        TweenService:Create(ValidateButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+        }):Play()
+    end)
+
+    local GetKeyButton = Instance.new("TextButton")
+    GetKeyButton.Size = UDim2.new(1, 0, 0, 38)
+    GetKeyButton.Position = UDim2.new(0, 0, 0, 255)
+    GetKeyButton.BackgroundColor3 = Color3.fromHex("25252D")
+    GetKeyButton.Text = "GET ACCESS LINK"
+    GetKeyButton.Font = Enum.Font.Gotham
+    GetKeyButton.TextSize = 12
+    GetKeyButton.TextColor3 = Color3.new(1, 1, 1)
+    GetKeyButton.AutoButtonColor = false
+    GetKeyButton.Parent = Content
+    
+    local GetKeyCorner = Instance.new("UICorner")
+    GetKeyCorner.CornerRadius = UDim.new(0, 6)
+    GetKeyCorner.Parent = GetKeyButton
+
+    GetKeyButton.MouseEnter:Connect(function()
+        TweenService:Create(GetKeyButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromHex("2D2D35")
+        }):Play()
+    end)
+
+    GetKeyButton.MouseLeave:Connect(function()
+        TweenService:Create(GetKeyButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromHex("25252D")
+        }):Play()
+    end)
+
+    local StatusText = Instance.new("TextLabel")
+    StatusText.Size = UDim2.new(1, 0, 0, 18)
+    StatusText.Position = UDim2.new(0, 0, 0, 305)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Text = ""
+    StatusText.Font = Enum.Font.Gotham
+    StatusText.TextSize = 11
+    StatusText.TextColor3 = Color3.fromRGB(150, 150, 150)
+    StatusText.TextXAlignment = Enum.TextXAlignment.Center
+    StatusText.Parent = Content
+
+    local ProgressBar = Instance.new("Frame")
+    ProgressBar.Size = UDim2.new(0, 0, 0, 2)
+    ProgressBar.Position = UDim2.new(0, 0, 0, 330)
+    ProgressBar.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+    ProgressBar.BackgroundTransparency = 1
+    ProgressBar.BorderSizePixel = 0
+    ProgressBar.Parent = Content
+
+    local function UpdateStatus(text, color)
+        StatusText.Text = text
+        StatusText.TextColor3 = color or Color3.fromRGB(150, 150, 150)
+    end
+
+    local function ShowProgress(percentage, color)
+        ProgressBar.BackgroundTransparency = 0
+        ProgressBar.BackgroundColor3 = color or Color3.fromRGB(138, 43, 226)
+        TweenService:Create(ProgressBar, TweenInfo.new(0.3), {
+            Size = UDim2.new(percentage, 0, 0, 2)
+        }):Play()
+    end
+
+    local isCooldown = false
+    local cooldownThread = nil
+    
+    local function StartCooldown(seconds)
+        if cooldownThread then 
+            task.cancel(cooldownThread)
+            cooldownThread = nil
+        end
+        
+        isCooldown = true
+        GetKeyButton.Interactable = false
+        GetKeyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+        
+        cooldownThread = task.spawn(function()
+            local remaining = seconds
+            while remaining > 0 do
+                local mins = math.floor(remaining / 60)
+                local secs = remaining % 60
+                GetKeyButton.Text = string.format("WAIT %02d:%02d", mins, secs)
+                ShowProgress(1 - (remaining / seconds), Color3.fromRGB(200, 100, 50))
+                task.wait(1)
+                remaining = remaining - 1
+                if not GetKeyButton or not GetKeyButton.Parent then 
+                    break 
+                end
+            end
+            
+            if GetKeyButton and GetKeyButton.Parent then
+                isCooldown = false
+                GetKeyButton.Interactable = true
+                GetKeyButton.Text = "GET ACCESS LINK"
+                GetKeyButton.BackgroundColor3 = Color3.fromHex("25252D")
+                ShowProgress(0, Color3.fromRGB(138, 43, 226))
+                ProgressBar.BackgroundTransparency = 1
+                saveTimer()
+            end
+            cooldownThread = nil
+        end)
+    end
+
+    local timeLeft = getRemainingCooldown()
+    if timeLeft > 0 then
+        StartCooldown(timeLeft)
+    end
+
+    GetKeyButton.MouseButton1Click:Connect(function()
+        if isCooldown then return end
+        
+        local link = Junkie.get_key_link()
+        if not link then
+            UpdateStatus("Error: Failed to get access link", Color3.fromRGB(255, 70, 70))
+            ShowProgress(1, Color3.fromRGB(255, 70, 70))
+            task.delay(2, function()
+                ShowProgress(0, Color3.fromRGB(138, 43, 226))
+                ProgressBar.BackgroundTransparency = 1
+            end)
+            return
+        end
+        
+        if setclipboard then
+            setclipboard(link)
+            UpdateStatus("Link copied to clipboard", Color3.fromRGB(50, 200, 100))
+            ShowProgress(1, Color3.fromRGB(50, 200, 100))
+            task.delay(1.5, function()
+                ShowProgress(0, Color3.fromRGB(138, 43, 226))
+                ProgressBar.BackgroundTransparency = 1
+            end)
+        else
+            UpdateStatus("Link: " .. link, Color3.fromRGB(100, 100, 255))
+        end
+        
+        saveTimer()
+        StartCooldown(Config.CooldownSeconds)
+    end)
+
+    local function ValidateKey()
+        if not ValidateButton.Interactable then return end
+        
+        local key = KeyInput.Text:gsub("%s+", "")
+        if #key == 0 then
+            InputStroke.Color = Color3.fromRGB(255, 50, 50)
+            ShakeFrame(InputFrame)
+            UpdateStatus("Please enter a key", Color3.fromRGB(255, 200, 50))
+            task.delay(1.5, function()
+                InputStroke.Color = Color3.fromHex("25252D")
+            end)
+            return
+        end
+        
+        ValidateButton.Text = "VERIFYING..."
+        ValidateButton.Interactable = false
+        KeyInput.Interactable = false
+        UpdateStatus("Verifying key...", Color3.fromRGB(100, 100, 255))
+        ShowProgress(0.5, Color3.fromRGB(100, 100, 255))
+        
+        task.spawn(function()
+            local result = Junkie.check_key(key)
+            
+            if result and result.valid then
+                InputStroke.Color = Color3.fromRGB(50, 255, 100)
+                ValidateButton.Text = "SUCCESS"
+                ValidateButton.BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+                UpdateStatus("Key validated successfully", Color3.fromRGB(50, 255, 100))
+                ShowProgress(1, Color3.fromRGB(50, 255, 100))
+                
+                saveVerifiedKey(key)
+                getgenv().SCRIPT_KEY = key
+                
+                task.wait(0.8)
+                getgenv().UI_CLOSED = true
+                ScreenGui:Destroy()
+                
+                local success, err = pcall(function()
+                    loadstring(game:HttpGet(Config.ScriptURL))()
+                end)
+                
+            else
+                InputStroke.Color = Color3.fromRGB(255, 50, 50)
+                ValidateButton.Text = "INVALID KEY"
+                ValidateButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+                ShakeFrame(InputFrame)
+                UpdateStatus("Invalid key, please try again", Color3.fromRGB(255, 70, 70))
+                ShowProgress(1, Color3.fromRGB(255, 70, 70))
+                
+                task.wait(1.5)
+                
+                ValidateButton.Text = "VALIDATE KEY"
+                ValidateButton.BackgroundColor3 = Color3.fromRGB(138, 43, 226)
+                ValidateButton.Interactable = true
+                KeyInput.Interactable = true
+                
+                InputStroke.Color = Color3.fromHex("25252D")
+                ShowProgress(0, Color3.fromRGB(138, 43, 226))
+                ProgressBar.BackgroundTransparency = 1
+                KeyInput.Text = ""
+            end
+        end)
+    end
+
+    ValidateButton.MouseButton1Click:Connect(ValidateKey)
+
+    KeyInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            ValidateKey()
+        end
+    end)
+
+    UserInputService.InputBegan:Connect(function(input, processed)
+        if processed then return end
+        if input.KeyCode == Enum.KeyCode.Escape then
+            getgenv().UI_CLOSED = true
+            ScreenGui:Destroy()
+        end
+    end)
+
+    MainFrame.BackgroundTransparency = 1
+    MainFrame.Size = UDim2.new(0, 0, 0, 0)
+    
+    task.delay(0.1, function()
+        TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            BackgroundTransparency = 0,
+            Size = UDim2.new(0, 400, 0, 420)
+        }):Play()
+    end)
+
+    return ScreenGui
+end
+
+local savedKey = loadVerifiedKey()
+if savedKey then
+    local result = Junkie.check_key(savedKey)
+    if result and result.valid then
+        getgenv().SCRIPT_KEY = savedKey
+        local success, err = pcall(function()
+            loadstring(game:HttpGet(Config.ScriptURL))()
+        end)
+        if not success then
+            KeySystem:CreateGUI()
+        end
+    else
+        clearSavedKey()
+        KeySystem:CreateGUI()
+    end
+else
+    KeySystem:CreateGUI()
+end
+
+while not getgenv().UI_CLOSED and not getgenv().SCRIPT_KEY do
+    task.wait(0.1)
+end
