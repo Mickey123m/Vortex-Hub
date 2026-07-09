@@ -1,3 +1,4 @@
+-- Verifica se já existe uma instância do painel
 local function checkExistingPanel()
     local coreGui = game:GetService("CoreGui") or game:GetService("StarterGui")
     for _, child in pairs(coreGui:GetChildren()) do
@@ -17,12 +18,14 @@ local player = Players.LocalPlayer
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local UserInputService = game:GetService("UserInputService")
 
+-- Função para auto-escolha de letras no ChoiceList - CORRIGIDA
 local function autoEscolherLetra()
     local playerGui = player:FindFirstChild("PlayerGui")
     if not playerGui then 
         return false 
     end
     
+    -- Procura ScreenGui em todos os ScreenGuis do jogador
     local screenGui = nil
     for _, child in pairs(playerGui:GetChildren()) do
         if child:IsA("ScreenGui") and child:FindFirstChild("ChoiceList") then
@@ -40,12 +43,15 @@ local function autoEscolherLetra()
         return false 
     end
     
+    -- Verifica se está visível (é nossa vez de escolher)
     if not choiceList.Visible then 
         return false 
     end
     
+    -- Procura por ImageButtons/ImageLabels/TextButtons dentro do ChoiceList
     local opcoes = {}
     
+    -- Procura diretamente nos filhos
     for _, child in pairs(choiceList:GetChildren()) do
         if child:IsA("ImageButton") or child:IsA("ImageLabel") or child:IsA("TextButton") then
             if child.Visible then
@@ -54,6 +60,7 @@ local function autoEscolherLetra()
         end
     end
     
+    -- Se não encontrou, procura em sub-frames
     if #opcoes == 0 then
         for _, child in pairs(choiceList:GetDescendants()) do
             if child:IsA("ImageButton") or child:IsA("ImageLabel") or child:IsA("TextButton") then
@@ -68,6 +75,7 @@ local function autoEscolherLetra()
         return false 
     end
     
+    -- Remove duplicatas
     local unicas = {}
     local seen = {}
     for _, op in ipairs(opcoes) do
@@ -81,8 +89,10 @@ local function autoEscolherLetra()
         return false 
     end
     
+    -- Escolhe uma aleatória
     local escolhida = unicas[math.random(1, #unicas)]
     
+    -- Simula clique usando coordenadas na tela
     local sucesso = false
     pcall(function()
         local absPos = escolhida.AbsolutePosition
@@ -90,8 +100,10 @@ local function autoEscolherLetra()
         local clickX = absPos.X + absSize.X / 2
         local clickY = absPos.Y + absSize.Y / 2
         
+        -- Mouse button down
         VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, true, nil, 0)
         task.wait(0.05)
+        -- Mouse button up
         VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, false, nil, 0)
         task.wait(0.05)
         
@@ -379,6 +391,7 @@ local palavrasPorPrefixo = {
     }
 }
 
+-- Hard Mode: categorias para escolha aleatória
 local palavrasHardMode = {
     Y = {
         "angry", "away", "airy", "army", "ability", "activity", "anniversary", "allergy", "agency", "anatomy", "anxiety", "actually", "accuracy", "academy", "agility", "apology", "assembly", "antony", "anthony", "any", "ally", "already", "apply", "archaeology", "astronomy", "asymmetry", "audacity", "authority", "autonomy",
@@ -592,7 +605,7 @@ local hardModeTitle = Instance.new("TextLabel")
 hardModeTitle.Size = UDim2.new(1, -PADDING*2, 0, 22)
 hardModeTitle.Position = UDim2.new(0, PADDING, 0, PADDING)
 hardModeTitle.BackgroundTransparency = 1
-hardModeTitle.Text = "🔴 Hard Mode"
+hardModeTitle.Text = "🟢 Hard Mode"
 hardModeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 hardModeTitle.Font = Enum.Font.GothamBold
 hardModeTitle.TextSize = 13
@@ -616,16 +629,16 @@ hardModeDesc.Parent = toggleFrame
 local hardToggleBtn = Instance.new("TextButton")
 hardToggleBtn.Size = UDim2.new(1, -PADDING*2, 0, 36)
 hardToggleBtn.Position = UDim2.new(0, PADDING, 0, PADDING + 58)
-hardToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-hardToggleBtn.Text = "DISABLED"
-hardToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+hardToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 60, 30)
+hardToggleBtn.Text = "ENABLED"
+hardToggleBtn.TextColor3 = Color3.fromRGB(100, 255, 100)
 hardToggleBtn.Font = Enum.Font.GothamBold
 hardToggleBtn.TextSize = 14
 hardToggleBtn.ZIndex = 11
 hardToggleBtn.Parent = toggleFrame
 Instance.new("UICorner", hardToggleBtn).CornerRadius = UDim.new(0, 8)
 
-local hardMode = false
+local hardMode = true  -- INICIANDO COMO ATIVADO
 
 hardToggleBtn.MouseButton1Click:Connect(function()
     hardMode = not hardMode
@@ -646,7 +659,7 @@ local safeModeTitle = Instance.new("TextLabel")
 safeModeTitle.Size = UDim2.new(1, -PADDING*2, 0, 22)
 safeModeTitle.Position = UDim2.new(0, PADDING, 0, PADDING + 110)
 safeModeTitle.BackgroundTransparency = 1
-safeModeTitle.Text = "🔴 Safe Mode"
+safeModeTitle.Text = "🟢 Safe Mode"
 safeModeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 safeModeTitle.Font = Enum.Font.GothamBold
 safeModeTitle.TextSize = 13
@@ -670,16 +683,16 @@ safeModeDesc.Parent = toggleFrame
 local safeToggleBtn = Instance.new("TextButton")
 safeToggleBtn.Size = UDim2.new(1, -PADDING*2, 0, 36)
 safeToggleBtn.Position = UDim2.new(0, PADDING, 0, PADDING + 160)
-safeToggleBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-safeToggleBtn.Text = "DISABLED"
-safeToggleBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+safeToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 60, 30)
+safeToggleBtn.Text = "ENABLED"
+safeToggleBtn.TextColor3 = Color3.fromRGB(100, 255, 100)
 safeToggleBtn.Font = Enum.Font.GothamBold
 safeToggleBtn.TextSize = 14
 safeToggleBtn.ZIndex = 11
 safeToggleBtn.Parent = toggleFrame
 Instance.new("UICorner", safeToggleBtn).CornerRadius = UDim.new(0, 8)
 
-local safeMode = false
+local safeMode = true  -- INICIANDO COMO ATIVADO
 
 safeToggleBtn.MouseButton1Click:Connect(function()
     safeMode = not safeMode
@@ -1085,7 +1098,7 @@ local errosAnteriores = 0
 local semPalavras = false
 local escolhaJaFeita = false
 local ultimoTempoChoice = 0
-local TEMPO_ENTRE_CHOICES = 2.0
+local TEMPO_ENTRE_CHOICES = 2.0  -- Espera 2 segundos entre verificações do ChoiceList
 
 local palavrasTentadas = {}
 
@@ -1139,10 +1152,12 @@ local function tentarPalavra(baseAgora, tempoRestante)
     end
 end
 
+-- CORREÇÃO PRINCIPAL: Loop que verifica ChoiceList SEPARADAMENTE do loop do jogo
 spawn(function()
     while scriptAtivo do
         if botAtivo then
             local agora = os.clock()
+            -- Verifica ChoiceList a cada 1.5 segundos para não sobrecarregar
             if agora - ultimoTempoChoice > 1.5 then
                 ultimoTempoChoice = agora
                 
@@ -1154,11 +1169,11 @@ spawn(function()
                 if fezEscolha then
                     print("[Vortex] ChoiceList: Letra escolhida automaticamente!")
                     escolhaJaFeita = true
-                    task.wait(0.5)
+                    task.wait(0.5)  -- Pequena pausa após escolher
                 end
             end
         end
-        task.wait(0.3)
+        task.wait(0.3)  -- Verifica frequentemente
     end
 end)
 
@@ -1187,6 +1202,7 @@ while scriptAtivo do
         continue
     end
     
+    -- Verifica ChoiceList também aqui (para quando está no jogo)
     if not escolhaJaFeita then
         local fezEscolha = false
         pcall(function()
