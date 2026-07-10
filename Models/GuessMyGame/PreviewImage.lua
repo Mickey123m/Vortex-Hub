@@ -9,6 +9,10 @@ local function CreateBoardImageUI()
         parentGui = player:WaitForChild("PlayerGui")
     end
     
+    if parentGui:FindFirstChild("BoardImageViewer") then
+        return nil
+    end
+    
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "BoardImageViewer"
     screenGui.ResetOnSpawn = false
@@ -271,7 +275,22 @@ local function TryAutoGuess(targetImageId)
 end
 
 local function StartOpponentBoardMonitor()
+    if game.Players.LocalPlayer.PlayerGui:FindFirstChild("BoardImageViewer") then
+        return
+    end
+    
+    local success, coreGui = pcall(function() return game:GetService("CoreGui") end)
+    if success and coreGui then
+        if coreGui:FindFirstChild("BoardImageViewer") then
+            return
+        end
+    end
+    
     local ui = CreateBoardImageUI()
+    if not ui then
+        return
+    end
+    
     local running = true
     local lastImageId = nil
     local alreadyGuessed = false
