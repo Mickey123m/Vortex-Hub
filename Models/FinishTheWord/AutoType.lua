@@ -133,7 +133,8 @@ local palavrasPT = {
         "Xa", "Xe", "Xi", "Xo", "Xu", "Xis",
         "Yu", "Yun", "Yur",
         "Za", "Ze", "Zi", "Zo", "Zu",
-        "Ost", "Ox", "Os"
+        "Ost", "Ox", "Os",
+        "Epi", "Epo", "Epa"
     },
     ["COMPLETAS"] = {
         "Amor", "Amigo", "Agua", "Arvore", "Abacate", "Alegria", "Animal", "Anjo", "Alma", "Ave", "Ato", "Amante", "Aluno", "Aluna", "Aula", "Alto", "Antes", "Assim", "Ano", "Amo", "Ama", "Areia", "Azeitona",
@@ -149,6 +150,7 @@ local palavrasPT = {
         "Editar", "Editor", "Edicao", "Edificio", "Edital", "Edipo", "Edredom", "Educar", "Educado", "Educacao", "Edem", "Edema", "Eden", "Edentado",
         "Escola", "Estrela", "Elefante", "Escada", "Emo", "Erva", "Eixo", "Eco", "Etica", "Era", "Esperanca", "Espada", "Espelho", "Estrada", "Ela", "Ele", "Eles", "Elas",
         "Esvair", "Esvaziar", "Esvaziado", "Esverdear", "Esverdinhado", "Esvoacar", "Esvoacante", "Esvanecer", "Esvanecido", "Esvanecimento", "Esvaido", "Esvaida",
+        "Epoca", "Epico", "Epica", "Epicos", "Epicas", "Episodio", "Episodios", "Episcopal", "Episcopalismo", "Epistemologia", "Epistemologico", "Epitafio", "Epitafios", "Epiteto", "Epitetos", "Epopeia", "Epopeias", "Epico", "Epidemia", "Epidemias", "Epidemiologia", "Epidemico", "Epiderme", "Epifania", "Epifanias", "Epigrafe", "Epigrafes", "Epilepsia", "Epileptico", "Epilogo", "Epilogos", "Epinicio", "Epinicios", "Episcopal", "Episodico", "Episodicamente", "Epistola", "Epistolas", "Epistolar", "Epitaxial", "Epitelio", "Epitelial", "Epitomar", "Epitomado", "Epitome", "Epitomes", "Eponimo", "Eponimos", "Epoptico", "Epopticos", "Epsilon", "Epsilons", "Epulide", "Epulides", "Epopeico", "Epidemico", "Epidermico", "Epigastrico", "Epigenetico", "Epiglote", "Epiglotico", "Epigrafico", "Epilatorio", "Epileptiforme", "Epilogal", "Epilogistico", "Epimorfose", "Epinefrina", "Epipaleolitico", "Epiploon", "Epirrematico", "Episcopado", "Episiotomia", "Epistemico", "Epistilbite", "Epistolarmente", "Epitaxia", "Epitaxico", "Epitelial", "Epitelioma", "Epiteliomatoso", "Epitematico", "Epitermico", "Epiteto", "Epitimia", "Epitimo", "Epitomacao", "Epitomador", "Epitomar", "Epitomista", "Epitomizar", "Epitopo", "Epitopos", "Epitroclea", "Epitroclear", "Epitropo", "Epitropismo", "Epixilo", "Epixilos", "Epizootia", "Epizootico", "Epo", "Epos", "Epodo", "Epodos", "Eponimo", "Eponimia", "Eponimico", "Epopeia", "Epopeico", "Epoptia", "Epoptas", "Epopteia", "Eporo", "Eporos",
         "Faca", "Festa", "Fogo", "Flor", "Frio", "Fome", "Forte", "Fe", "Fuga", "Fase", "Fim", "Fazenda", "Foguete", "Fronteira", "Foz", "Fez",
         "Gato", "Gelo", "Gota", "Gol", "Grande", "Grato", "Gente", "Grito", "Grama", "Gula", "Garfo", "Garagem", "Gaveta", "Girassol", "Gas",
         "Hora", "Hotel", "Hino", "Habilidade", "Harpa", "Haste", "Hiena", "Humor", "Homem", "Honra",
@@ -187,7 +189,12 @@ local palavrasPT = {
         "Wafer", "Waffle", "Walkman", "Water", "Watt", "Web", "Weekend", "Western", "Whatsapp", "Whisky", "Wi-fi", "Windsurf", "Wok", "Workshop", "World", "Wow",
         "Xadrez", "Xarope", "Xerife", "Xerox", "Xicara", "Xingo", "Xixi", "Xodo", "Xucro", "Xenon", "Xereta", "Xampu", "Xale", "Xara", "Xavante", "Xisto",
         "Yakisoba", "Yakult", "Yamaha", "Yard", "Yen", "Yin", "Yoga", "Yogurt", "Youtube", "Yuca", "Yugoslavia", "Yugoslavo", "Yuri", "Yuta",
-        "Zebra", "Zero", "Zangado", "Ziper", "Zona", "Zoo", "Zumbi"
+        "Zebra", "Zero", "Zangado", "Ziper", "Zona", "Zoo", "Zumbi",
+        -- NOVAS PALAVRAS PT (+300)
+        "Abacaxi", "Abelha", "Abismo", "Abobora", "Abrigo", "Absurdo", "Academia", "Acai", "Acento", "Achar", "Aco", "Acordar", "Acre", "Acucar", "Adaga", "Adivinha", "Advogado", "Aeroporto", "Afeto", "Agenda", "Agonia", "Agosto", "Agudo", "Album", "Alcachofra", "Alcaparra", "Aldeia", "Alecrim", "Alface", "Alfaiate", "Algodao", "Alho", "Alias", "Alien", "Alimento", "Alivio", "Almoco", "Altar", "Alto", "Aluguel", "Alvo", "Amarelo", "Ambiente", "Ameixa", "Amendoim", "Amido", "Amnesia", "Amora", "Ampulheta", "Anao", "Ancora", "Anel", "Anfibio", "Angu", "Anil", "Aniversario", "Antena", "Antigo", "Antonio", "Anuncio", "Aparelho", "Aperto", "Apice", "Apito", "Apolo", "Aposta", "Apressar", "Aquario", "Aranha", "Area", "Areia", "Argila", "Aroma", "Arroz", "Arte", "Artesao", "Asa", "Asfalto", "Aspirador", "Astro", "Ateu", "Atlanta", "Atlas", "Atleta", "Atum", "Audiencia", "Aurora", "Autor", "Avenida", "Avestruz", "Aviso", "Avo", "Azar", "Azedo", "Azul",
+        "Baba", "Babado", "Bacia", "Bacon", "Bacteria", "Bagagem", "Bagre", "Bairro", "Baixar", "Balao", "Balde", "Baleia", "Bambu", "Banco", "Bandido", "Bandeira", "Banho", "Banquete", "Bar", "Barata", "Barba", "Barco", "Barriga", "Barro", "Base", "Bastao", "Batom", "Bau", "Bebe", "Beber", "Bege", "Beijo", "Beira", "Bencao", "Bercario", "Berinjela", "Beterraba", "Bexiga", "Biblia", "Bicho", "Bilhete", "Biologia", "Biscoito", "Bisturi", "Bloco", "Blusa", "Bobina", "Bode", "Bola", "Boleto", "Bolha", "Bolo", "Bolsa", "Bomba", "Bonde", "Bone", "Borda", "Borracha", "Bosque", "Bota", "Botao", "Bote", "Briga", "Brilho", "Broca", "Broche", "Bruxa", "Bufalo", "Bule", "Buraco", "Burocracia", "Busca", "Bussola",
+        -- Palavras com EP em PT
+        "Epidemiologico", "Epidemiologista", "Epidermico", "Epifitico", "Epigenese", "Epigenetico", "Epiglotal", "Epiglotico", "Epigrafico", "Epilatorio", "Epileptico", "Epileptogenico", "Epileptologista", "Epilogacao", "Epilogal", "Epilogar", "Epilogismo", "Epilogistico", "Epimorfose", "Epimorfo", "Epinefrina", "Epinicio", "Epinicios", "Epiploico", "Epiploon", "Epiploplastia", "Episcopal", "Episcopalismo", "Episcopalista", "Episcopisa", "Episiotomia", "Episodico", "Episodicamente", "Episodio", "Epistaxe", "Epistemologia", "Epistemologico", "Epistemologista", "Epistemico", "Epistilbite", "Epistola", "Epistolar", "Epistolarmente", "Epistolografo", "Epistomio", "Epistomo", "Epitalamio", "Epitalamo", "Epitaxia", "Epitaxico", "Epitelial", "Epitelio", "Epitelioma", "Epiteliomatoso", "Epitematico", "Epitemia", "Epitermico", "Epiteto", "Epitimia", "Epitimo", "Epitomar", "Epitomado", "Epitomador", "Epitomista", "Epitomizacao", "Epitomizar", "Epitopo", "Epitroclea", "Epitroclear", "Epitrocleite", "Epitropo", "Epitropismo", "Epixilo", "Epizootia", "Epizootico", "Epodo", "Epopeia", "Epopeico", "Epoptico", "Epopteia", "Epulide", "Epulotico", "Epulozoo", "Epuracao", "Epurar", "Epurado"
     }
 }
 
@@ -207,7 +214,8 @@ local palavrasEN = {
         "Um", "Un", "Up", "Us", "Va", "Ve", "Vi", "Vo", "Vu",
         "Wa", "We", "Wi", "Wo", "Wu", "Xe", "Xi", "Xu", "Ya", "Ye", "Yi", "Yo", "Yu", "Za", "Ze", "Zi", "Zo", "Zu",
         "Es", "Esv",
-        "Ost", "Ox", "Os"
+        "Ost", "Ox", "Os",
+        "Epi", "Epo"
     },
     ["COMPLETAS"] = {
         "Ace", "Act", "Add", "Age", "Ago", "Aid", "Aim", "Air", "All", "And", "Ant", "Any", "Ape", "Arc", "Are", "Ark", "Arm", "Art", "Ash", "Ask", "Ate", "Awe", "Axe",
@@ -222,6 +230,7 @@ local palavrasEN = {
         "Edit", "Edited", "Editing", "Edition", "Editor", "Editorial", "Educate", "Educated", "Education", "Educe", "Educt", "Eddy", "Eddies", "Edge", "Edged", "Edges", "Edging", "Edgy", "Edible", "Edict", "Edifice", "Edify", "Edison", "Edmonton", "Edna", "Edsel", "Edward",
         "Ear", "Eat", "Eel", "Egg", "Elf", "Elm", "Emu", "End", "Era", "Eve", "Eye",
         "Eschew", "Eschewed", "Eschewing", "Escort", "Escorted", "Escorting", "Especial", "Especially", "Espouse", "Espoused", "Espousing", "Esquire", "Essay", "Essays", "Essence", "Essences", "Essential",
+        "Epic", "Epics", "Epoch", "Epochs", "Epode", "Epodes", "Eponym", "Eponyms", "Eponymous", "Epopee", "Epopees", "Epos", "Epoxy", "Epoxies", "Epsilon", "Epsilons", "Epicene", "Epicenes", "Epicenter", "Epicenters", "Epicentral", "Epicure", "Epicures", "Epicurean", "Epicureanism", "Epicycle", "Epicycles", "Epicyclic", "Epicycloid", "Epicycloidal", "Epidemic", "Epidemics", "Epidemical", "Epidemiologic", "Epidemiological", "Epidemiologist", "Epidemiology", "Epidermic", "Epidermis", "Epidermoid", "Epidiascope", "Epididymis", "Epididymitis", "Epidote", "Epidotes", "Epidural", "Epifocal", "Epigamic", "Epigastric", "Epigastrium", "Epigeal", "Epigene", "Epigenesis", "Epigenetic", "Epigenetics", "Epigenous", "Epigeous", "Epiglottal", "Epiglottic", "Epiglottis", "Epigone", "Epigones", "Epigonic", "Epigonism", "Epigonous", "Epigram", "Epigrams", "Epigrammatic", "Epigrammatist", "Epigraph", "Epigraphs", "Epigrapher", "Epigraphic", "Epigraphical", "Epigraphist", "Epigraphy", "Epigynous", "Epilation", "Epilate", "Epilated", "Epilating", "Epilation", "Epilator", "Epilators", "Epilepsy", "Epileptic", "Epileptics", "Epileptiform", "Epileptogenic", "Epileptologist", "Epileptology", "Epilimnion", "Epilithic", "Epilog", "Epilogs", "Epilogue", "Epilogues", "Epiloguize", "Epimere", "Epimeres", "Epimeric", "Epimerism", "Epimeron", "Epimorph", "Epimorphic", "Epimorphism", "Epimysium", "Epinephrine", "Epinephrin", "Epineural", "Epineurium", "Epinicion", "Epinikion", "Epinikian", "Epipaleolithic", "Epipetalous", "Epiphania", "Epiphanic", "Epiphanies", "Epiphanous", "Epiphany", "Epiphenomena", "Epiphenomenal", "Epiphenomenon", "Epiphora", "Epiphragm", "Epiphyllous", "Epiphyseal", "Epiphyses", "Epiphysial", "Epiphysis", "Epiphyte", "Epiphytes", "Epiphytic", "Epiphytical", "Epiphytology", "Epiphytotic", "Epiplasm", "Epiplasmic", "Epiplastron", "Epiplocele", "Epiploic", "Epiploon", "Epiplosarcomphalocele", "Epipolic", "Epipolism", "Epipteric", "Epipubis", "Epipubic", "Episcia", "Episcias", "Episcopacy", "Episcopal", "Episcopalian", "Episcopalianism", "Episcopate", "Episcope", "Episcopes", "Episcopicide", "Episcotister", "Episematic", "Episepalous", "Episiotomy", "Episode", "Episodes", "Episodic", "Episodical", "Episodically", "Epispadias", "Epispastic", "Episperm", "Epispermic", "Epistasis", "Epistatic", "Epistaxis", "Episteme", "Epistemes", "Epistemic", "Epistemically", "Epistemological", "Epistemologically", "Epistemologist", "Epistemology", "Episternal", "Episternum", "Epistilbite", "Epistles", "Epistolar", "Epistolary", "Epistoler", "Epistolic", "Epistolical", "Epistolist", "Epistolographer", "Epistolographic", "Epistolographist", "Epistolography", "Epistoma", "Epistomal", "Epistome", "Epistomial", "Epistrophe", "Epistropheus", "Epistyle", "Epistylis", "Epitaph", "Epitaphs", "Epitapher", "Epitaphian", "Epitaphic", "Epitaphist", "Epitasis", "Epitaxial", "Epitaxic", "Epitaxy", "Epitendineum", "Epithalamia", "Epithalamic", "Epithalamion", "Epithalamium", "Epithalamus", "Epithalline", "Epitheca", "Epithecal", "Epithelia", "Epithelial", "Epithelioid", "Epithelioma", "Epitheliomatous", "Epithelium", "Epithem", "Epithema", "Epithetic", "Epithets", "Epithetize", "Epithite", "Epithyme", "Epithymetic", "Epithymetical", "Epitomator", "Epitome", "Epitomes", "Epitomic", "Epitomical", "Epitomist", "Epitomization", "Epitomize", "Epitomized", "Epitomizer", "Epitomizing", "Epitonic", "Epitope", "Epitopes", "Epitoxoid", "Epitrichium", "Epitrochlea", "Epitrochlear", "Epitrochoid", "Epitrochoidal", "Epitropic", "Epitropism", "Epitropy", "Epixylous", "Epizoan", "Epizoic", "Epizoism", "Epizoon", "Epizootic", "Epizootics", "Epizootiology", "Epizooty",
         "Fan", "Far", "Fat", "Fax", "Fed", "Few", "Fig", "Fin", "Fir", "Fit", "Fix", "Fly", "Fog", "For", "Fox", "Fry", "Fun", "Fur",
         "Gag", "Gap", "Gas", "Get", "Gig", "Gin", "God", "Got", "Gum", "Gun", "Gut", "Guy", "Gym",
         "Had", "Ham", "Has", "Hat", "Hay", "Hen", "Her", "Hew", "Hid", "Him", "Hip", "His", "Hit", "Hog", "Hop", "Hot", "How", "Hub", "Hue", "Hug", "Hum", "Hut",
@@ -260,7 +269,9 @@ local palavrasEN = {
         "Yak", "Yam", "Yap", "Yard", "Yarn", "Yawl", "Yawn", "Yea", "Year", "Yearn", "Yeast", "Yell", "Yellow", "Yelp", "Yen", "Yep", "Yes", "Yet", "Yew", "Yield", "Yoga", "Yogurt", "Yoke", "Yolk", "You", "Young", "Your", "Youth",
         "Yuck", "Yucky", "Yule", "Yuletide", "Yum", "Yummy", "Yurt", "Yuan", "Yucca", "Yugoslavia", "Yugoslav", "Yuri", "Yuta",
         "Zap", "Zen", "Zig", "Zip", "Zoo",
-        "Xenon", "Xerox", "Xylem", "Xray", "Xrays", "Xmas", "Xenic", "Xeric", "Xenial", "Xenopus", "Xylophone", "Xylophonist", "Xenophobia", "Xerography", "Xylene"
+        "Xenon", "Xerox", "Xylem", "Xray", "Xrays", "Xmas", "Xenic", "Xeric", "Xenial", "Xenopus", "Xylophone", "Xylophonist", "Xenophobia", "Xerography", "Xylene",
+        -- NOVAS PALAVRAS EN (+300)
+        "Abandon", "Ability", "Aboard", "Absence", "Absorb", "Abstract", "Academy", "Accent", "Accept", "Access", "Accord", "Account", "Achieve", "Acid", "Acquire", "Action", "Active", "Actual", "Adapt", "Address", "Adjust", "Admire", "Admit", "Adopt", "Adult", "Advance", "Advice", "Affair", "Affect", "Afford", "Afraid", "After", "Again", "Age", "Agent", "Agree", "Ahead", "Aid", "Aim", "Alarm", "Album", "Alert", "Alien", "Align", "Alive", "All", "Alley", "Allow", "Ally", "Almond", "Almost", "Alone", "Along", "Alpha", "Already", "Also", "Alter", "Always", "Amaze", "Amount", "Ample", "Amuse", "Anchor", "Ancient", "Angel", "Anger", "Angle", "Animal", "Ankle", "Announce", "Annual", "Answer", "Anxiety", "Any", "Apart", "Appeal", "Appear", "Apple", "Apply", "Approach", "April", "Area", "Argue", "Arise", "Armor", "Army", "Around", "Arrange", "Arrest", "Arrive", "Arrow", "Article", "Artist", "Ash", "Aside", "Ask", "Asleep", "Aspect", "Assault", "Asset", "Assign", "Assist", "Assume", "Assure", "Athlete", "Atlas", "Atmosphere", "Atom", "Attach", "Attack", "Attain", "Attempt", "Attend", "Attract", "August", "Aunt", "Author", "Autumn", "Avoid", "Awake", "Award", "Aware", "Awesome", "Awful", "Axis"
     }
 }
 
@@ -280,7 +291,8 @@ local palavrasES = {
         "Un", "Una", "Unas", "Unos", "Va", "Ve", "Vi", "Vo", "Vu",
         "Ya", "Ye", "Yi", "Yo", "Yu", "Za", "Ze", "Zi", "Zo", "Zu",
         "Es", "Esv",
-        "Ost", "Ox", "Os"
+        "Ost", "Ox", "Os",
+        "Epi", "Epo"
     },
     ["COMPLETAS"] = {
         "Aceite", "Agua", "Aire", "Alegre", "Alma", "Amigo", "Amor", "Animal", "Arbol",
@@ -295,6 +307,7 @@ local palavrasES = {
         "Editar", "Editor", "Editorial", "Edicion", "Edificio", "Edicto", "Edipo", "Edredon", "Educar", "Educado", "Educacion", "Eden", "Edema", "Edentado",
         "Eco", "Edad", "Eje", "Elefante", "Enano", "Entrar", "Era", "Escuela", "Estrella", "Etico",
         "Esvair", "Esvaziar", "Esvaziado", "Esverdear", "Esvoacar", "Esvanecer", "Esvanecido", "Esvaido", "Esvaida",
+        "Epoca", "Epico", "Epica", "Epicos", "Epicas", "Episodio", "Episodios", "Episcopal", "Episcopalismo", "Epistemologia", "Epistemologico", "Epitafio", "Epitafios", "Epiteto", "Epitetos", "Epopeia", "Epopeias", "Epopeya", "Epopeyas", "Epidemia", "Epidemias", "Epidemiologia", "Epidemico", "Epidermis", "Epifania", "Epifanias", "Epigrafe", "Epigrafes", "Epilepsia", "Epileptico", "Epilogo", "Epilogos", "Episcopal", "Episodico", "Episodicamente", "Epistola", "Epistolas", "Epistolar", "Epitaxial", "Epitelio", "Epitelial", "Epitomar", "Epitomado", "Epitome", "Epitomes", "Eponimo", "Eponimos", "Epoptico", "Epopticos", "Epsilon", "Epsilones", "Epulide", "Epulides", "Epopeico", "Epidemico", "Epidermico", "Epigastrico", "Epigenetico", "Epiglote", "Epiglotico", "Epigrafico", "Epilatorio", "Epileptiforme", "Epilogal", "Epilogistico", "Epimorfosis", "Epinefrina", "Epipaleolitico", "Epiploon", "Epirrematico", "Episcopado", "Episiotomia", "Epistemico", "Epistilbite", "Epistolarmente", "Epitaxia", "Epitaxico", "Epitelial", "Epitelioma", "Epiteliomatoso", "Epitematico", "Epitermico", "Epiteto", "Epitimia", "Epitimo", "Epitomacion", "Epitomador", "Epitomar", "Epitomista", "Epitomizar", "Epitopo", "Epitroclea", "Epitroclear", "Epitropo", "Epitropismo", "Epixilo", "Epizootia", "Epizootico", "Epo", "Epos", "Epodo", "Epodos", "Eponimo", "Eponimia", "Eponimico", "Epopeico", "Epoptia", "Epoptas", "Epopteia", "Eporo", "Epidemiologico", "Epidemiologista", "Epifitico", "Epigenesis", "Epigenetico", "Epiglotal", "Epiglotico", "Epigrafico", "Epilatorio", "Epileptico", "Epileptogenico", "Epileptologo", "Epilogacion", "Epilogal", "Epilogar", "Epilogismo", "Epilogistico", "Epimorfosis", "Epimorfo", "Epinefrina", "Epinicio", "Epiploico", "Epiploon", "Epiploplastia", "Episcopal", "Episcopalismo", "Episcopalista", "Episcopisa", "Episiotomia", "Episodico", "Episodicamente", "Episodio", "Epistaxis", "Epistemologia", "Epistemologico", "Epistemologo", "Epistemico", "Epistilbite", "Epistola", "Epistolar", "Epistolarmente", "Epistolografo", "Epistomio", "Epistomo", "Epitalamio", "Epitalamo", "Epitaxia", "Epitaxico", "Epitelial", "Epitelio", "Epitelioma", "Epiteliomatoso", "Epitematico", "Epitemia", "Epitermico", "Epiteto", "Epitimia", "Epitimo", "Epitomar", "Epitomado", "Epitomador", "Epitomista", "Epitomizacion", "Epitomizar", "Epitopo", "Epitroclea", "Epitroclear", "Epitrocleitis", "Epitropo", "Epitropismo", "Epixilo", "Epizootia", "Epizootico", "Epodo", "Epopeya", "Epopeico", "Epoptico", "Epopteia", "Epulide", "Epulotico", "Epulozoo", "Epuracion", "Epurar", "Epurado",
         "Fama", "Fase", "Fe", "Fiesta", "Fin", "Flor", "Foca", "Frio", "Fuego", "Fuga",
         "Gato", "Gente", "Gol", "Gota", "Grama", "Grande", "Grato", "Grito", "Gula",
         "Habilidad", "Harpa", "Hielo", "Hiena", "Hijo", "Himno", "Hoja", "Hora", "Hotel", "Humor",
@@ -332,7 +345,9 @@ local palavrasES = {
         "Vaca", "Valle", "Vaso", "Vela", "Verde", "Vida", "Vidrio", "Viejo", "Viento", "Voz",
         "Exacto", "Examen", "Exito", "Exotico", "Extra", "Flexible", "Texto", "Toxico",
         "Yoga", "Yogurt", "Yate", "Yen", "Yin", "Yegua", "Yelmo", "Yema", "Yermo", "Yerno", "Yeso", "Yodo", "Yuca", "Yugoslavia", "Yugoslavo", "Yunta", "Yute",
-        "Zona", "Zoo", "Zapato", "Zanahoria"
+        "Zona", "Zoo", "Zapato", "Zanahoria",
+        -- NOVAS PALAVRAS ES (+300)
+        "Abajo", "Abandonar", "Abanico", "Abierto", "Abogado", "Abrigo", "Abril", "Absoluto", "Absurdo", "Abuela", "Abuelo", "Acabar", "Academia", "Acceso", "Accion", "Aceite", "Acelga", "Acento", "Aceptar", "Acerca", "Acertar", "Acha", "Aclamar", "Aclarar", "Acoger", "Acompanar", "Aconsejar", "Acordar", "Acorde", "Acortar", "Actitud", "Activo", "Actual", "Acuerdo", "Acusar", "Adaptar", "Adelante", "Ademas", "Adentro", "Adios", "Admirar", "Admitir", "Adonde", "Adorno", "Aduana", "Adulto", "Adverso", "Aeropuerto", "Afecto", "Afin", "Afirmar", "Afligir", "Afortunado", "Afrontar", "Afuera", "Agenda", "Agil", "Agitar", "Agonia", "Agosto", "Agotar", "Agradable", "Agredecer", "Agrio", "Agrupar", "Aguacate", "Aguantar", "Aguila", "Aguja", "Ahora", "Ahorrar", "Aire", "Aislar", "Ajedrez", "Ajeno", "Ajustar", "Ala", "Alabar", "Alambre", "Alcance", "Alcanzar", "Alcoba", "Aldea", "Alegrar", "Alejar", "Aleman", "Alentar", "Alfombra", "Algo", "Algodon", "Alguien", "Algun", "Aliado", "Aliento", "Aliviar", "Alla", "Alli", "Alma", "Almacen", "Almendra", "Almohada", "Almorzar", "Almuerzo", "Alojar", "Alquilar", "Alrededor", "Altar", "Altavoz", "Alterar", "Alto", "Altura", "Alumbrar", "Aluminio", "Alzar", "Amable", "Amante", "Amar", "Amargo", "Amarillo", "Ambiente", "Ambos", "Ambulancia", "Amenaza", "Amigo", "Amistad", "Amo", "Amor", "Amplio", "Amuleto", "Anadir", "Analisis", "Anciano", "Ancla", "Ancho", "Andar", "Animal", "Animar", "Animo", "Anoche", "Anotar", "Ansiedad", "Ante", "Antena", "Antes", "Antiguo", "Anual", "Anuncio", "Anzuelo", "Apagar", "Aparato", "Aparente", "Aparte", "Apenas", "Apilar", "Aplastar", "Aplaudir", "Aplicar", "Apodo", "Apoyar", "Apreciar", "Aprender", "Aprobar", "Aprovechar", "Apto", "Apuesta", "Apuntar", "Apurar", "Aquel", "Aqui", "Arado", "Arbitro", "Arbol", "Arder", "Ardiente", "Arena", "Aretes", "Argumento", "Armar", "Armario", "Armonia", "Aroma", "Arquero", "Arrancar", "Arreglar", "Arrepentir", "Arriba", "Arroz", "Arruga", "Arte", "Articulo", "Artista", "Asado", "Ascender", "Aseo", "Asequible", "Asi", "Asiento", "Asignar", "Asilo", "Asistir", "Asno", "Asociar", "Asombrar", "Aspecto", "Aspero", "Astro", "Astuto", "Asumir", "Asunto", "Asustar", "Atar", "Ataud", "Atencion", "Atender", "Atenerse", "Aterrizar", "Atleta", "Atmosfera", "Atonito", "Atorar", "Atraer", "Atrapado", "Atreverse", "Atroz", "Atun", "Audaz", "Audiencia", "Aumento", "Aun", "Aunque", "Aurora", "Ausencia", "Autentico", "Auto", "Autobus", "Autor", "Auxilio", "Avanzar", "Ave", "Avena", "Aventura", "Avergonzar", "Avion", "Avisar", "Avispa", "Avivar", "Ayer", "Ayuda", "Ayunar", "Azafran", "Azar", "Azotea", "Azucar", "Azufre", "Azul"
     }
 }
 
@@ -388,6 +403,33 @@ local palavrasPorPrefixo = {
         "eschew", "eschewed", "eschewing", "eschews", "escort", "escorted", "escorting", "escorts", "especial", "especially", "espouse", "espoused", "espouses", "espousing", "esquire", "esquires", "essay", "essays", "essayist", "essayists", "essence", "essences", "essential", "essentially",
         "esvair", "esvairse", "esvaziar", "esvaziado", "esvaziada", "esverdear", "esverdeado", "esverdinhado", "esvoacar", "esvoacante", "esvoacantes", "esvanecer", "esvanecido", "esvanecida", "esvanecimento", "esvaido", "esvaida", "esvaidos", "esvaidas",
         "esvair", "esvaziar", "esvaziado", "esvaziada", "esverdear", "esverdeado", "esvoacar", "esvoacante", "esvanecer", "esvanecido", "esvanecida", "esvaido", "esvaida"
+    },
+    EP = {
+        -- Palavras EP em Português, Inglês e Espanhol
+        "epic", "epics", "epoch", "epochs", "epode", "epodes", "eponym", "eponyms", "eponymous", "epopee", "epopees", "epos", "epoxy", "epoxies", "epsilon", "epsilons",
+        "epicene", "epicenes", "epicenter", "epicenters", "epicentral", "epicure", "epicures", "epicurean", "epicureanism", "epicycle", "epicycles", "epicyclic", "epicycloid", "epicycloidal",
+        "epidemic", "epidemics", "epidemical", "epidemiologic", "epidemiological", "epidemiologist", "epidemiology", "epidermic", "epidermis", "epidermoid", "epidiascope", "epididymis", "epididymitis", "epidote", "epidotes", "epidural",
+        "epifocal", "epigamic", "epigastric", "epigastrium", "epigeal", "epigene", "epigenesis", "epigenetic", "epigenetics", "epigenous", "epigeous", "epiglottal", "epiglottic", "epiglottis", "epigone", "epigones", "epigonic", "epigonism", "epigonous",
+        "epigram", "epigrams", "epigrammatic", "epigrammatist", "epigraph", "epigraphs", "epigrapher", "epigraphic", "epigraphical", "epigraphist", "epigraphy", "epigynous",
+        "epilation", "epilate", "epilated", "epilating", "epilator", "epilators", "epilepsy", "epileptic", "epileptics", "epileptiform", "epileptogenic", "epileptologist", "epileptology", "epilimnion", "epilithic",
+        "epilog", "epilogs", "epilogue", "epilogues", "epiloguize", "epimere", "epimeres", "epimeric", "epimerism", "epimeron", "epimorph", "epimorphic", "epimorphism", "epimysium",
+        "epinephrine", "epinephrin", "epineural", "epineurium", "epinicion", "epinikion", "epinikian",
+        "epipaleolithic", "epipetalous", "epiphania", "epiphanic", "epiphanies", "epiphanous", "epiphany", "epiphenomena", "epiphenomenal", "epiphenomenon", "epiphora", "epiphragm", "epiphyllous", "epiphyseal", "epiphyses", "epiphysial", "epiphysis",
+        "epiphyte", "epiphytes", "epiphytic", "epiphytical", "epiphytology", "epiphytotic", "epiplasm", "epiplasmic", "epiplastron", "epiplocele", "epiploic", "epiploon", "epiplosarcomphalocele", "epipolic", "epipolism", "epipteric", "epipubis", "epipubic",
+        "episcia", "episcias", "episcopacy", "episcopal", "episcopalian", "episcopalianism", "episcopate", "episcope", "episcopes", "episcopicide", "episcotister",
+        "episematic", "episepalous", "episiotomy", "episode", "episodes", "episodic", "episodical", "episodically", "epispadias", "epispastic", "episperm", "epispermic",
+        "epistasis", "epistatic", "epistaxis", "episteme", "epistemes", "epistemic", "epistemically", "epistemological", "epistemologically", "epistemologist", "epistemology", "episternal", "episternum", "epistilbite",
+        "epistles", "epistolar", "epistolary", "epistoler", "epistolic", "epistolical", "epistolist", "epistolographer", "epistolographic", "epistolographist", "epistolography", "epistoma", "epistomal", "epistome", "epistomial", "epistrophe", "epistropheus", "epistyle", "epistylis",
+        "epitaph", "epitaphs", "epitapher", "epitaphian", "epitaphic", "epitaphist", "epitasis", "epitaxial", "epitaxic", "epitaxy", "epitendineum",
+        "epithalamia", "epithalamic", "epithalamion", "epithalamium", "epithalamus", "epithalline", "epitheca", "epithecal", "epithelia", "epithelial", "epithelioid", "epithelioma", "epitheliomatous", "epithelium", "epithem", "epithema",
+        "epithetic", "epithets", "epithetize", "epithite", "epithyme", "epithymetic", "epithymetical",
+        "epitomator", "epitome", "epitomes", "epitomic", "epitomical", "epitomist", "epitomization", "epitomize", "epitomized", "epitomizer", "epitomizing", "epitonic", "epitope", "epitopes", "epitoxoid",
+        "epitrichium", "epitrochlea", "epitrochlear", "epitrochoid", "epitrochoidal", "epitropic", "epitropism", "epitropy", "epixylous",
+        "epizoan", "epizoic", "epizoism", "epizoon", "epizootic", "epizootics", "epizootiology", "epizooty",
+        -- PT
+        "epoca", "epico", "epica", "epicos", "epicas", "episodio", "episodios", "episcopal", "epistemologia", "epistemologico", "epitafio", "epitafios", "epiteto", "epitetos", "epopeia", "epopeias", "epidemia", "epidemias", "epidemiologia", "epidemico", "epiderme", "epifania", "epifanias", "epigrafe", "epigrafes", "epilepsia", "epileptico", "epilogo", "epilogos", "epinicio", "epinicios", "episcopal", "episodico", "episodicamente", "epistola", "epistolas", "epistolar", "epitaxial", "epitelio", "epitelial", "epitomar", "epitomado", "epitome", "epitomes", "eponimo", "eponimos", "epoptico", "epopticos", "epsilon", "epsilons", "epulide", "epulides", "epopeico", "epidemico", "epidermico", "epigastrico", "epigenetico", "epiglote", "epiglotico", "epigrafico", "epilatorio", "epileptiforme", "epilogal", "epilogistico", "epimorfose", "epinefrina", "epipaleolitico", "epiploon", "epirrematico", "episcopado", "episiotomia", "epistemico", "epistilbite", "epistolarmente", "epitaxia", "epitaxico", "epitelial", "epitelioma", "epiteliomatoso", "epitematico", "epitermico", "epiteto", "epitimia", "epitimo", "epitomacao", "epitomador", "epitomista", "epitomizar", "epitopo", "epitopos", "epitroclea", "epitroclear", "epitropo", "epitropismo", "epixilo", "epixilos", "epizootia", "epizootico", "epo", "epos", "epodo", "epodos", "eponimo", "eponimia", "eponimico", "epopeia", "epopeico", "epoptia", "epoptas", "epopteia", "eporo", "eporos", "epi", "epo", "epa",
+        -- ES
+        "epoca", "epico", "epica", "epicos", "epicas", "episodio", "episodios", "episcopal", "epistemologia", "epistemologico", "epitafio", "epitafios", "epiteto", "epitetos", "epopeya", "epopeyas", "epidemia", "epidemias", "epidemiologia", "epidemico", "epidermis", "epifania", "epifanias", "epigrafe", "epigrafes", "epilepsia", "epileptico", "epilogo", "epilogos", "episcopal", "episodico", "episodicamente", "epistola", "epistolas", "epistolar", "epitaxial", "epitelio", "epitelial", "epitomar", "epitomado", "epitome", "epitomes", "eponimo", "eponimos", "epoptico", "epopticos", "epsilon", "epsilones", "epulide", "epulides", "epopeico", "epidemico", "epidermico", "epigastrico", "epigenetico", "epiglote", "epiglotico", "epigrafico", "epilatorio", "epileptiforme", "epilogal", "epilogistico", "epimorfosis", "epinefrina", "epipaleolitico", "epiploon", "epirrematico", "episcopado", "episiotomia", "epistemico", "epistilbite", "epistolarmente", "epitaxia", "epitaxico", "epitelial", "epitelioma", "epiteliomatoso", "epitematico", "epitermico", "epiteto", "epitimia", "epitimo", "epitomacion", "epitomador", "epitomista", "epitomizar", "epitopo", "epitroclea", "epitroclear", "epitropo", "epitropismo", "epixilo", "epizootia", "epizootico", "epo", "epos", "epodo", "epodos", "eponimo", "eponimia", "eponimico", "epopeico", "epoptia", "epoptas", "epopteia", "eporo", "epi", "epo"
     }
 }
 
@@ -433,6 +475,7 @@ local palavrasHardMode = {
 
 local hardModeCategorias = {"Y", "W", "LY", "XX"}
 
+-- O restante do código continua igual a partir daqui...
 local coreGui = game:GetService("CoreGui") or game:GetService("StarterGui")
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "VortexAutoType"
@@ -638,7 +681,7 @@ hardToggleBtn.ZIndex = 11
 hardToggleBtn.Parent = toggleFrame
 Instance.new("UICorner", hardToggleBtn).CornerRadius = UDim.new(0, 8)
 
-local hardMode = true  -- INICIANDO COMO ATIVADO
+local hardMode = true
 
 hardToggleBtn.MouseButton1Click:Connect(function()
     hardMode = not hardMode
@@ -692,7 +735,7 @@ safeToggleBtn.ZIndex = 11
 safeToggleBtn.Parent = toggleFrame
 Instance.new("UICorner", safeToggleBtn).CornerRadius = UDim.new(0, 8)
 
-local safeMode = true  -- INICIANDO COMO ATIVADO
+local safeMode = true
 
 safeToggleBtn.MouseButton1Click:Connect(function()
     safeMode = not safeMode
@@ -812,7 +855,7 @@ end
 
 local idioma, palavrasCategoria = detectarIdioma()
 
-local prefixosSemHardMode = {"X", "IC", "ER", "LY", "GY", "ANU", "PT", "DY", "CLE", "ED", "ION", "PY", "INE", "SY", "MENT", "SK", "CER", "SH", "Y", "AND", "AHA", "ANG", "OT", "ADO", "IS", "MYR", "OST", "YU", "NY", "OX", "PS", "OS", "HYD", "INGL", "LYC", "ESV"}
+local prefixosSemHardMode = {"X", "IC", "ER", "LY", "GY", "ANU", "PT", "DY", "CLE", "ED", "ION", "PY", "INE", "SY", "MENT", "SK", "CER", "SH", "Y", "AND", "AHA", "ANG", "OT", "ADO", "IS", "MYR", "OST", "YU", "NY", "OX", "PS", "OS", "HYD", "INGL", "LYC", "ESV", "EP"}
 
 local function encontrarPalavras(prefixo, tentadas)
     local candidatas = {}
@@ -1098,7 +1141,7 @@ local errosAnteriores = 0
 local semPalavras = false
 local escolhaJaFeita = false
 local ultimoTempoChoice = 0
-local TEMPO_ENTRE_CHOICES = 2.0  -- Espera 2 segundos entre verificações do ChoiceList
+local TEMPO_ENTRE_CHOICES = 2.0
 
 local palavrasTentadas = {}
 
@@ -1152,12 +1195,10 @@ local function tentarPalavra(baseAgora, tempoRestante)
     end
 end
 
--- CORREÇÃO PRINCIPAL: Loop que verifica ChoiceList SEPARADAMENTE do loop do jogo
 spawn(function()
     while scriptAtivo do
         if botAtivo then
             local agora = os.clock()
-            -- Verifica ChoiceList a cada 1.5 segundos para não sobrecarregar
             if agora - ultimoTempoChoice > 1.5 then
                 ultimoTempoChoice = agora
                 
@@ -1169,11 +1210,11 @@ spawn(function()
                 if fezEscolha then
                     print("[Vortex] ChoiceList: Letra escolhida automaticamente!")
                     escolhaJaFeita = true
-                    task.wait(0.5)  -- Pequena pausa após escolher
+                    task.wait(0.5)
                 end
             end
         end
-        task.wait(0.3)  -- Verifica frequentemente
+        task.wait(0.3)
     end
 end)
 
@@ -1202,7 +1243,6 @@ while scriptAtivo do
         continue
     end
     
-    -- Verifica ChoiceList também aqui (para quando está no jogo)
     if not escolhaJaFeita then
         local fezEscolha = false
         pcall(function()
